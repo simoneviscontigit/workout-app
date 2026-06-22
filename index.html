@@ -481,8 +481,9 @@ function getMissingNutritionDays(){
  // Parti dalla data del primo allenamento, max 30 giorni fa
  var firstSession=(S.history||[])[0];
  var firstDate=firstSession&&firstSession.date?firstSession.date.split('T')[0]:null;
- var maxBack=new Date(Date.now()-30*86400000).toISOString().split('T')[0];
- var startDate=(firstDate&&firstDate>maxBack)?firstDate:maxBack;
+ var today=new Date().toISOString().split('T')[0];
+ var maxBack=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
+ var startDate=(firstDate&&firstDate>maxBack)?firstDate:today; // se non c'è storia, non chiedere nulla di passato
  var yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
  for(var d=new Date(startDate);d.toISOString().split('T')[0]<=yesterday;d.setDate(d.getDate()+1)){
   var ds=d.toISOString().split('T')[0];
@@ -1536,7 +1537,8 @@ function openNutrition(){
  S.nutPhotoUploads=[];
  // Se non ci sono giorni mancanti, offri comunque ieri
  var yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
- S.nutTarget=queue.length>0?queue[0]:{date:yesterday};
+ var today=new Date().toISOString().split('T')[0];
+ S.nutTarget=queue.length>0?queue[0]:{date:today};
  go('nutrition',{qStep:-1,qAns:{}});
 }
 
