@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Coach 💪">
+<meta name="theme-color" content="#09090b">
+<title>💪 Coach</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#09090b;color:#fafafa;font-family:"Helvetica Neue",system-ui,sans-serif;max-width:440px;margin:0 auto}
+.pg{padding:18px;min-height:100vh;padding-bottom:90px}
+.card{background:#18181b;border:1px solid #27272a;border-radius:16px;padding:14px;margin-bottom:10px}
+.lbl{color:#52525b;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.btn{display:block;width:100%;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:900;cursor:pointer;color:#fff;margin-bottom:8px;text-align:center}
+.btn-ghost{display:block;width:100%;background:transparent;color:#71717a;border:1px solid #27272a;border-radius:12px;padding:12px;font-size:13px;cursor:pointer;margin-bottom:8px}
+.back{background:#27272a;border:none;border-radius:10px;padding:9px 14px;color:#a1a1aa;font-size:13px;cursor:pointer}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.pb{height:3px;background:#27272a;border-radius:99px}
+.pbf{height:3px;border-radius:99px;transition:width .4s}
+.opt{background:#18181b;border:1px solid #27272a;border-radius:12px;padding:13px 16px;color:#d4d4d8;font-size:14px;cursor:pointer;text-align:left;width:100%;display:block;margin-bottom:7px}
+.opt.sel{background:#3d1200;border-color:#f97316;color:#fafafa}
+.hdr{display:flex;align-items:center;margin-bottom:18px;gap:8px}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;text-align:center}
+.ex-media{width:100%;max-height:220px;object-fit:cover;border-radius:14px;display:block}
+.img-fb{width:100%;height:160px;border-radius:14px;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+.macro-bar{height:7px;background:#27272a;border-radius:99px;overflow:hidden;margin-top:3px;margin-bottom:10px}
+.mfill{height:7px;border-radius:99px}
+.score-ring{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;border:4px solid;margin:0 auto 12px}
+textarea,input[type=text]{background:#18181b;border:1px solid #27272a;border-radius:12px;color:#fafafa;font-size:14px;padding:12px;width:100%;outline:none;font-family:inherit;margin-bottom:8px;resize:none}
+.chat-msg{padding:10px 14px;border-radius:14px;margin-bottom:7px;font-size:13px;line-height:1.5}
+.tag-core{background:#422006;border:1px solid #92400e;border-radius:7px;padding:4px 10px;display:inline-block;margin-bottom:8px;color:#fbbf24;font-size:10px;font-weight:700;letter-spacing:1px}
+.tag-band{background:#1a1500;border:1px solid #ca8a0440;border-radius:10px;padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;gap:6px;color:#fbbf24;font-size:13px;font-weight:600}
+/* ── Floating AI ── */
+.ai-fab{position:fixed;bottom:24px;right:18px;width:54px;height:54px;border-radius:50%;background:#f97316;border:none;cursor:pointer;font-size:18px;font-weight:900;letter-spacing:-.5px;box-shadow:0 4px 24px #f9731640;z-index:1000;display:flex;align-items:center;justify-content:center;color:#fff;transition:transform .15s}
+.ai-fab:active{transform:scale(.92)}
+.ai-slide{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(102%);width:100%;max-width:440px;background:#18181b;border-top:1px solid #f9731640;border-radius:20px 20px 0 0;z-index:999;transition:transform .28s cubic-bezier(.32,1,.45,1);display:flex;flex-direction:column;max-height:72vh}
+.ai-slide.open{transform:translateX(-50%) translateY(0)}
+.ai-slide-head{padding:14px 16px 10px;border-bottom:1px solid #27272a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ai-ctx-pill{background:#27272a;border-radius:20px;padding:5px 12px;font-size:11px;color:#a1a1aa;font-weight:600;max-width:220px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ai-slide-msgs{flex:1;overflow-y:auto;padding:12px 14px;-webkit-overflow-scrolling:touch}
+.ai-slide-input{padding:12px 14px 20px;border-top:1px solid #27272a;flex-shrink:0;display:flex;gap:8px;background:#18181b}
+.ai-slide-input input{margin:0;flex:1}
+.ai-send-btn{background:#f97316;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;padding:0 16px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+</style>
+</head>
+<body>
+<div id="app"><div class="center"><span style="font-size:40px">💪</span></div></div>
+<script>
+// ─── CONFIG ─────────────────────────────────────────────────────────────────
+// Chiave API Anthropic — salvata in localStorage, mai nel codice
+function getApiKey(){return localStorage.getItem('anthropicKey')||'';}
+const APIKEY = getApiKey();
+
+// ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
+const DB={
+ push:[
+  {id:'p1',cat:'push',name:'Archer Push-up',video:'Archer push-up.mp4',
+   desc:'Mano larga sul lato, l\'altra tesa di fianco. Piega solo il gomito del braccio largo tenendo il corpo basso. Alterna ogni rep. Core contratto.',
+   muscles:'Petto unilat., Tricipiti, Core',reps:8,repsMax:11,sets:4},
+  {id:'p2',cat:'push',name:'Pseudo Planche Push-up',video:'Pseudo planche push-up.mp4',
+   desc:'Mani rivolte verso i fianchi, braccia leggermente inclinate. Inclina il corpo avanti il più possibile prima di scendere. Testa e spalle avanzano oltre le mani.',
+   muscles:'Petto basso, Spalle, Core',reps:6,repsMax:9,sets:4},
+  {id:'p3',cat:'push',name:'Dip su Sedie',video:'Dip su sedie.mp4',
+   desc:'Due sedie stabili, mani sul bordo. Scendi finché i gomiti superano le spalle. Busto leggermente inclinato avanti per coinvolgere il petto.',
+   muscles:'Tricipiti, Petto basso',reps:12,repsMax:16,sets:4},
+  {id:'p4',cat:'push',name:'Band Chest Press',video:'Band chest press.mp4',
+   desc:'Elastico ancorato alla porta a altezza petto. Premi le maniglie avanti con polsi dritti. Abbassa lento 3 secondi. Senti lo stretch del petto in fondo.',
+   muscles:'Petto, Tricipiti',reps:12,repsMax:16,sets:4,band:'15-25kg'},
+  {id:'p5',cat:'push',name:'Pike Push-up su Rialzo',video:'Pike push-up su rialzo.mp4',
+   desc:'Piedi su sedia, corpo a V stretta, fianchi alti. Scendi con la testa verso il suolo tra le mani. Movimento verticale puro — spalle, non petto.',
+   muscles:'Spalle ant., Tricipiti',reps:8,repsMax:11,sets:4},
+ ],
+ pull:[
+  {id:'r1',cat:'pull',name:'Band Bent-over Row',video:'Band bent-over row .mp4',
+   desc:'Piedi sull\'elastico, busto a 45° (schiena piatta!). Tira i gomiti dietro verso l\'anca, non verso il soffitto. Contrai la schiena in cima. Abbassa 3s.',
+   muscles:'Dorsali, Romboidi',reps:12,repsMax:16,sets:4,band:'20-30kg'},
+  {id:'r2',cat:'pull',name:'Pullover Elastico',video:null,
+   desc:'Elastico ancorato in ALTO sulla porta. Allontanati, braccia tese sopra la testa. Tira in arco verso le cosce mantenendo i gomiti quasi dritti. La tensione è presente da subito.',
+   muscles:'Dorsali, Core',reps:12,repsMax:16,sets:4,band:'15-25kg'},
+  {id:'r3',cat:'pull',name:'Curl Bicipiti',video:null,
+   desc:'Piedi sull\'elastico, presa supinata. Gomiti fissi ai fianchi — non muoverli mai. Curla supinando il polso in cima 1s. Abbassa lento 3 secondi.',
+   muscles:'Bicipiti',reps:10,repsMax:14,sets:4,band:'35kg'},
+  {id:'r4',cat:'pull',name:'Hammer Curl',video:null,
+   desc:'Presa neutra, pollice verso l\'alto per tutta l\'esecuzione. Gomiti fissi. Colpisce brachiale e brachioradiale. Movimento lento e controllato.',
+   muscles:'Bicipiti, Brachiale',reps:12,repsMax:16,sets:3,band:'25-35kg'},
+  {id:'r5',cat:'pull',name:'Tricep Overhead',video:null,
+   desc:'Elastico ancorato basso. Braccio sopra la testa, gomito fisso. Estendi verso l\'alto. Il lungo capo del tricipite è massimamente allungato in questa posizione.',
+   muscles:'Tricipiti (lungo capo)',reps:12,repsMax:16,sets:3,band:'15-20kg'},
+ ],
+ shoulders:[
+  {id:'s1',cat:'shoulders',name:'Band Shoulder Press',video:'Band shoulder press.mp4',
+   desc:'Piedi sull\'elastico, maniglie alle orecchie. Premi sopra la testa bloccando i gomiti 1s in cima. Abbassa lento 3s. Compound spalle.',
+   muscles:'Deltoide, Tricipiti',reps:10,repsMax:14,sets:4,band:'35kg'},
+  {id:'s2',cat:'shoulders',name:'Alzate Laterali',video:null,
+   desc:'Piedi sull\'elastico. Alza le braccia di lato a gomiti semi-flessi. Pausa 1 secondo in alto. Abbassa 3 secondi. Deltoide medio — insostituibile.',
+   muscles:'Deltoide medio',reps:15,repsMax:20,sets:4,band:'10-15kg'},
+  {id:'s3',cat:'shoulders',name:'Face Pull',video:'Face pull con elastico.mp4',
+   desc:'Elastico ancorato al viso. Tira verso il naso dividendo le mani verso le orecchie. Gomiti SOPRA le spalle. Salute spalle + deltoide posteriore.',
+   muscles:'Deltoide post., Rotatori',reps:15,repsMax:20,sets:3,band:'15-20kg'},
+ ],
+ legs:[
+  {id:'l1',cat:'legs',name:'Pistol Squat',video:'Pistol squat.mp4',
+   desc:'Squat su 1 gamba, altra tesa avanti. Scendi il più in basso possibile mantenendo il tallone a terra. Usa supporto leggero per il bilanciamento se serve.',
+   muscles:'Quadricipiti, Glutei, Core',reps:6,repsMax:9,sets:4},
+  {id:'l2',cat:'legs',name:'Bulgarian Split Squat',video:'Bulgarian split squat con elastico.mp4',
+   desc:'Piede posteriore su sedia. Scendi col ginocchio anteriore a 90°. Elastico sulle spalle per overload. Busto eretto, spingi col tallone avanti.',
+   muscles:'Quadricipiti, Glutei',reps:10,repsMax:14,sets:4,band:'25kg'},
+  {id:'l3',cat:'legs',name:'Squat con Elastico',video:null,
+   desc:'Elastico sulle spalle. Squat profondo, cosce parallele al suolo. Talloni a terra, ginocchia sui piedi. Variante bilaterale con carico progressivo.',
+   muscles:'Quadricipiti, Glutei',reps:15,repsMax:20,sets:4,band:'25-35kg'},
+  {id:'l4',cat:'legs',name:'Band Leg Curl',video:'Band leg curl .mp4',
+   desc:'A pancia in giù, elastico ancorato davanti alla caviglia. Curla il tallone verso il gluteo. Contrai il femorale in cima 1s. Abbassa lento 3s.',
+   muscles:'Femorali',reps:12,repsMax:16,sets:3,band:'15-25kg'},
+ ],
+ core:[
+  {id:'c1', cat:'core',name:'Hollow Body Hold',    time:30, desc:'Schiena piatta, lombare incollata. Braccia tese sopra la testa, gambe a 30cm. Spalle alzate. Nessun cedimento.',muscles:'Core completo'},
+  {id:'c2', cat:'core',name:'V-Up',                time:35, desc:'Sdraiato, braccia oltre la testa. Alza gambe tese e busto insieme cercando di toccare le punte. Abbassa controllato senza appoggiarti.',muscles:'Retto addominale'},
+  {id:'c3', cat:'core',name:'Windshield Wiper',    time:35, desc:'Sdraiato, gambe verticali tese. Abbassa lentamente verso destra, centro, sinistra. Zero momentum — è il core che controlla.',muscles:'Obliqui'},
+  {id:'c4', cat:'core',name:'Bicycle',             time:40, desc:'Mani alla nuca, gomiti larghi. Gomito dx verso ginocchio sn, poi inverti. Gambe basse. Ritmo controllato — non correre.',muscles:'Obliqui, Retto'},
+  {id:'c5', cat:'core',name:'Heel Tap',            time:40, desc:'Sdraiato, ginocchia piegate, piedi piatti. Spalle alzate. Tocca tallone dx con mano dx, poi sn con sn. Contrazione laterale.',muscles:'Obliqui laterali'},
+  {id:'c6', cat:'core',name:'Russian Twist',       time:40, desc:'Seduto a 45°, piedi sollevati. Ruota il busto completamente lato a lato, braccia tese. Più lento è più intenso.',muscles:'Obliqui'},
+  {id:'c7', cat:'core',name:'Reverse Crunch',      time:35, desc:'Sdraiato, gambe a 90°. Porta i glutei verso il soffitto sollevando il bacino. Abbassa lento senza toccare terra.',muscles:'Addominali bassi'},
+  {id:'c8', cat:'core',name:'Crunch 90°',          time:35, desc:'Gambe a 90° sospese. Alza solo le spalle verso le ginocchia — niente collo. Breve pausa in cima a ogni rep.',muscles:'Retto addominale'},
+  {id:'c9', cat:'core',name:'Tuck Crunch',         time:35, desc:'Porta ginocchia al petto e busto verso le ginocchia contemporaneamente. Distendi parzialmente e ripeti senza appoggiarti.',muscles:'Core completo'},
+  {id:'c10',cat:'core',name:'Scissor Orizzontale', time:40, desc:'Gambe a 15-20cm. Incrocia le gambe alternando quale sta sopra — forbice orizzontale. Lombare sempre incollata a terra.',muscles:'Addominali bassi'},
+  {id:'c11',cat:'core',name:'Cross Crunch',        time:35, desc:'Mani alla nuca. Gomito dx verso ginocchio sn alzando il busto, poi inverti. Lento e controllato — non rimbalzare.',muscles:'Obliqui, Retto'},
+  {id:'c12',cat:'core',name:'Mountain Climber',    time:35, desc:'Plank braccia tese. Porta il ginocchio al petto alternando, ritmo sostenuto. Bacino stabile — non alzarlo.',muscles:'Core, Cardio'},
+  {id:'c13',cat:'core',name:'Twist Plank',         time:40, desc:'Plank su avambracci. Ruota il bacino verso dx quasi a sfiorare il suolo, poi sn. Il core frena il movimento.',muscles:'Obliqui, Core'},
+  {id:'c14',cat:'core',name:'Side Crunch Alternato',time:35,desc:'Gambe piegate verso dx. Alza il busto verso il ginocchio alto per metà tempo, poi cambia lato. Solo l\'obliquo lavora.',muscles:'Obliqui'},
+  {id:'c15',cat:'core',name:'Sit-up',              time:40, desc:'Piedi a terra, mani alla nuca. Sali col busto fino alla verticale, abbassa lento controllando la discesa. Lombare che striscia a terra.',muscles:'Retto addominale'},
+  {id:'c16',cat:'core',name:'Alternating Toe Touch',time:40, desc:'Sdraiato, gambe tese verso il soffitto. Alza il busto e tocca la punta del piede dx con la mano sn, poi inverti. Torna giù lento.',muscles:'Retto, Obliqui'},
+  {id:'c17',cat:'core',name:'Side Plank',           time:30, desc:'Appoggiati su un avambraccio, corpo in linea retta. Reggi per metà tempo su ogni lato. Fianchi alti, non cedere.',muscles:'Obliqui, Core'},
+  {id:'c18',cat:'core',name:'X Crunch',             time:35, desc:'Sdraiato a X con braccia e gambe aperte. Porta gomito dx verso ginocchio sn sollevando busto e gamba, poi inverti. Movimento diagonale.',muscles:'Obliqui, Retto'},
+  {id:'c19',cat:'core',name:'Leg Raise',            time:40, desc:'Sdraiato, mani sotto i glutei. Tieni le gambe tese e alzale a 90°, abbassa lento fermandoti a 15cm da terra. Lombare incollata.',muscles:'Addominali bassi'},
+  {id:'c20',cat:'core',name:'Double Crunch',        time:35, desc:'Soleva contemporaneamente spalle e ginocchia verso il centro. Le due metà del corpo si avvicinano — contrai forte in cima prima di abbassare.',muscles:'Retto completo'},
+  {id:'c21',cat:'core',name:'Ronaldo Crunch',       time:35, desc:'Sdraiato, una gamba tesa a 45° e l\'altra a terra. Fai crunch verso la gamba alzata. Alterna ogni set. Movimento obliquo verso l\'anca.',muscles:'Retto, Obliqui'},
+  {id:'c22',cat:'core',name:'Plank Jack',           time:35, desc:'Posizione plank braccia tese. Salta aprendo e chiudendo i piedi (jumping jack). Core stabile, bacino fermo, non oscillare.',muscles:'Core, Cardio'},
+  {id:'c23',cat:'core',name:'Karate Kid',           time:40, desc:'In piedi. Solleva il ginocchio dx verso il petto ruotando il busto a dx, poi sn verso sn. Ritmo costante, core contratto per l\'equilibrio.',muscles:'Obliqui, Core, Equilibrio'},
+  {id:'c24',cat:'core',name:'Unicorn Crunch',       time:35, desc:'Sdraiato, una gamba tesa alzata, braccio opposto teso. Crunch diagonale portando il gomito verso il ginocchio alzato. Alterna ogni rep.',muscles:'Obliqui, Retto'},
+  {id:'c25',cat:'core',name:'V-sit',                time:30, desc:'Seduto, gambe a 45° e busto inclinato indietro — forma a V. Braccia tese parallele alle gambe. Tieni la posizione. Il core regge tutto.',muscles:'Core completo, Flessori anca'},
+  {id:'c26',cat:'core',name:'Tamburello',           time:40, desc:'Sdraiato, gambe a 45°. Scalcia alternando in ritmo (flutter kick) portando le braccia verso la coscia che scende. Ritmo cadenzato.',muscles:'Addominali bassi, Obliqui'},
+  {id:'c27',cat:'core',name:'Frog Reverse Crunch',  time:35, desc:'Sdraiato, suole dei piedi unite (rana). Porta le ginocchia verso il petto sollevando il bacino. Abbassa controllato senza toccare terra.',muscles:'Addominali bassi'},
+  {id:'c28',cat:'core',name:'Scissor Verticale',    time:40, desc:'Sdraiato, gambe tese al soffitto. Abbassa una gamba quasi a terra mentre l\'altra resta su. Alterna il movimento in forbice verticale.',muscles:'Addominali bassi, Flessori'},
+  {id:'c29',cat:'core',name:'Crunch a Libro',       time:35, desc:'Sdraiato, braccia oltre la testa. Porta simultaneamente braccia e gambe tese verso il centro — il corpo si chiude come un libro. Apri lento.',muscles:'Retto completo'},
+ ],
+ // ─ Circuiti predefiniti: seq = IDs degli esercizi, 'B' = pausa 30s
+ coreCircuits:[
+  {id:'cc1',label:'Retto & Obliqui · 7 min',
+   seq:['c1','c4','c5','c29','c11','c7','c6','c8','c12']},
+  {id:'cc2',label:'Bassi & Plank · 7 min',
+   seq:['c19','c28','c10','c13','c22','c27','c17','c9','c2']},
+  {id:'cc3',label:'Full Core · 10 min · 2 pause',
+   seq:['c1','c15','c16','c20','B','c6','c21','c24','c4','B','c8','c7','c10','c12']},
+  {id:'cc4',label:'Obliqui & Dinamico · 10 min · 2 pause',
+   seq:['c3','c14','c18','c23','B','c13','c22','c11','c25','B','c26','c28','c5','c9']},
+  {id:'cc5',label:'Stile Cotto al Dente · 10 min · 2 pause',
+   seq:['c26','c10','c29','c5','B','c4','c9','c7','c11','B','c15','c23','c13','c22']},
+  {id:'cc6',label:'Power Core · 10 min · 2 pause',
+   seq:['c2','c19','c20','c28','B','c27','c6','c21','c24','B','c16','c18','c25','c4']},
+ ]
+};
+
+// Varianti chiaro/scuro per colore giorno (split color → palette)
+const COLOR_VARIANTS={
+ '#ef4444':{light:'#fca5a5',dark:'#991b1b'}, // PUSH — rosso
+ '#8b5cf6':{light:'#c4b5fd',dark:'#4c1d95'}, // PULL — viola
+ '#14b8a6':{light:'#5eead4',dark:'#0f766e'}, // GAMBE — teal
+ '#f97316':{light:'#fdba74',dark:'#9a3412'}, // FULL — arancio
+ '#f59e0b':{light:'#fde68a',dark:'#b45309'}, // CORE — ambra
+};
+const PLAN=[
+ {id:'push', name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:2,shoulders:1},desc:'Petto · Tricipiti · Spalle'},
+ {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:3},            desc:'Dorsali · Bicipiti · Braccia'},
+ {id:'legs', name:'GAMBE', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:3},            desc:'Quadricipiti · Glutei · Femorali'},
+ {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:2,shoulders:1},desc:'Petto · Tricipiti · Spalle'},
+ {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:2,shoulders:1},desc:'Dorsali · Bicipiti + Spalle'},
+ {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:1,legs:1},desc:'Corpo completo · Mix intelligente'},
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const S={
+ view:'home',history:[],skipped:[],nutrition:null,splitIdx:0,nutQueue:[],nutQueueIdx:0,nutTarget:null,
+ wSplit:null,wEx:[],wSteps:[],wStepIdx:0,wTimer:0,wElapsed:0,wSets:0,wStartTime:0,wPaused:false,
+ qStep:0,qAns:{},pending:null,
+ aiDB:{sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},
+ aiChat:[],aiLoading:false,aiErr:'',exFbAnswers:{},
+ aiOpen:false,floatChat:[],floatLoading:false,
+ trialMode:false,trialNutMode:false,wConfirmClose:false,
+ mealPhotoState:{date:'',note:'',loading:false,estimate:null,error:''},
+ nutReminder:false,nutReminderCount:0,
+ nutPhotoUploads:[],
+ preWorkoutCheck:false,preWQStep:0,preWQAns:{},
+ nutQty:{},
+};
+let TI=null;
+
+function shuf(a){return[...a].sort(()=>Math.random()-.5)}
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+
+// ─── MEDIA ───────────────────────────────────────────────────────────────────
+function imgFb(ex){
+ var cc={push:'#ef4444',pull:'#8b5cf6',shoulders:'#818cf8',legs:'#14b8a6',core:'#f59e0b'};
+ var col=cc[ex.cat]||'#52525b';
+ var icon=ex.isCore?'🔥':'💪';
+ return '<div class="img-fb" style="display:flex;background:'+col+'15;border:1px solid '+col+'30"><span style="font-size:40px">'+icon+'</span><span style="color:'+col+';font-size:12px;font-weight:700">'+ex.muscles+'</span></div>';
+}
+function mediaErr(el){
+ el.style.display='none';
+ var fb=el.nextElementSibling;if(fb)fb.style.display='flex';
+}
+function mediaHtml(ex){
+ var fb=imgFb(ex);
+ if(!ex.video&&!ex.img)return fb;
+ var fbH=fb.replace('display:flex','display:none');
+ if(ex.video)
+  return '<video class="ex-media" src="'+encodeURIComponent(ex.video.trim())+'" autoplay loop muted playsinline onerror="mediaErr(this)"></video>'+fbH;
+ return '<img class="ex-media" src="'+ex.img+'" alt="" onerror="mediaErr(this)">'+fbH;
+}
+
+// ─── WORKOUT LOGIC ───────────────────────────────────────────────────────────
+function applyAdaptation(ex){
+ var a=S.aiDB.adaptation||{};
+ var mult=a.repsMultiplier||1;
+ var setsAdj=a.setsAdjustment||0;
+ // Adatta in base ai muscoli indolenziti dichiarati nel check pre-workout
+ var preAns=S.preWQAns||{};
+ var doms=preAns.domsActual||1;
+ var sore=preAns.soreMuscles||[];
+ if(doms>=3&&sore.length>0&&ex.muscles){
+  var exMusclesLow=(ex.muscles||'').toLowerCase();
+  var hasSore=sore.some(function(m){return exMusclesLow.indexOf(m.toLowerCase())>=0;});
+  if(hasSore){
+   setsAdj=setsAdj-1; // sempre -1 set per muscoli indolenziti
+   if(doms>=4)mult=Math.min(mult,0.8); // DOMS forte: anche -20% reps
+  }
+ }
+ if(mult===1&&setsAdj===0)return ex;
+ var newEx=Object.assign({},ex);
+ if(ex.isTime){
+  newEx.time=Math.max(10,Math.round((ex.time||30)*mult));
+ } else {
+  newEx.reps=Math.max(5,Math.round((ex.reps||8)*mult));
+  if(ex.repsMax) newEx.repsMax=Math.max(newEx.reps+1,Math.round((ex.repsMax)*mult));
+ }
+ newEx.sets=Math.max(2,(ex.sets||3)+setsAdj);
+ return newEx;
+}
+function genWorkout(splitIdx,skipped){
+ var split=PLAN[splitIdx%6];
+ var adapt=S.aiDB.adaptation||{};
+ var avoid=adapt.avoidExercises||[];
+ var suggest=adapt.suggestExercises||[];
+ var exercises=[],used=[];
+ Object.entries(split.cats).forEach(function(entry){
+  var cat=entry[0],count=entry[1];
+  var preferred=DB[cat].filter(function(e){return suggest.includes(e.id)&&!skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id);});
+  var pool=DB[cat].filter(function(e){return !skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&!preferred.find(function(p){return p.id===e.id;});});
+  var sel=preferred.concat(shuf(pool)).slice(0,count);
+  sel.forEach(function(e){exercises.push(applyAdaptation(e));used.push(e.id);});
+ });
+ // Scegli un circuito core casuale e costruisci la sequenza
+ var circuit=shuf(DB.coreCircuits)[0];
+ var coreById={};DB.core.forEach(function(e){coreById[e.id]=e;});
+ var core=circuit.seq.map(function(id,idx){
+  if(id==='B') return {id:'brk'+idx,cat:'core',name:'RIPOSO',desc:'Respira. Prossimo blocco tra poco.',muscles:'',isBreak:true,isCore:true,isTime:true,time:30,sets:1};
+  var e=coreById[id];
+  if(!e)return null;
+  var adapted=applyAdaptation(Object.assign({},e,{isCore:true,isTime:true,sets:1}));
+  return adapted;
+ }).filter(Boolean);
+ return{split:split,all:exercises.concat(core),circuit:circuit};
+}
+function buildSteps(all){
+ var s=[];
+ var coreIntroAdded=false;
+ all.forEach(function(ex,ei){
+  if(ex.isCore){
+   // Inserisci schermata intro + countdown 10s prima del primo esercizio core
+   if(!coreIntroAdded){
+    coreIntroAdded=true;
+    s.push({type:'core_intro'});
+    s.push({type:'rest',dur:10,isCoreEntry:true,nextName:''});
+   }
+   // Circuito core: flusso automatico
+   if(ex.isBreak){
+    // Pausa 30s — step di rest speciale
+    s.push({type:'rest',dur:30,isCoreBreak:true,nextName:all[ei+1]?all[ei+1].name:''});
+   } else {
+    s.push({type:'work',ex:ex,exIdx:ei,setNum:1,totalSets:1});
+    if(ei<all.length-1&&!all[ei+1].isBreak){
+     // 8s transizione verso prossimo esercizio
+     s.push({type:'rest',dur:8,isTransition:true,nextName:all[ei+1]?all[ei+1].name:''});
+    } else if(ei<all.length-1&&all[ei+1].isBreak){
+     // nessuna transizione — la pausa è subito dopo
+    }
+   }
+  } else {
+   var ts=ex.sets||3;
+   for(var i=1;i<=ts;i++){
+    s.push({type:'work',ex:ex,exIdx:ei,setNum:i,totalSets:ts});
+    if(i<ts) s.push({type:'rest',dur:90,isSetRest:true,nextName:ex.name,nextBand:ex.band||null});
+    else if(ei<all.length-1) s.push({type:'rest',dur:60,isSetRest:false,nextName:all[ei+1].name,nextBand:all[ei+1].band||null});
+   }
+  }
+ });
+ return s;
+}
+function calcPatterns(){
+ var sess=S.aiDB.sessions;
+ if(!sess.length)return{};
+ var wq=sess.filter(function(s){return s.quiz;});
+ function avg(arr,k){return arr.length?Math.round(arr.reduce(function(s,h){return s+(h.quiz[k]||0);},0)/arr.length*10)/10:0;}
+ return{
+  totalSessions:sess.length,
+  avgEnergy:avg(wq,'energy'),avgDifficulty:avg(wq,'difficulty'),
+  recentEnergy:avg(wq.slice(-5),'energy'),recentDifficulty:avg(wq.slice(-5),'difficulty'),
+  splitHistory:sess.slice(-6).map(function(s){return s.split&&s.split.id;}),
+  skippedExercises:S.skipped.slice(),
+ };
+}
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+async function loadData(){
+ try{
+  var v;
+  v=localStorage.getItem('wh');if(v)S.history=JSON.parse(v);
+  v=localStorage.getItem('si');if(v)S.splitIdx=parseInt(v)||0;
+  v=localStorage.getItem('sk');if(v)S.skipped=JSON.parse(v)||[];
+  v=localStorage.getItem('nd');if(v)S.nutrition=JSON.parse(v);
+  v=localStorage.getItem('ai');if(v){var _ai=JSON.parse(v);S.aiDB=Object.assign({sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},_ai);if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};if(!S.aiDB.nutritionAdvice)S.aiDB.nutritionAdvice='';if(!S.aiDB.mealLog)S.aiDB.mealLog={};}
+  if(!S.aiDB.profile)S.aiDB.profile={peso:74,altezza:182,eta:30,obiettivo:'massa'};
+  // Migrazione: ripristina da array nutrition legacy (preferisci dati reali su skipped)
+  if(S.aiDB.nutrition&&S.aiDB.nutrition.length){
+   S.aiDB.nutrition.forEach(function(n){
+    if(n.date&&(!S.aiDB.nutritionLog[n.date]||S.aiDB.nutritionLog[n.date].skipped))
+     S.aiDB.nutritionLog[n.date]=n;
+   });
+  }
+  // Migrazione: ripristina da h.nutrition sui vecchi session objects
+  (S.history||[]).forEach(function(h){
+   var d=h.date&&h.date.split('T')[0];
+   if(d&&h.nutrition&&h.nutrition.score!=null&&(!S.aiDB.nutritionLog[d]||S.aiDB.nutritionLog[d].skipped))
+    S.aiDB.nutritionLog[d]=Object.assign({date:d},h.nutrition);
+  });
+  // RECOVERY ONE-TIME: ripristina dati nutrizione reali persi (da backup Drive analizzato il 2026-06-22)
+  if(!S.aiDB._nutRecovered){
+   var RECOVERED={
+    '2026-06-07':{date:'2026-06-07',protein:4,carbs:2,fats:5,calories:1,water:3,sleep:2,stress:3,note:'Ho fatto sessione extra 1 ora di surf',fromPhotos:true,savedAt:'2026-06-21T17:11:46.787Z',score:59,protein_g:156,carbs_g:128,fats_g:113,calories_kcal:2114,water_l:2,sleep_h:6},
+    '2026-06-15':{date:'2026-06-15',protein:2,carbs:3,fats:1,calories:1,water:3,sleep:3,stress:3,note:'Sono ancora reduce da influenza intestinale',savedAt:'2026-06-16T04:08:15.308Z',score:56,protein_g:90,carbs_g:200,fats_g:30,calories_kcal:1800,water_l:2,sleep_h:7},
+    '2026-06-16':{date:'2026-06-16',protein:4,carbs:3,fats:3,calories:2,water:2,sleep:3,stress:1,note:'',savedAt:'2026-06-17T02:49:09.547Z',score:72,protein_g:160,carbs_g:200,fats_g:70,calories_kcal:2200,water_l:1.5,sleep_h:7},
+    '2026-06-17':{date:'2026-06-17',protein:3,carbs:4,fats:3,calories:2,water:2,sleep:3,stress:2,note:'',savedAt:'2026-06-18T03:14:14.288Z',score:73,protein_g:130,carbs_g:270,fats_g:70,calories_kcal:2200,water_l:1.5,sleep_h:7},
+    '2026-06-18':{date:'2026-06-18',protein:3,carbs:3,fats:2,calories:1,water:2,sleep:2,stress:2,note:'',savedAt:'2026-06-19T14:22:04.380Z',score:56,protein_g:130,carbs_g:200,fats_g:50,calories_kcal:1800,water_l:1.5,sleep_h:6}
+   };
+   Object.keys(RECOVERED).forEach(function(d){
+    var ex=S.aiDB.nutritionLog[d];
+    // Sovrascrive se: mancante, skipped, o test entry (salvato il 22 giu per date precedenti)
+    var isTest=ex&&ex.savedAt&&ex.savedAt>='2026-06-22T00:00:00Z'&&d<'2026-06-22';
+    if(!ex||ex.skipped||isTest)S.aiDB.nutritionLog[d]=RECOVERED[d];
+   });
+   S.aiDB._nutRecovered=true;
+   sv('ai',S.aiDB);
+   setTimeout(syncToDrive,3000);
+  }
+  // Restore today's chat session
+  if(S.aiDB.currentChat&&S.aiDB.currentChat.date===new Date().toDateString())S.floatChat=S.aiDB.currentChat.msgs||[];
+ }catch(e){}
+}
+const DRIVE_URL='https://script.google.com/macros/s/AKfycbxtbx4x2KZZxgCvzOtibFtFTI8h0Bxg1-xalRboisHzyP_w8QD14Hb2-ZiAgTTDNQPP/exec';
+async function sv(k,v){try{localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}}
+async function restoreFromDrive(){
+ var btn=document.getElementById('restore-btn');
+ if(btn){btn.textContent='⏳ Scaricando...';btn.disabled=true;}
+ try{
+  var r=await fetch(DRIVE_URL,{redirect:'follow'});
+  var data=await r.json();
+  if(!data.ok){alert('Errore: '+(data.error||'risposta non valida'));if(btn){btn.textContent='☁️ Ripristina da Drive';btn.disabled=false;}return;}
+  if(data.history)await sv('history',data.history);
+  if(data.aiDB)await sv('ai',data.aiDB);
+  if(data.splits)await sv('splits',data.splits);
+  alert('✅ Dati ripristinati da Drive!\n'+((data.history||[]).length)+' sessioni caricate.\nRicarico...');
+  location.reload();
+ }catch(e){
+  alert('Errore connessione: '+e.message);
+  if(btn){btn.textContent='☁️ Ripristina da Drive';btn.disabled=false;}
+ }
+}
+async function syncToDrive(){
+ try{
+  var payload={history:S.history,nutrition:S.nutrition,aiDB:S.aiDB,skipped:S.skipped,savedAt:new Date().toISOString()};
+  fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload)});
+ }catch(e){}
+}
+
+// ─── NAV + RENDER ─────────────────────────────────────────────────────────────
+function go(v,extra){clearInterval(TI);S.view=v;if(extra)Object.assign(S,extra);render();}
+function render(){
+ var app=document.getElementById('app');
+ if(S.preWorkoutCheck){app.innerHTML=rPreWorkoutCheck();updateFloatAI();return;}
+ var map={home:rHome,workout:rWorkout,post_quiz:rPQ,nutrition:rNut,history:rHist,ai:rAI,meal_photo:rMealPhoto,profile:rProfile};
+ app.innerHTML=(map[S.view]||rHome)();
+ if(S.view==='workout')startTimer();
+ updateFloatAI();
+}
+function updateFloatAI(){
+ var c=document.getElementById('ai-float-c');
+ if(!c){c=document.createElement('div');c.id='ai-float-c';document.body.appendChild(c);}
+ // Hide floating button on the full AI page
+ if(S.view==='ai'){c.innerHTML='';return;}
+ c.innerHTML=rFloatingAI();
+ // Scroll msgs to bottom
+ setTimeout(function(){var el=document.getElementById('float-msgs');if(el)el.scrollTop=el.scrollHeight;},50);
+}
+
+// ─── HOME ─────────────────────────────────────────────────────────────────────
+function rHome(){
+ var t=PLAN[S.splitIdx%6];
+ var last=S.history[S.history.length-1];
+ var wk=S.history.filter(function(h){return new Date(h.date)>new Date(Date.now()-7*864e5);}).length;
+ var rec=S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.shortRec;
+ var cycle='';
+ PLAN.forEach(function(sp,i){
+  var cur=i===S.splitIdx%6,done=i<S.splitIdx%6;
+  cycle+='<div style="display:flex;align-items:center;gap:10px;padding:6px;border-radius:10px;background:'+(cur?'#27272a':'transparent')+';margin-bottom:2px">'
+   +'<div style="width:20px;height:20px;border-radius:50%;background:'+(done?sp.color:cur?sp.color+'25':'#27272a')+';border:2px solid '+(cur||done?sp.color:'#3f3f46')+';display:flex;align-items:center;justify-content:center;font-size:9px;color:'+(done?'#fff':cur?sp.color:'#52525b')+';font-weight:800;flex-shrink:0">'+(done?'✓':i+1)+'</div>'
+   +'<span style="color:'+(cur?'#fafafa':done?'#3f3f46':'#71717a')+';font-size:13px;font-weight:'+(cur?700:400)+';flex:1">'+sp.emoji+' '+sp.name+'</span>'
+   +'<span style="color:#3f3f46;font-size:10px">'+sp.desc.split(' · ')[0]+'</span></div>';
+ });
+ var prof=S.aiDB.profile||{};
+ var profLabel=(prof.altezza||'?')+'cm · '+(prof.peso||'?')+'kg';
+ var goalLabel=prof.obiettivo==='massa'?'Massa muscolare':prof.obiettivo==='definizione'?'Definizione':'Mantenimento';
+ return '<div class="pg">'
+  +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">'
+  +'<div><div class="lbl" style="margin-bottom:4px">Il Tuo Coach</div><div style="font-size:22px;font-weight:900">'+profLabel+'</div><div style="color:#52525b;font-size:12px;margin-top:2px">'+goalLabel+' · Corpo libero + Elastici</div></div>'
+  +'<div style="display:flex;gap:6px;align-items:flex-start">'
+  +'<button onclick="go(\'profile\')" style="background:#27272a;border:none;border-radius:10px;padding:9px 12px;color:#a1a1aa;font-size:15px;cursor:pointer">⚙️</button>'
+  +'<div class="card" style="padding:10px 14px;text-align:right;margin:0"><div style="color:'+t.color+';font-size:22px;font-weight:900;line-height:1">'+wk+'</div><div class="lbl" style="font-size:9px">/ 6 sett.</div></div>'
+  +'</div>'
+  +'</div>'
+  +'<div style="background:linear-gradient(135deg,'+t.bg+',#18181b);border:1px solid '+t.color+'40;border-radius:20px;padding:22px;margin-bottom:12px;position:relative;overflow:hidden">'
+  +'<div style="position:absolute;top:-10px;right:-10px;font-size:80px;opacity:.07">'+t.emoji+'</div>'
+  +'<div class="lbl" style="color:'+t.color+';margin-bottom:5px">Oggi · Giorno '+((S.splitIdx%6)+1)+'/6</div>'
+  +'<div style="font-size:28px;font-weight:900;letter-spacing:-1px;line-height:1;margin-bottom:4px">'+t.emoji+' '+t.name+'</div>'
+  +'<div style="color:#a1a1aa;font-size:13px;margin-bottom:16px">'+t.desc+'</div>'
+  +(S.nutReminder
+   ?'<div style="background:#1a1200;border:1px solid #f59e0b50;border-radius:14px;padding:12px 14px;margin-bottom:12px">'
+    +'<div style="color:#f59e0b;font-size:12px;font-weight:700;margin-bottom:6px">📅 '+S.nutReminderCount+' giorn'+(S.nutReminderCount===1?'o':'i')+' senza nutrizione</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button class="btn-ghost" style="margin:0;flex:1;font-size:12px" onclick="S.nutReminder=false;startWorkout()">Fai dopo</button>'
+    +'<button class="btn" style="background:#f59e0b;margin:0;flex:1;font-size:12px" onclick="S.nutReminder=false;openNutrition()">Compila →</button>'
+    +'</div></div>'
+   :'')
+  +'<button class="btn" style="background:'+t.color+';margin:0" onclick="startWorkout()">INIZIA ▶</button>'
+  +'</div>'
+  +'<div class="g3">'
+  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:19px;font-weight:900">'+S.history.length+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Sessioni</div></div>'
+  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:19px;font-weight:900">'+(last?last.duration+'m':'—')+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Ultima</div></div>'
+  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:19px;font-weight:900">'+(last?last.split.emoji:'—')+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Split prec.</div></div>'
+  +'</div>'
+  +'<div class="card"><div class="lbl" style="margin-bottom:10px">Ciclo 6 Giorni</div>'+cycle+'</div>'
+  +'<div class="g3">'
+  +'<button class="card" style="text-align:center;margin:0;cursor:pointer" onclick="openNutrition()"><div style="font-size:13px;font-weight:900;color:#a1a1aa;margin-bottom:3px">NUT</div><div style="color:#52525b;font-size:10px;letter-spacing:1px">Nutrizione</div></button>'
+  +'<button class="card" style="text-align:center;margin:0;cursor:pointer" onclick="go(\'history\')"><div style="font-size:13px;font-weight:900;color:#a1a1aa;margin-bottom:3px">LOG</div><div style="color:#52525b;font-size:10px;letter-spacing:1px">Storico</div></button>'
+  +'<button class="card" style="text-align:center;margin:0;cursor:pointer" onclick="go(\'ai\')"><div style="font-size:13px;font-weight:900;color:#f97316;margin-bottom:3px">AI</div><div style="color:#52525b;font-size:10px;letter-spacing:1px">Coach</div></button>'
+  +'</div>'
+  +(S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.recoveryFlag&&S.aiDB.adaptation.recoveryAction?'<div style="background:#1a0000;border:1px solid #ef444450;border-radius:14px;padding:12px;margin-bottom:10px"><div class="lbl" style="color:#ef4444;margin-bottom:4px">⚠ RECOVERY — allenamento adattato</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.adaptation.recoveryAction+'</div></div>':'')
+  +(S.aiDB&&S.aiDB.nutritionAdvice?'<div style="background:#0a1a0a;border:1px solid #22c55e30;border-radius:14px;padding:12px;margin-bottom:10px"><div class="lbl" style="color:#22c55e;margin-bottom:4px">💡 NUTRIZIONE — consiglio per domani</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.nutritionAdvice+'</div></div>':'')
+  +(rec?'<div style="background:#1a0a00;border:1px solid #f9731630;border-radius:14px;padding:12px;margin-bottom:10px"><div class="lbl" style="color:#f97316;margin-bottom:4px">ADATTAMENTO ATTIVO</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+rec+'</div></div>':'')
+  +'<div style="display:flex;gap:8px;margin-bottom:8px">'
+  +'<button onclick="startTrialWorkout()" style="flex:1;background:#1c1c1e;border:1px solid #2c2c2e;border-radius:12px;padding:12px;font-size:12px;font-weight:700;color:#6b6b70;cursor:pointer;letter-spacing:.5px">SESSIONE PROVA</button>'
+  +'<button onclick="startTrialNutrition()" style="flex:1;background:#1c1c1e;border:1px solid #2c2c2e;border-radius:12px;padding:12px;font-size:12px;font-weight:700;color:#6b6b70;cursor:pointer;letter-spacing:.5px">SURVEY PROVA</button>'
+  +'</div>'
+  +'</div>';
+}
+
+function getMissingNutritionDays(){
+ var log=S.aiDB.nutritionLog||{};
+ var missing=[];
+ // Parti dalla data del primo allenamento, max 30 giorni fa
+ var firstSession=(S.history||[])[0];
+ var firstDate=firstSession&&firstSession.date?firstSession.date.split('T')[0]:null;
+ var maxBack=new Date(Date.now()-30*86400000).toISOString().split('T')[0];
+ var startDate=(firstDate&&firstDate>maxBack)?firstDate:maxBack;
+ var yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
+ for(var d=new Date(startDate);d.toISOString().split('T')[0]<=yesterday;d.setDate(d.getDate()+1)){
+  var ds=d.toISOString().split('T')[0];
+  if(!log[ds])missing.push(ds);
+ }
+ return missing;
+}
+var SORE_MUSCLES=['Petto','Tricipiti','Spalle','Dorsali','Bicipiti','Quadricipiti','Glutei','Femorali','Core'];
+var SPLIT_MUSCLES={'push':['Petto','Tricipiti','Spalle'],'push2':['Petto','Tricipiti','Spalle'],'pull':['Dorsali','Bicipiti'],'pull2':['Dorsali','Bicipiti','Spalle'],'legs':['Quadricipiti','Glutei','Femorali'],'full':['Petto','Tricipiti','Dorsali','Bicipiti','Quadricipiti']};
+function buildPreWorkoutComment(){
+ var ans=S.preWQAns||{};
+ var todaySplit=PLAN[S.splitIdx%6];
+ var doms=ans.domsActual||1;
+ var recov=ans.recoveryFeel||2;
+ var sore=ans.soreMuscles||[];
+ var todayMuscles=SPLIT_MUSCLES[todaySplit.id]||[];
+ var overlap=sore.filter(function(m){return todayMuscles.indexOf(m)>=0;});
+ var domsWord=doms===2?'lieve':doms===3?'moderato':'forte';
+ if(doms<=1||sore.length===0){
+  if(recov>=4)return '🔥 Nessun indolenzimento e ti senti carico: recupero perfetto. Oggi spingiamo senza limitazioni.';
+  if(recov>=3)return '✅ Nessun indolenzimento, ti senti riposato. Procedi con il piano standard.';
+  if(recov>=2)return '👍 Nessun indolenzimento. Ti senti nella norma — nella norma si va avanti, niente scuse.';
+  return '⚠️ Ti senti spossato senza indolenzimento muscolare: può essere fatica sistemica o sonno scarso. Tieni d\'occhio la qualità degli esercizi, non forzare oltre il 70%.';
+ }
+ if(overlap.length===0){
+  return '✅ DOMS '+domsWord+' in '+sore.join(', ')+' — ma oggi lavori '+todaySplit.desc+'. Nessun conflitto: puoi spingere normalmente. L\'indolenzimento che non tocca i muscoli di oggi è un buon segnale che hanno lavorato.';
+ }
+ if(doms>=4&&overlap.length>=2){
+  return '🔴 DOMS forte in '+sore.join(', ')+' con overlap su oggi ('+todaySplit.name+'). Considera se valga la pena aspettare un giorno o fare solo la parte non infiammata. Se procedi: -1 serie per i muscoli dolenti, niente failure.';
+ }
+ if(doms>=3){
+  return '⚠️ DOMS moderato in '+overlap.join(', ')+'. Questi muscoli lavorano anche oggi — normale, non ti bloccare. Adatto: -1 serie su '+overlap.join('/')+'e riscaldamento più lungo su queste zone. Le altre partiranno al 100%.';
+ }
+ return '✅ DOMS lieve in '+overlap.join(', ')+' — sei nei range normali post-allenamento. Significa che hai stimolato bene. Si va avanti con il piano, magari 2-3 minuti extra di mobilità prima dei gruppi interessati.';
+}
+function rPreWorkoutCheck(){
+ var lastSession=(S.history||[]).slice(-1)[0];
+ var lastDate=lastSession&&lastSession.date?lastSession.date.split('T')[0]:'?';
+ var lastSplit=lastSession&&lastSession.split?(lastSession.split.emoji+' '+lastSession.split.name):'?';
+ var todaySplit=PLAN[S.splitIdx%6];
+ var phase=S.preWQPhase||'doms';
+ var wrap='<div style="position:fixed;inset:0;background:#09090b;z-index:200;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">'
+  +'<div style="width:100%;max-width:360px">'
+  +'<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#52525b;margin-bottom:4px;text-align:center">PRIMA DI INIZIARE</div>'
+  +(lastSession?'<div style="font-size:11px;color:#3f3f46;text-align:center;margin-bottom:16px">Ultima: <span style="color:#71717a">'+lastSplit+' · '+lastDate+'</span></div>':'<div style="margin-bottom:16px"></div>');
+ if(phase==='doms'){
+  var dOpts=['✅ No','⚡ Lieve','😬 Moderato','🔴 Forte'].map(function(o,i){
+   var sel=S.preWQAns.domsActual===i+1;
+   return '<button class="opt'+(sel?' sel':'')+'" onclick="pickDoms('+(i+1)+')" style="border-color:'+(sel?'#818cf8':'')+'">'+o+'</button>';
+  }).join('');
+  return wrap+'<div style="font-size:19px;font-weight:700;text-align:center;margin-bottom:16px;line-height:1.3">Senti ancora indolenzimento dall\'ultimo allenamento?</div>'+dOpts
+   +'<button class="btn-ghost" style="margin-top:16px;color:#3f3f46;font-size:11px" onclick="S.preWorkoutCheck=false;S.preWQAns={};launchWorkout()">Salta →</button>'
+   +'</div></div>';
+ }
+ if(phase==='muscles'){
+  var mBtns=SORE_MUSCLES.map(function(m){
+   var sel=(S.preWQAns.soreMuscles||[]).indexOf(m)>=0;
+   return '<button onclick="toggleSoreMuscle(\''+m+'\')" style="padding:10px 14px;border-radius:10px;border:2px solid '+(sel?'#ef4444':'#27272a')+';background:'+(sel?'#2d0a0a':'#18181b')+';color:'+(sel?'#ef4444':'#71717a')+';font-size:13px;font-weight:700;cursor:pointer">'+m+'</button>';
+  }).join('');
+  return wrap+'<button class="back" style="margin-bottom:12px" onclick="S.preWQPhase=\'doms\';render()">← Indietro</button>'
+   +'<div style="font-size:19px;font-weight:700;text-align:center;margin-bottom:6px">Quali muscoli senti indolenziti?</div>'
+   +'<div style="color:#52525b;font-size:12px;text-align:center;margin-bottom:14px">Seleziona tutti i gruppi interessati</div>'
+   +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">'+mBtns+'</div>'
+   +'<button class="btn" style="background:#818cf8" onclick="S.preWQPhase=\'recovery\';render()">Continua →</button>'
+   +'<button class="btn-ghost" style="color:#3f3f46;font-size:11px" onclick="S.preWQAns.soreMuscles=[];S.preWQPhase=\'recovery\';render()">Non ricordo / nessuno in particolare →</button>'
+   +'</div></div>';
+ }
+ if(phase==='recovery'){
+  var back=S.preWQAns.domsActual>=2?'muscles':'doms';
+  var rOpts=['😩 Spossato','😐 Nella norma','😊 Riposato','🔥 Carico'].map(function(o,i){
+   var sel=S.preWQAns.recoveryFeel===i+1;
+   return '<button class="opt'+(sel?' sel':'')+'" onclick="pickRecovery('+(i+1)+')" style="border-color:'+(sel?'#818cf8':'')+'">'+o+'</button>';
+  }).join('');
+  return wrap+'<button class="back" style="margin-bottom:12px" onclick="S.preWQPhase=\''+back+'\';render()">← Indietro</button>'
+   +'<div style="font-size:19px;font-weight:700;text-align:center;margin-bottom:16px;line-height:1.3">Come ti senti fisicamente oggi?</div>'+rOpts
+   +'<button class="btn-ghost" style="margin-top:16px;color:#3f3f46;font-size:11px" onclick="S.preWorkoutCheck=false;S.preWQAns={};launchWorkout()">Salta →</button>'
+   +'</div></div>';
+ }
+ // phase === 'comment'
+ var comment=buildPreWorkoutComment();
+ return wrap
+  +'<div style="background:#18181b;border:1px solid #27272a;border-radius:16px;padding:16px;margin-bottom:14px">'
+  +'<div style="font-size:11px;font-weight:700;color:#f97316;letter-spacing:1px;margin-bottom:8px">💬 COACH</div>'
+  +'<div style="color:#d4d4d8;font-size:14px;line-height:1.7">'+comment+'</div>'
+  +'</div>'
+  +'<div style="background:#1a1a2e;border:1px solid #818cf840;border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">'
+  +'<span style="color:#818cf8;font-size:13px;font-weight:700">'+todaySplit.emoji+' '+todaySplit.name+'</span>'
+  +'<span style="color:#52525b;font-size:11px">'+todaySplit.desc+'</span>'
+  +'</div>'
+  +'<button class="btn" style="background:'+todaySplit.color+'" onclick="S.preWorkoutCheck=false;launchWorkout()">Inizia '+todaySplit.emoji+' →</button>'
+  +'<button class="btn-ghost" style="color:#3f3f46;font-size:12px" onclick="S.preWQPhase=\'recovery\';render()">← Modifica risposte</button>'
+  +'</div></div>';
+}
+function pickDoms(v){
+ S.preWQAns.domsActual=v;
+ S.preWQPhase=v>=2?'muscles':'recovery';
+ render();
+}
+function toggleSoreMuscle(m){
+ if(!S.preWQAns.soreMuscles)S.preWQAns.soreMuscles=[];
+ var idx=S.preWQAns.soreMuscles.indexOf(m);
+ if(idx>=0)S.preWQAns.soreMuscles.splice(idx,1);
+ else S.preWQAns.soreMuscles.push(m);
+ render();
+}
+function pickRecovery(v){
+ S.preWQAns.recoveryFeel=v;
+ S.preWQPhase='comment';
+ render();
+}
+function launchWorkout(){
+ var w=genWorkout(S.splitIdx,S.skipped);
+ S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
+ S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();
+ S.trialMode=false;
+ go('workout');
+}
+function startWorkout(){
+ var missing=getMissingNutritionDays();
+ if(missing.length>0&&!S.nutReminder){
+  S.nutReminderCount=missing.length;
+  S.nutReminder=true;
+  render();return;
+ }
+ S.nutReminder=false;
+ // Mostra check pre-workout se ci sono sessioni precedenti
+ var hasPrev=(S.history||[]).length>0;
+ if(hasPrev){
+  S.preWorkoutCheck=true;S.preWQStep=0;S.preWQPhase='doms';S.preWQAns={soreMuscles:[]};
+  render();return;
+ }
+ launchWorkout();
+}
+function startTrialWorkout(){
+ var idx=(S.splitIdx+Math.floor(Math.random()*5)+1)%6;
+ var w=genWorkout(idx,[]);
+ S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
+ S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();
+ S.trialMode=true;
+ go('workout');
+}
+function startTrialNutrition(){
+ S.trialNutMode=true;
+ S.nutQueue=[];S.nutQueueIdx=0;S.nutPhotoUploads=[];
+ S.nutTarget={date:new Date(Date.now()-86400000).toISOString().split('T')[0]};
+ go('nutrition',{qStep:-1,qAns:{}});
+}
+async function handleNutPhotos(event){
+ var files=Array.from(event.target.files);
+ if(!files.length)return;
+ // Aggiungi placeholder loading per ogni file
+ var startIdx=(S.nutPhotoUploads||[]).length;
+ S.nutPhotoUploads=(S.nutPhotoUploads||[]).concat(files.map(function(){return{status:'loading'};}));
+ render();
+ for(var i=0;i<files.length;i++){
+  var file=files[i];
+  var idx=startIdx+i;
+  try{
+   var b64=await new Promise(function(res,rej){
+    var fr=new FileReader();
+    fr.onload=function(e){res(e.target.result.split(',')[1]);};
+    fr.onerror=rej;
+    fr.readAsDataURL(file);
+   });
+   var mt=file.type||'image/jpeg';
+   var est=await estimateMealFromPhoto(b64,mt,'');
+   S.nutPhotoUploads[idx]={status:'done',estimate:est};
+  }catch(e){
+   S.nutPhotoUploads[idx]={status:'error'};
+  }
+  render();
+ }
+}
+async function confirmNutPhotos(){
+ var uploads=S.nutPhotoUploads||[];
+ var done=uploads.filter(function(u){return u.status==='done';});
+ if(!done.length){S.qStep=0;render();return;}
+ // Aggregazione macro
+ var tot={protein_g:0,carbs_g:0,fats_g:0,calories:0};
+ var descs=[];
+ done.forEach(function(u){
+  var e=u.estimate;
+  tot.protein_g+=e.protein_g||0;
+  tot.carbs_g+=e.carbs_g||0;
+  tot.fats_g+=e.fats_g||0;
+  tot.calories+=e.calories||0;
+  descs.push(e.foodDescription);
+ });
+ var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ if(!S.trialNutMode){
+  // Salva ogni singola stima nel mealLog
+  if(!S.aiDB.mealLog)S.aiDB.mealLog={};
+  if(!S.aiDB.mealLog[targetDate])S.aiDB.mealLog[targetDate]=[];
+  done.forEach(function(u){
+   S.aiDB.mealLog[targetDate].push(Object.assign({},u.estimate,{loggedAt:new Date().toISOString()}));
+  });
+  await sv('ai',S.aiDB);
+ }
+ // Auto-popola qAns con macro aggregate
+ function toScore(val,thresholds){
+  for(var i=0;i<thresholds.length;i++)if(val<=thresholds[i])return i;
+  return thresholds.length;
+ }
+ var pScore=toScore(tot.protein_g,[80,120,160,200]);
+ var cScore=toScore(tot.carbs_g,[100,200,300,400]);
+ var fScore=toScore(tot.fats_g,[30,50,70,90]);
+ var calScore=toScore(tot.calories,[1200,1800,2400,3000]);
+ S.qAns=Object.assign(S.qAns||{},{protein:pScore,carbs:cScore,fats:fScore,calories:calScore});
+ S.nutPhotoUploads=[];
+ // Salta le domande macro (0-3) e vai a water (4)
+ S.qStep=4;
+ render();
+}
+
+// ─── WORKOUT ─────────────────────────────────────────────────────────────────
+function rWorkout(){
+ var step=S.wSteps[S.wStepIdx];
+ if(!step)return rHome();
+ var prog=S.wStepIdx/S.wSteps.length;
+ var sp=S.wSplit;
+
+ // ── REST: transizione core (8s), pausa core (30s), riposo normale ───────────
+ if(step.type==='core_intro'){
+  return '<div class="center" style="background:#09090b">'
+   +'<div style="font-size:60px;margin-bottom:12px">🔥</div>'
+   +'<div style="font-size:30px;font-weight:900;margin-bottom:8px;letter-spacing:1px">ADDOMINALI</div>'
+   +'<div style="color:#52525b;font-size:13px;margin-bottom:32px">Preparati per il circuito core</div>'
+   +'<button class="btn" style="background:#f97316;width:auto;padding:16px 40px;font-size:16px" onclick="advStep()">PRONTO ⚡</button>'
+   +'</div>';
+ }
+ if(step.type==='rest'){
+  if(step.isCoreEntry){
+   // 10s countdown verde prima del primo esercizio core
+   return '<div class="center" style="background:#09090b">'
+    +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#22c55e"></div></div></div>'
+    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:12px">🔥 ADDOMINALI — PRONTI IN</div>'
+    +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;color:#22c55e;line-height:1;margin-bottom:20px">'+S.wTimer+'</div>'
+    +'<button class="btn" style="background:#22c55e;width:auto;padding:14px 36px" onclick="skipRest()">INIZIA ⚡</button>'
+    +'</div>';
+  }
+  if(step.isTransition){
+   // 8 secondi tra esercizi core — schermata minimalista verde
+   return '<div class="center" style="background:#09090b">'
+    +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#22c55e"></div></div></div>'
+    +'<div style="color:#52525b;font-size:11px;letter-spacing:2px;margin-bottom:12px">PROSSIMO</div>'
+    +'<div style="font-size:24px;font-weight:900;margin-bottom:20px;text-align:center;padding:0 20px">'+step.nextName+'</div>'
+    +'<div id="wt-rest" style="font-size:72px;font-weight:900;font-family:monospace;color:#22c55e;line-height:1">'+S.wTimer+'</div>'
+    +'<button id="core-pause-btn" class="btn-ghost" style="margin-top:20px;width:auto;padding:10px 28px" onclick="pauseCore()">'+(S.wPaused?'▶ Riprendi':'⏸ Pausa')+'</button>'
+    +'</div>';
+  }
+  if(step.isCoreBreak){
+   // 30 secondi di pausa nel circuito core — verde
+   return '<div class="center" style="background:#09090b">'
+    +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#22c55e"></div></div></div>'
+    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:8px">🔥 CORE CIRCUIT</div>'
+    +'<div style="color:#52525b;font-size:13px;margin-bottom:6px">RIPOSO</div>'
+    +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;color:#22c55e;line-height:1;margin-bottom:10px">'+S.wTimer+'</div>'
+    +(step.nextName?'<div style="color:#52525b;font-size:11px;margin-bottom:4px">Prossimo blocco</div><div style="font-size:16px;font-weight:700;margin-bottom:20px">'+step.nextName+'</div>':'')
+    +'<button id="core-pause-btn" class="btn-ghost" style="width:auto;padding:10px 28px" onclick="pauseCore()">'+(S.wPaused?'▶ Riprendi':'⏸ Pausa')+'</button>'
+    +'</div>';
+  }
+  // Riposo normale tra esercizi/serie
+  return '<div class="center" style="background:#09090b;position:relative">'
+   +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:'+sp.color+'"></div></div></div>'
+   +'<div class="lbl" style="margin-bottom:8px">'+(step.isSetRest?'RIPOSO TRA SERIE':'CAMBIO ESERCIZIO')+'</div>'
+   +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;line-height:1;margin-bottom:10px;color:'+sp.color+'">'+S.wTimer+'</div>'
+   +'<div style="color:#52525b;font-size:12px;margin-bottom:4px">Prossimo:</div>'
+   +'<div style="font-size:18px;font-weight:700;margin-bottom:14px;text-align:center">'+step.nextName+'</div>'
+   +(step.nextBand?'<div class="tag-band" style="margin-bottom:14px">🔴 Prepara elastico: '+step.nextBand+'</div>':'')
+   +'<button class="btn" style="background:'+sp.color+';width:auto;padding:14px 36px;margin-bottom:12px" onclick="skipRest()">PRONTO ⚡</button>'
+   +'<button class="back" onclick="wBack()">← Torna indietro</button>'
+   +'</div>';
+ }
+
+ var ex=step.ex;
+ var ac=ex.isCore?'#f59e0b':sp.color;
+ var pal=COLOR_VARIANTS[ac]||{light:ac,dark:ac};
+
+ // ── CORE CIRCUIT: schermata automatica ─────────────────────────────────────
+ if(ex.isCore){
+  // Conta solo gli esercizi reali (no pause) per il progresso del circuito
+  var coreSteps=S.wSteps.filter(function(s){return s.type==='work'&&s.ex&&s.ex.isCore&&!s.ex.isBreak;});
+  var coreIdx=coreSteps.findIndex(function(s){return s.exIdx===step.exIdx;});
+  var coreTotal=coreSteps.length;
+  return '<div style="display:flex;flex-direction:column;height:100vh;background:#09090b;align-items:center;justify-content:center;text-align:center;padding:20px;position:relative">'
+   +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#f59e0b"></div></div></div>'
+   +'<div style="color:#f59e0b;font-size:10px;letter-spacing:2px;margin-bottom:6px">🔥 CORE CIRCUIT · '+(coreIdx+1)+'/'+coreTotal+'</div>'
+   +'<div style="font-size:26px;font-weight:900;line-height:1.2;margin-bottom:6px;max-width:300px">'+ex.name+'</div>'
+   +'<div style="color:#71717a;font-size:13px;margin-bottom:28px;max-width:280px;line-height:1.5">'+ex.muscles+'</div>'
+   +'<div id="wt-core-timer" style="font-size:110px;font-weight:900;font-family:monospace;color:#f59e0b;line-height:1;margin-bottom:6px">'+S.wTimer+'</div>'
+   +'<div style="color:#52525b;font-size:11px;margin-bottom:32px">secondi</div>'
+   +'<div style="background:#18181b;border-radius:14px;padding:12px 16px;max-width:300px;margin-bottom:28px">'
+   +'<p style="color:#a1a1aa;font-size:13px;line-height:1.5;margin:0">'+ex.desc+'</p>'
+   +'</div>'
+   +'<div style="display:flex;gap:10px;justify-content:center">'
+   +'<button id="core-pause-btn" class="btn-ghost" style="width:auto;padding:12px 28px" onclick="pauseCore()">'+(S.wPaused?'▶ Riprendi':'⏸ Pausa')+'</button>'
+   +'<button class="btn-ghost" style="width:auto;padding:12px 20px;color:#52525b;font-size:12px" onclick="skipCoreCircuit()">Salta core ›</button>'
+   +'</div>'
+   +'</div>';
+ }
+
+ // ── ESERCIZIO NORMALE ───────────────────────────────────────────────────────
+ return '<div style="display:flex;flex-direction:column;height:100vh;background:#09090b">'
+  +'<div style="flex:1;overflow-y:auto;padding:16px 16px 8px;-webkit-overflow-scrolling:touch">'
+  +(S.wConfirmClose?'<div style="background:#27272a;border:1px solid #3f3f46;border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">'
+   +'<span style="font-size:13px;color:#d4d4d8;font-weight:600">Chiudi e vai al riepilogo?</span>'
+   +'<div style="display:flex;gap:8px">'
+   +'<button onclick="S.wConfirmClose=false;render()" style="background:transparent;border:1px solid #3f3f46;border-radius:8px;color:#71717a;font-size:12px;padding:6px 14px;cursor:pointer">Annulla</button>'
+   +'<button onclick="S.wConfirmClose=false;finishWorkout()" style="background:#f97316;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;cursor:pointer">Sì, chiudi</button>'
+   +'</div></div>':'')
+  +(S.trialMode?'<div style="background:#422006;border:1px solid #92400e;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#fbbf24;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SESSIONE PROVA — non registrata</div>':'')
+  +'<div class="pb" style="margin-bottom:14px"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:'+ac+'"></div></div>'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+  +'<span class="lbl">'+sp.emoji+' '+sp.name+'</span>'
+  +'<div style="display:flex;align-items:center;gap:10px">'
+  +'<span class="lbl">EX '+(step.exIdx+1)+'/'+S.wEx.length+'</span>'
+  +'<button onclick="S.wConfirmClose=true;render()" style="background:transparent;border:none;color:#3f3f46;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;padding:4px 0">CHIUDI ✕</button>'
+  +'</div>'
+  +'</div>'
+  +'<div style="font-size:22px;font-weight:900;margin-bottom:8px;line-height:1.15">'+ex.name+'</div>'
+  +(ex.band?'<div class="tag-band">🔴 Elastico: '+ex.band+'</div>':'')
+  +mediaHtml(ex)
+  +'<div class="card" style="margin-top:10px">'
+  +'<p style="color:#d4d4d8;font-size:14px;line-height:1.6;margin:0">'+ex.desc+'</p>'
+  +'<p style="color:#52525b;font-size:12px;margin-top:8px;margin-bottom:0">💪 '+ex.muscles+'</p>'
+  +'</div>'
+  +'</div>'
+  +'<div style="background:#09090b;border-top:1px solid #27272a;padding:18px 16px 24px;flex-shrink:0">'
+  +'<div class="g3" style="margin-bottom:14px;gap:8px">'
+  +'<div class="card" style="text-align:center;padding:16px 6px;margin:0;border-color:'+pal.light+'60">'
+  +'<div class="lbl" style="margin-bottom:5px;font-size:10px">SET</div>'
+  +'<div style="font-family:monospace;font-size:26px;font-weight:900;line-height:1">'+step.setNum+'<span style="color:#3f3f46;font-size:13px">/'+step.totalSets+'</span></div>'
+  +'</div>'
+  +(ex.isTime
+    ?'<div class="card" style="text-align:center;padding:16px 6px;margin:0;border-color:'+pal.base+'50">'
+     +'<div class="lbl" style="margin-bottom:5px;font-size:10px">COUNTDOWN</div>'
+     +'<div id="wt-timer" style="color:'+ac+';font-family:monospace;font-size:26px;font-weight:900;line-height:1">'+S.wTimer+'s</div>'
+     +'</div>'
+    :'<div class="card" style="padding:0;margin:0;border-color:'+pal.base+'50;overflow:hidden">'
+     +'<div style="display:flex;height:100%">'
+     +'<div style="flex:1;text-align:center;padding:16px 4px;border-right:1px solid #27272a">'
+     +'<div class="lbl" style="margin-bottom:5px;font-size:10px;color:'+pal.base+'">TARGET</div>'
+     +'<div style="color:'+pal.base+';font-family:monospace;font-size:26px;font-weight:900;line-height:1">'+ex.reps+'</div>'
+     +'</div>'
+     +'<div style="flex:1;text-align:center;padding:16px 4px">'
+     +'<div class="lbl" style="margin-bottom:5px;font-size:10px;color:'+pal.dark+'">MAX</div>'
+     +'<div style="color:'+pal.dark+';font-family:monospace;font-size:26px;font-weight:900;line-height:1">'+(ex.repsMax||ex.reps)+'</div>'
+     +'</div>'
+     +'</div>'
+     +'</div>'
+  )
+  +'<div class="card" style="text-align:center;padding:16px 6px;margin:0;border-color:'+pal.dark+'60">'
+  +'<div class="lbl" style="margin-bottom:5px;font-size:10px">'+(ex.isTime?'—':'TEMPO')+'</div>'
+  +'<div id="wt-elapsed" style="color:#71717a;font-family:monospace;font-size:'+(ex.isTime?12:22)+'px;font-weight:700;line-height:1">'+(ex.isTime?'hold':fmt(S.wElapsed))+'</div>'
+  +'</div>'
+  +'</div>'
+  +'<button class="btn" style="background:'+ac+';margin-bottom:12px;padding:18px" onclick="workoutDone()">✓ SET COMPLETATO!</button>'
+  +'<div style="display:flex;gap:8px">'
+  +'<button class="btn-ghost" style="margin:0;flex:1;padding:14px" onclick="wBack()">← Indietro</button>'
+  +'<button class="btn-ghost" style="margin:0;flex:1;padding:14px" onclick="skipExercise()">🔄 Cambia</button>'
+  +'</div>'
+  +'</div>'
+  +'</div>';
+}
+
+function startTimer(){
+ clearInterval(TI);
+ var step=S.wSteps[S.wStepIdx];if(!step)return;
+ if(step.type==='core_intro'){return;} // nessun timer — l'utente preme PRONTO
+ if(step.type==='rest'){
+  S.wTimer=step.dur;
+  TI=setInterval(function(){
+   if(S.wPaused)return;
+   S.wTimer=Math.max(0,S.wTimer-1);
+   var el=document.getElementById('wt-rest');if(el)el.textContent=S.wTimer;
+   if(S.wTimer<=0){clearInterval(TI);advStep();}
+  },1000);
+ } else {
+  var ex=step.ex;
+  if(ex.isCore&&ex.isTime){
+   // Circuito core: auto-avanza a fine timer
+   S.wTimer=ex.time;S.wElapsed=0;
+   TI=setInterval(function(){
+    if(S.wPaused)return;
+    S.wTimer=Math.max(0,S.wTimer-1);S.wElapsed++;
+    var e=document.getElementById('wt-core-timer');if(e)e.textContent=S.wTimer;
+    if(S.wTimer<=0){clearInterval(TI);S.wSets++;advStep();}
+   },1000);
+  } else if(ex.isTime){
+   S.wTimer=ex.time;S.wElapsed=0;
+   TI=setInterval(function(){S.wTimer=Math.max(0,S.wTimer-1);S.wElapsed++;var e=document.getElementById('wt-timer');if(e)e.textContent=S.wTimer+'s';},1000);
+  } else {
+   S.wTimer=0;S.wElapsed=0;
+   TI=setInterval(function(){S.wElapsed++;var e=document.getElementById('wt-elapsed');if(e)e.textContent=fmt(S.wElapsed);},1000);
+  }
+ }
+}
+function advStep(){S.wStepIdx++;if(S.wStepIdx>=S.wSteps.length){finishWorkout();return;}render();}
+function workoutDone(){clearInterval(TI);S.wSets++;advStep();}
+function skipRest(){clearInterval(TI);advStep();}
+function pauseCore(){S.wPaused=true;var e=document.getElementById('core-pause-btn');if(e){e.textContent='▶ Riprendi';e.onclick=resumeCore;}}
+function resumeCore(){S.wPaused=false;var e=document.getElementById('core-pause-btn');if(e){e.textContent='⏸ Pausa';e.onclick=pauseCore;}}
+function wBack(){
+ clearInterval(TI);
+ var prev=S.wStepIdx-1;
+ while(prev>0&&S.wSteps[prev].type!=='work')prev--;
+ if(prev>=0&&S.wSteps[prev].type==='work'){S.wStepIdx=prev;S.wSets=Math.max(0,S.wSets-1);render();}
+ else go('home');
+}
+function skipExercise(){
+ clearInterval(TI);var step=S.wSteps[S.wStepIdx];if(step.type!=='work')return;
+ var ex=step.ex;var ns=S.skipped.concat([ex.id]);S.skipped=ns;sv('sk',ns);
+ var pool=(DB[ex.cat]||[]).filter(function(e){return !ns.includes(e.id)&&!S.wEx.find(function(x){return x.id===e.id;});});
+ var rep=shuf(pool)[0];
+ if(rep){
+  var newEx=Object.assign({},rep,{isCore:ex.isCore});
+  var ne=S.wEx.slice();ne[step.exIdx]=newEx;
+  S.wEx=ne;S.wSteps=buildSteps(ne);
+  var fi=S.wSteps.findIndex(function(s){return s.type==='work'&&s.exIdx===step.exIdx&&s.setNum===1;});
+  S.wStepIdx=Math.max(0,fi);
+ } else {
+  var nx=S.wSteps.findIndex(function(s,i){return i>S.wStepIdx&&s.type==='work'&&s.exIdx>step.exIdx;});
+  if(nx!==-1)S.wStepIdx=nx;else{finishWorkout();return;}
+ }
+ render();
+}
+function finishWorkout(){
+ clearInterval(TI);
+ if(S.trialMode){S.trialMode=false;go('home');return;}
+ var dur=Math.round((Date.now()-S.wStartTime)/60000)||1;
+ S.pending={split:S.wSplit,exercises:S.wEx,sets:S.wSets,duration:dur};
+ S.qStep=0;S.qAns={};go('post_quiz');
+}
+
+// ─── POST QUIZ ────────────────────────────────────────────────────────────────
+var PQ=[
+ {key:'energy',q:'Come ti senti fisicamente?',opts:['😴 Esausto','😐 Stanco ma ok','💪 Energico','🔥 Carico!']},
+ {key:'difficulty',q:"Com'era la difficoltà?",opts:['😴 Troppo facile','👌 Giusta','💦 Difficile','💀 Massacrante']},
+ {key:'mood',q:'Soddisfazione?',opts:['😞 Bassa','😐 Media','😊 Alta','🤩 Massima']},
+ {key:'muscleWork',q:'Hai sentito i muscoli lavorare?',opts:['❌ Per niente','😐 Un po\'','💪 Sì','🔥 Molto']},
+ {key:'domsExpected',q:'Pensi di sentire indolenzimento domani?',opts:['No','Forse','Sì','Sicuramente']},
+];
+function rPQ(){
+ if(S.qStep===PQ.length)return rExFeedback();
+ var q=PQ[S.qStep];
+ var total=PQ.length+1;
+ var bars=Array(total).fill(0).map(function(_,i){return '<div style="height:3px;flex:1;border-radius:99px;background:'+(i<=S.qStep?'#f97316':'#27272a')+'"></div>';}).join('');
+ var opts=q.opts.map(function(o,i){return '<button class="opt '+(S.qAns[q.key]===i+1?'sel':'')+'" onclick="pickPQ('+i+')">'+o+'</button>';}).join('');
+ return '<div class="center">'
+  +'<div style="font-size:22px;font-weight:900;letter-spacing:-1px;margin-bottom:3px">FATTO</div>'
+  +'<div style="color:#52525b;font-size:13px;margin-bottom:20px">'+(S.pending&&S.pending.duration||'?')+' min · '+(S.pending&&S.pending.sets||0)+' serie</div>'
+  +'<div style="width:100%;max-width:360px">'
+  +'<div style="display:flex;gap:5px;margin-bottom:18px">'+bars+'</div>'
+  +(S.qStep>0?'<button class="back" style="margin-bottom:12px" onclick="S.qStep--;render()">← Indietro</button>':'')
+  +'<div style="font-size:18px;font-weight:700;text-align:center;margin-bottom:14px">'+q.q+'</div>'
+  +opts+'</div></div>';
+}
+function rExFeedback(){
+ var today=new Date().toDateString();
+ // Feedback chat già dati oggi, raggruppati per esercizio
+ var chatByEx={};
+ (S.aiDB.chatLog||[]).filter(function(c){return new Date(c.date).toDateString()===today&&c.reply!=='[nota post-allenamento]';}).forEach(function(c){
+  var k=c.exercise||'gen';
+  if(!chatByEx[k])chatByEx[k]=[];
+  chatByEx[k].push(c);
+ });
+ var exs=(S.pending&&S.pending.exercises)||[];
+ var normalEx=exs.filter(function(e){return !e.isCore;});
+ var hasCore=exs.some(function(e){return e.isCore;});
+ var total=PQ.length+1;
+ var bars=Array(total).fill(0).map(function(_,i){return '<div style="height:3px;flex:1;border-radius:99px;background:'+(i<total?'#f97316':'#27272a')+'"></div>';}).join('');
+ function exCard(id,name,key){
+  var chats=chatByEx[key]||[];
+  var chatHtml=chats.map(function(c){return '<div style="font-size:11px;color:#a1a1aa;background:#27272a;border-radius:8px;padding:5px 8px;margin-bottom:4px">↩ '+c.userMsg+'</div>';}).join('');
+  return '<div class="card" style="margin-bottom:8px;padding:12px">'
+   +'<div style="font-size:12px;font-weight:800;color:#a1a1aa;margin-bottom:6px;letter-spacing:.5px">'+name+'</div>'
+   +chatHtml
+   +'<textarea id="exfb-'+id+'" rows="2" placeholder="Aggiungi feedback..." style="font-size:12px;margin:0;min-height:0;padding:8px">'+(S.exFbAnswers[id]||'')+'</textarea>'
+   +'</div>';
+ }
+ var cards=normalEx.map(function(ex){return exCard(ex.id,ex.name,ex.id);}).join('');
+ var coreCard=hasCore?exCard('core','CIRCUITO CORE','core'):'';
+ return '<div class="pg">'
+  +'<div style="display:flex;gap:5px;margin-bottom:18px">'+bars+'</div>'
+  +'<button class="back" style="margin-bottom:14px" onclick="S.qStep=PQ.length-1;render()">← Indietro</button>'
+  +'<div style="font-size:16px;font-weight:900;margin-bottom:4px">Note esercizi</div>'
+  +'<div style="color:#52525b;font-size:12px;margin-bottom:14px">Feedback già dati durante la sessione · aggiungi altro se vuoi</div>'
+  +cards+coreCard
+  +'<button class="btn" style="background:#f97316;margin-top:4px" onclick="saveExFeedback()">Salva e termina ›</button>'
+  +'</div>';
+}
+function saveExFeedback(){
+ var today=new Date().toISOString();
+ var exs=(S.pending&&S.pending.exercises)||[];
+ function saveNote(id,name){
+  var el=document.getElementById('exfb-'+id);
+  var val=el?el.value.trim():'';
+  S.exFbAnswers[id]=val;
+  if(val){
+   S.aiDB.chatLog=(S.aiDB.chatLog||[]).concat([{
+    date:today,contextType:'exercise',exercise:id,exerciseName:name,
+    userMsg:val,reply:'[nota post-allenamento]'
+   }]);
+  }
+ }
+ exs.filter(function(e){return !e.isCore;}).forEach(function(ex){saveNote(ex.id,ex.name);});
+ if(exs.some(function(e){return e.isCore;}))saveNote('core','Circuito Core');
+ finishSession();
+}
+function pickPQ(i){
+ S.qAns[PQ[S.qStep].key]=i+1;
+ if(S.qStep<PQ.length-1){S.qStep++;render();}else{S.qStep=PQ.length;render();}
+}
+async function finishSession(){
+ try{
+  var session=Object.assign({},S.pending||{},{quiz:S.qAns,preCheck:S.preWQAns||{},date:new Date().toISOString()});
+  S.preWQAns={};
+  S.aiDB.sessions=(S.aiDB.sessions||[]).concat([session]);
+  S.aiDB.patterns=calcPatterns();
+  var nh=(S.history||[]).concat([session]);
+  S.history=nh;
+  S.splitIdx=(S.splitIdx||0)+1;
+  await sv('wh',nh);
+  await sv('si',String(S.splitIdx));
+  syncToDrive();
+  runAdaptation(session);
+ }catch(e){console.error('finishSession:',e);}
+ go('home');
+}
+
+// ─── NUTRITION ───────────────────────────────────────────────────────────────
+var NQ=[
+ {key:'protein',q:'Proteine oggi?',sub:'Target massa: 130-150g · Carne, uova, latticini, legumi',
+  opts:[{l:'Pochissimo (<60g)',e:'🔴',v:1},{l:'Poco (60-100g)',e:'🟠',v:2},{l:'Equilibrato (100-130g)',e:'🟡',v:3},{l:'Tanto (130-160g)',e:'🟢',v:4},{l:'Tantissimo (>160g)',e:'💚',v:5}]},
+ {key:'carbs',q:'Carboidrati oggi?',sub:'Carburante · Pasta, riso, patate, frutta, pane',
+  opts:[{l:'Pochissimo (<80g)',e:'🔴',v:1},{l:'Poco (80-150g)',e:'🟠',v:2},{l:'Equilibrato (150-250g)',e:'🟡',v:3},{l:'Tanto (250-350g)',e:'🟢',v:4},{l:'Tantissimo (>350g)',e:'💚',v:5}]},
+ {key:'fats',q:'Grassi oggi?',sub:'Grassi buoni · Olio EVO, avocado, frutta secca, pesce',
+  opts:[{l:'Pochissimo (<30g)',e:'🔴',v:1},{l:'Poco (30-50g)',e:'🟠',v:2},{l:'Equilibrato (50-80g)',e:'🟢',v:3},{l:'Tanto (80-110g)',e:'🟡',v:4},{l:'Tantissimo (>110g)',e:'🟠',v:5}]},
+ {key:'calories',q:'Calorie totali stimate?',sub:'Per massa: circa 2700-2900 kcal (mantenimento ~2500)',
+  opts:[{l:'Deficit (<2400kcal)',e:'📉',v:1},{l:'Mantenimento (~2500)',e:'⚖️',v:2},{l:'Surplus lieve (2700-2900)',e:'📈',v:3},{l:'Surplus alto (>3000)',e:'🍖',v:4}]},
+ {key:'water',q:'Idratazione?',sub:'Almeno 2.5L per metabolismo e recupero muscolare',
+  opts:[{l:'Scarsa (<1.5L)',e:'🔴',v:1},{l:'Insufficiente (1.5-2L)',e:'🟠',v:2},{l:'Buona (2-2.5L)',e:'🟡',v:3},{l:'Ottima (>2.5L)',e:'💧',v:4}]},
+ {key:'sleep',q:'Sonno scorsa notte?',sub:'Il muscolo cresce durante il sonno profondo',
+  opts:[{l:'Scarso (<5h o agitato)',e:'🔴',v:1},{l:'Sufficiente (5-6h)',e:'🟠',v:2},{l:'Buono (7-8h)',e:'🟢',v:3},{l:'Ottimo (>8h o profondo)',e:'😴',v:4}]},
+ {key:'stress',q:'Stress e recupero oggi?',sub:'Il cortisolo alto frena la sintesi proteica',
+  opts:[{l:'Alto stress',e:'🔴',v:1},{l:'Moderato',e:'🟡',v:2},{l:'Tranquillo',e:'🟢',v:3},{l:'Recupero ottimale',e:'💚',v:4}]},
+ {key:'note',q:'Note extra (opzionale)',sub:'Pasto saltato, stomaco in disordine, integratori...'},
+];
+var NQ_MACRO_KEYS=['protein','carbs','fats','calories'];
+function hasMealPhotos(date){
+ return !!(S.aiDB.mealLog&&S.aiDB.mealLog[date]&&S.aiDB.mealLog[date].length);
+}
+function rNutPhotoScreen(){
+ var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var d=new Date(targetDate+'T12:00:00');
+ var dLabel=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+ var uploads=S.nutPhotoUploads||[];
+ var allDone=uploads.length>0&&uploads.every(function(u){return u.status==='done'||u.status==='error';});
+ var anyLoading=uploads.some(function(u){return u.status==='loading';});
+ var uploadsHtml=uploads.map(function(u,i){
+  if(u.status==='loading')return '<div style="background:#18181b;border-radius:10px;padding:10px 12px;margin-bottom:6px;color:#71717a;font-size:13px">⏳ Analisi foto '+(i+1)+'...</div>';
+  if(u.status==='error')return '<div style="background:#1a0000;border-radius:10px;padding:10px 12px;margin-bottom:6px;color:#f87171;font-size:12px">⚠️ Foto '+(i+1)+': errore analisi</div>';
+  var e=u.estimate;
+  return '<div style="background:#18181b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;margin-bottom:6px">'
+   +'<div style="color:#d4d4d8;font-size:13px;font-weight:600;margin-bottom:3px">'+e.foodDescription+'</div>'
+   +'<div style="color:#71717a;font-size:11px">P:'+Math.round(e.protein_g)+'g · C:'+Math.round(e.carbs_g)+'g · F:'+Math.round(e.fats_g)+'g · '+Math.round(e.calories)+'kcal'
+   +' <span style="color:'+(e.confidence==='alta'?'#22c55e':e.confidence==='media'?'#f59e0b':'#ef4444')+'">'+e.confidence+'</span></div>'
+   +'</div>';
+ }).join('');
+ return '<div class="pg">'
+  +'<div class="hdr"><button class="back" onclick="S.trialNutMode=false;S.nutPhotoUploads=[];go(\'home\')" style="margin:0">✕</button>'
+  +'<span style="font-weight:800;font-size:16px">🥗 NUTRIZIONE</span></div>'
+  +(S.trialNutMode?'<div style="background:#1c1c1e;border:1px solid #3f3f46;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#6b6b70;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SURVEY PROVA — non registrata</div>':'')
+  +(S.nutQueue&&S.nutQueue.length>1
+   ?'<div style="background:#1c1a0e;border:1px solid #f59e0b30;border-radius:12px;padding:10px 14px;margin-bottom:14px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="color:#f59e0b;font-size:11px;font-weight:700;letter-spacing:1px">📅 CATCH-UP</div><div style="color:#d4d4d8;font-size:13px;margin-top:2px">'+(S.nutQueueIdx+1)+' di '+S.nutQueue.length+' da compilare</div></div><div style="color:#a1a1aa;font-size:12px">'+dLabel+'</div></div>'
+    +'<button onclick="skipNutDay()" style="width:100%;padding:6px;border-radius:8px;border:1px solid #3f3f46;background:transparent;color:#52525b;font-size:11px;cursor:pointer">Salta questo giorno (già compilato o non disponibile)</button>'
+    +'</div>'
+   :'<div style="background:#18181b;border-radius:12px;padding:8px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><div style="color:#a1a1aa;font-size:13px">📅 <strong style="color:#d4d4d8">'+dLabel+'</strong></div><button onclick="skipNutDay()" style="border:none;background:transparent;color:#3f3f46;font-size:11px;cursor:pointer">Salta ×</button></div>')
+  +'<div style="font-size:22px;font-weight:900;margin-bottom:6px;line-height:1.2">Cosa hai mangiato?</div>'
+  +'<div style="color:#71717a;font-size:13px;margin-bottom:20px">Carica le foto dei tuoi pasti oppure compila manualmente.</div>'
+  +uploadsHtml
+  +'<label style="display:block;background:#18181b;border:2px dashed '+(uploads.length?'#27272a':'#3f3f46')+';border-radius:14px;padding:'+(uploads.length?'14px':'24px')+';text-align:center;cursor:pointer;margin-bottom:12px">'
+  +(uploads.length?'<div style="color:#71717a;font-size:12px">+ Aggiungi altre foto</div>':'<div style="font-size:36px;margin-bottom:8px">📷</div><div style="color:#a1a1aa;font-size:14px;font-weight:600">Carica foto pasti</div><div style="color:#52525b;font-size:12px;margin-top:4px">Multipli, dalla galleria</div>')
+  +'<input type="file" accept="image/*" multiple style="display:none" onchange="handleNutPhotos(event)">'
+  +'</label>'
+  +'<div style="background:#18181b;border:1px solid #27272a;border-radius:14px;padding:12px;margin-bottom:12px">'
+  +'<div style="font-size:11px;font-weight:700;color:#71717a;letter-spacing:1px;margin-bottom:8px">✏️ AGGIUNGI A TESTO</div>'
+  +'<div style="display:flex;gap:8px;align-items:flex-end">'
+  +'<textarea id="nut-manual-text" rows="2" placeholder="Es: colazione con 2 uova e pane, 200ml latte..." style="flex:1;font-size:12px;margin:0;min-height:0;padding:8px;resize:none"></textarea>'
+  +'<button class="btn" style="width:auto;padding:8px 14px;font-size:12px;background:#818cf8;flex-shrink:0;margin:0" onclick="addManualTextMeal()">Analizza</button>'
+  +'</div>'
+  +'</div>'
+  +(uploads.length>0&&!anyLoading
+   ?'<button class="btn" style="background:#22c55e;margin-bottom:10px" onclick="confirmNutPhotos()">Conferma tutti i pasti e prosegui →</button>'
+   :'')
+  +'<button class="btn-ghost" style="margin:0" onclick="S.nutPhotoUploads=[];S.qStep=0;render()">Compila manualmente (senza AI) →</button>'
+  +'</div>';
+}
+function rNut(){
+ if(S.qStep===-1)return rNutPhotoScreen();
+ if(S.qStep>=NQ.length)return rNutSummary();
+ var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ if(hasMealPhotos(targetDate)&&NQ_MACRO_KEYS.includes(NQ[S.qStep].key)){
+  S.qStep++;render();return '';
+ }
+ var s=S.qStep;var q=Object.assign({},NQ[s]);
+ // Sonno: label dinamica con le due giornate
+ if(q.key==='sleep'){
+  var sleepD=new Date(targetDate+'T12:00:00');
+  var nextD=new Date(sleepD.getTime()+86400000);
+  var dn=function(d){return d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});};
+  q.q='Sonno notte '+sleepD.toLocaleDateString('it-IT',{weekday:'long'})+' → '+nextD.toLocaleDateString('it-IT',{weekday:'long'})+'?';
+  q.sub='La notte che ha concluso il '+dn(sleepD)+' (quella appena dormita se stai compilando '+dn(nextD)+')';
+ }
+ var bars=NQ.map(function(_,i){return '<div style="height:3px;flex:1;border-radius:99px;background:'+(i<s?'#22c55e':i===s?'#22c55e':'#27272a')+'"></div>';}).join('');
+ var body='';
+ if(s===NQ.length-1){
+  body='<textarea id="nut-note" rows="3" placeholder="Es: ho saltato pranzo, mangiato fuori...">'+(S.qAns.note||'')+'</textarea>'
+   +'<button class="btn" style="background:#22c55e" onclick="saveNutNote()">Continua →</button>';
+ } else {
+  body=q.opts.map(function(o){return '<button class="opt '+(S.qAns[q.key]===o.v?'sel':'')+'" onclick="pickNut('+o.v+')">'+o.e+' '+o.l+'</button>';}).join('');
+ }
+ var tDate=S.nutTarget?new Date(S.nutTarget.date):new Date();
+ var tLabel=tDate.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+ var queueBanner=S.nutQueue&&S.nutQueue.length>1
+  ?'<div style="background:#1c1a0e;border:1px solid #f59e0b30;border-radius:12px;padding:10px 14px;margin-bottom:14px">'
+   +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+   +'<div><div style="color:#f59e0b;font-size:11px;font-weight:700;letter-spacing:1px">📅 CATCH-UP</div>'
+   +'<div style="color:#d4d4d8;font-size:13px;margin-top:2px">'+(S.nutQueueIdx+1)+' di '+S.nutQueue.length+' da compilare</div></div>'
+   +'<div style="color:#a1a1aa;font-size:12px">'+tLabel+'</div>'
+   +'</div>'
+   +'<button onclick="skipNutDay()" style="width:100%;padding:6px;border-radius:8px;border:1px solid #3f3f46;background:transparent;color:#52525b;font-size:11px;cursor:pointer">Salta questo giorno (già compilato o non disponibile)</button>'
+   +'</div>'
+  :(S.nutTarget?'<div style="background:#18181b;border-radius:12px;padding:8px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><div style="color:#a1a1aa;font-size:13px">📅 <strong style="color:#d4d4d8">'+tLabel+'</strong></div><button onclick="skipNutDay()" style="border:none;background:transparent;color:#3f3f46;font-size:11px;cursor:pointer">Salta ×</button></div>':'');
+ return '<div class="pg">'
+  +'<div class="hdr"><button class="back" onclick="S.trialNutMode=false;go(\'home\')" style="margin:0">✕</button><span style="font-weight:800;font-size:16px">🥗 NUTRIZIONE</span></div>'
+  +(S.trialNutMode?'<div style="background:#1c1c1e;border:1px solid #3f3f46;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#6b6b70;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SURVEY PROVA — non registrata</div>':'')
+  +queueBanner
+  +'<div style="display:flex;gap:4px;margin-bottom:18px">'+bars+'</div>'
+  +(s>0?'<button class="back" style="margin-bottom:12px" onclick="S.qStep--;render()">← Indietro</button>':'')
+  +'<div class="lbl" style="margin-bottom:5px">'+(s+1)+' / '+NQ.length+'</div>'
+  +'<div style="font-size:21px;font-weight:900;margin-bottom:5px">'+q.q+'</div>'
+  +'<div style="color:#71717a;font-size:13px;margin-bottom:18px">'+q.sub+'</div>'
+  +body+'</div>';
+}
+// ─── PROFILO & TDEE ──────────────────────────────────────────────────────────
+function calcDayCalTarget(date){
+ var p=S.aiDB.profile||{};
+ var peso=p.peso||74, alt=p.altezza||182, eta=p.eta||30;
+ var bmr=Math.round(10*peso+6.25*alt-5*eta+5); // Mifflin-St Jeor uomo
+ var tdee=Math.round(bmr*1.375); // moderatamente attivo
+ var goal=p.obiettivo||'massa';
+ var goalAdj=goal==='massa'?300:goal==='definizione'?-400:0;
+ var base=tdee+goalAdj;
+ var session=(S.history||[]).find(function(h){return h.date&&h.date.split('T')[0]===date;});
+ var burned=0;
+ if(session){
+  var sid=(session.split&&session.split.id)||'';
+  var rate=sid==='legs'?8:sid==='full'?7.5:7;
+  burned=Math.round((session.duration||45)*rate);
+ }
+ return{bmr:bmr,tdee:tdee,goalAdj:goalAdj,base:base,burned:burned,target:base+burned,goal:goal,session:session};
+}
+function rProfile(){
+ var p=S.aiDB.profile||{};
+ var objs=['massa','definizione','mantenimento'];
+ var objLabels=['💪 Massa','🎯 Definizione','⚖️ Mantenimento'];
+ var objBtns=objs.map(function(o,i){
+  var sel=p.obiettivo===o;
+  return '<button onclick="S.aiDB.profile.obiettivo=\''+o+'\';render()" style="flex:1;padding:10px 6px;border-radius:10px;border:2px solid '+(sel?'#818cf8':'#27272a')+';background:'+(sel?'#1e1b4b':'#18181b')+';color:'+(sel?'#818cf8':'#71717a')+';font-size:12px;font-weight:700;cursor:pointer">'+objLabels[i]+'</button>';
+ }).join('');
+ function numInput(id,label,val,unit,min,max){
+  return '<div style="margin-bottom:14px">'
+   +'<div style="font-size:11px;color:#71717a;font-weight:700;letter-spacing:1px;margin-bottom:6px">'+label+'</div>'
+   +'<div style="display:flex;align-items:center;gap:8px">'
+   +'<input type="number" id="pf-'+id+'" value="'+(val||'')+'" min="'+min+'" max="'+max+'" placeholder="—"'
+   +' style="flex:1;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:18px;font-weight:700;padding:12px;outline:none;text-align:center">'
+   +'<span style="color:#52525b;font-size:13px;font-weight:600;min-width:32px">'+unit+'</span>'
+   +'</div></div>';
+ }
+ return '<div class="pg">'
+  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">← Home</button><span style="font-weight:800;font-size:16px">⚙️ PROFILO</span></div>'
+  +'<div class="card">'
+  +numInput('peso','PESO',p.peso,'kg',40,150)
+  +numInput('altezza','ALTEZZA',p.altezza,'cm',140,220)
+  +numInput('eta','ETÀ',p.eta,'anni',15,80)
+  +'<div style="font-size:11px;color:#71717a;font-weight:700;letter-spacing:1px;margin-bottom:8px">OBIETTIVO</div>'
+  +'<div style="display:flex;gap:6px;margin-bottom:4px">'+objBtns+'</div>'
+  +'</div>'
+  +(function(){
+   var tmp=Object.assign({},p,{peso:p.peso||74,altezza:p.altezza||182,eta:p.eta||30});
+   var bmr=Math.round(10*tmp.peso+6.25*tmp.altezza-5*tmp.eta+5);
+   var tdee=Math.round(bmr*1.375);
+   var adj=tmp.obiettivo==='massa'?300:tmp.obiettivo==='definizione'?-400:0;
+   return '<div class="card" style="background:#0f1a0f;border-color:#22c55e30">'
+    +'<div class="lbl" style="color:#22c55e;margin-bottom:8px">📊 STIMA TDEE</div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">BMR</span><span style="color:#d4d4d8">'+bmr+' kcal</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">TDEE (att. moderata)</span><span style="color:#d4d4d8">'+tdee+' kcal</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">Aggiustamento obiettivo</span><span style="color:'+(adj>=0?'#22c55e':'#ef4444')+'">'+(adj>=0?'+':'')+adj+' kcal</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;border-top:1px solid #27272a;padding-top:8px;margin-top:4px"><span style="color:#fafafa">Target riposo</span><span style="color:#fafafa">'+(tdee+adj)+' kcal</span></div>'
+    +'</div>';
+  })()
+  +'<button class="btn" style="background:#818cf8" onclick="(function(){'
+   +'var pe=document.getElementById(\'pf-peso\'),ae=document.getElementById(\'pf-altezza\'),te=document.getElementById(\'pf-eta\');'
+   +'if(pe&&pe.value)S.aiDB.profile.peso=parseFloat(pe.value);'
+   +'if(ae&&ae.value)S.aiDB.profile.altezza=parseFloat(ae.value);'
+   +'if(te&&te.value)S.aiDB.profile.eta=parseFloat(te.value);'
+   +'sv(\'ai\',S.aiDB);go(\'home\');'
+   +'})()">Salva Profilo</button>'
+  +'<div class="card" style="margin-top:12px;background:#0f0f0f;border-color:#27272a">'
+  +'<div class="lbl" style="color:#f59e0b;margin-bottom:8px">🔑 ANTHROPIC API KEY</div>'
+  +'<input type="password" id="api-key-input" placeholder="sk-ant-api03-..." value="'+(localStorage.getItem('anthropicKey')||'')+'"'
+  +' style="width:100%;box-sizing:border-box;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:13px;padding:10px;outline:none;font-family:monospace">'
+  +'<button class="btn" style="background:#78350f;margin-top:8px" onclick="(function(){var k=document.getElementById(\'api-key-input\').value.trim();if(k){localStorage.setItem(\'anthropicKey\',k);alert(\'✅ Chiave salvata!\');}else{localStorage.removeItem(\'anthropicKey\');alert(\'Chiave rimossa.\');}})()">Salva chiave API</button>'
+  +'<div style="font-size:11px;color:#52525b;margin-top:6px">La chiave è salvata solo su questo dispositivo, mai nel cloud.</div>'
+  +'</div>'
+  +'<button id="restore-btn" class="btn" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;margin-top:8px" onclick="restoreFromDrive()">☁️ Ripristina da Drive</button>'
+  +'</div>';
+}
+function scoreToQty(key,score){
+ var maps={
+  protein_g:   [50,90,130,160,185],
+  carbs_g:     [80,140,200,270,350],
+  fats_g:      [30,50,70,90,110],
+  calories_kcal:[1800,2200,2500,2800],
+  water_l:     [1.0,1.5,2.0,2.5],
+  sleep_h:     [5,6,7,8]
+ };
+ var arr=maps[key];
+ if(!arr||!score)return null;
+ return arr[Math.min(score-1,arr.length-1)];
+}
+function rNutSummary(){
+ var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var a=S.qAns;
+ // Pre-popola sempre tutte le quantità (da foto se disponibili, altrimenti da score)
+ var photoMacros=calcDailyMacrosFromPhotos(targetDate);
+ var fromPhoto=!!photoMacros;
+ S.nutQty=S.nutQty||{};
+ if(photoMacros){
+  S.nutQty.protein_g=Math.round(photoMacros.protein_g)||0;
+  S.nutQty.carbs_g=Math.round(photoMacros.carbs_g)||0;
+  S.nutQty.fats_g=Math.round(photoMacros.fats_g)||0;
+  S.nutQty.calories_kcal=Math.round(photoMacros.calories)||0;
+ } else {
+  if(!S.nutQty.protein_g)S.nutQty.protein_g=scoreToQty('protein_g',a.protein)||0;
+  if(!S.nutQty.carbs_g)S.nutQty.carbs_g=scoreToQty('carbs_g',a.carbs)||0;
+  if(!S.nutQty.fats_g)S.nutQty.fats_g=scoreToQty('fats_g',a.fats)||0;
+  if(!S.nutQty.calories_kcal)S.nutQty.calories_kcal=scoreToQty('calories_kcal',a.calories)||0;
+ }
+ if(!S.nutQty.water_l)S.nutQty.water_l=scoreToQty('water_l',a.water)||0;
+ if(!S.nutQty.sleep_h)S.nutQty.sleep_h=scoreToQty('sleep_h',a.sleep)||0;
+ // Giorno di allenamento: aggiusta calorie verso l'alto (+300-500kcal stima consumo)
+ if(hadWorkoutOn(targetDate)&&S.nutQty.calories_kcal){
+  S.nutQty.calories_kcal=Math.round(S.nutQty.calories_kcal+400);
+ }
+ var q=S.nutQty;
+ var score=calcNutScore(a);
+ var col=score>=75?'#22c55e':score>=50?'#f59e0b':'#ef4444';
+ var advice=getNutAdvice(a);
+ function mbar(label,val,max,c,labels,qtyKey,qtySuffix){
+  var lbl=labels&&val>=1?labels[val-1]:'—';
+  var qtyVal=qtyKey&&q[qtyKey]?(fromPhoto&&(qtyKey==='protein_g'||qtyKey==='carbs_g'||qtyKey==='fats_g'||qtyKey==='calories_kcal')?'':'~')+q[qtyKey]+' '+qtySuffix:'';
+  var qtyHtml=qtyVal?'<span style="color:#d4d4d8;font-size:12px;font-weight:600">'+qtyVal+'</span>':'';
+  return '<div style="margin-bottom:10px">'
+   +'<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:3px">'
+   +'<span style="color:#a1a1aa">'+label+'</span>'
+   +'<div style="display:flex;align-items:center;gap:8px">'
+   +(qtyHtml)
+   +'<span style="color:'+c+';font-weight:700;min-width:80px;text-align:right">'+lbl+'</span>'
+   +'</div>'
+   +'</div>'
+   +'<div class="macro-bar"><div class="mfill" style="width:'+(val?Math.round((val/max)*100):0)+'%;background:'+c+'"></div></div>'
+   +'</div>';
+ }
+ var L5=['Pochissimo','Poco','Equilibrato','Tanto','Tantissimo'];
+ var L4c=['Deficit','Mantenimento','Surplus lieve','Surplus alto'];
+ var L4=['Scarso','Insufficiente','Buono','Ottimo'];
+ var L4s=['Alto stress','Moderato','Tranquillo','Ottimale'];
+ return '<div class="pg">'
+  +'<div class="hdr"><button class="back" onclick="S.qStep=NQ.length-1;render()" style="margin:0">← Modifica</button><span style="font-weight:800;font-size:16px">📊 RECAP NUTRIZIONE</span></div>'
+  +'<div style="text-align:center;margin-bottom:18px">'
+  +'<div class="score-ring" style="border-color:'+col+';color:'+col+'">'+score+'</div>'
+  +'<div style="font-size:16px;font-weight:700">'+(score>=75?'💪 Ottima giornata!':score>=50?'👍 Nella norma':'⚠️ Migliorabile')+'</div>'
+  +'<div class="lbl" style="margin-top:4px">'+(S.nutTarget?new Date(S.nutTarget.date):new Date()).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})+'</div>'
+  +(a.fromPhotos?'<div style="margin-top:6px;display:inline-block;background:#1a2a1a;border:1px solid #22c55e40;border-radius:8px;padding:4px 10px;font-size:11px;color:#22c55e">📸 Macro da foto</div>':'')
+  +'</div>'
+  +'<div class="card">'
+  +'<div style="font-size:10px;font-weight:700;color:#52525b;letter-spacing:1px;margin-bottom:10px;text-align:right">CATEGORIA · STIMA QUANTITÀ</div>'
+  +mbar('Proteine',a.protein||0,5,'#818cf8',L5,'protein_g','g')
+  +mbar('Carboidrati',a.carbs||0,5,'#f59e0b',L5,'carbs_g','g')
+  +mbar('Grassi',a.fats||0,5,'#22c55e',L5,'fats_g','g')
+  +mbar('Calorie',a.calories||0,4,'#ef4444',L4c,'calories_kcal','kcal')
+  +mbar('Idratazione',a.water||0,4,'#f97316',L4,'water_l','L')
+  +mbar('Sonno',a.sleep||0,4,'#8b5cf6',L4,'sleep_h','h')
+  +mbar('Stress/Recovery',a.stress||0,4,'#22c55e',L4s)
+  +'</div>'
+  +(function(){
+   var dt=calcDayCalTarget(targetDate);
+   var actual=q.calories_kcal||0;
+   var delta=actual>0?actual-dt.target:null;
+   var dColor=delta===null?'#52525b':Math.abs(delta)<=150?'#22c55e':Math.abs(delta)<=350?'#f59e0b':'#ef4444';
+   var dLabel=delta===null?'—':Math.abs(delta)<=150?'✓ In linea':delta>0?'↑ Surplus':'↓ Deficit';
+   var tomorrow=new Date(new Date(targetDate).getTime()+86400000).toISOString().split('T')[0];
+   var nextPlan=PLAN[(S.splitIdx+1)%6];
+   var tRate=nextPlan&&nextPlan.id==='legs'?8:nextPlan&&nextPlan.id==='full'?7.5:7;
+   var tBurnW=Math.round(45*tRate);
+   return '<div class="card" style="margin-bottom:10px;background:#12121a;border-color:#3f3f6660">'
+    +'<div class="lbl" style="color:#818cf8;margin-bottom:10px">🔥 BILANCIO CALORICO</div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">TDEE base</span><span style="color:#d4d4d8">'+dt.tdee+' kcal</span></div>'
+    +(dt.goalAdj!==0?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">Obiettivo ('+dt.goal+')</span><span style="color:'+(dt.goalAdj>0?'#22c55e':'#ef4444')+'">'+(dt.goalAdj>0?'+':'')+dt.goalAdj+' kcal</span></div>':'')
+    +(dt.burned>0?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">Allenamento '+dt.session.split.name+' ('+dt.session.duration+'min)</span><span style="color:#f97316">+'+dt.burned+' kcal</span></div>':'')
+    +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;border-top:1px solid #27272a;padding-top:8px;margin:6px 0 10px"><span style="color:#fafafa">Target oggi</span><span style="color:#fafafa">'+dt.target+' kcal</span></div>'
+    +(actual>0
+     ?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#a1a1aa">Ingerito'+(fromPhoto?'':' (stima~)')+'</span><span style="color:#d4d4d8">'+actual+' kcal</span></div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span style="color:'+dColor+'">'+dLabel+'</span><span style="color:'+dColor+'">'+(delta!==null?Math.abs(delta)+' kcal':'')+'</span></div>'
+     :'<div style="color:#52525b;font-size:12px">Nessun dato ingestione disponibile</div>')
+    +'<div style="border-top:1px solid #27272a;margin:10px 0 8px"></div>'
+    +'<div style="font-size:10px;color:#52525b;font-weight:700;letter-spacing:1px;margin-bottom:6px">DOMANI · '+nextPlan.emoji+' '+nextPlan.name+'</div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:#a1a1aa">Se ti alleni (stima ~45min)</span><span style="color:#d4d4d8">~'+(dt.base+tBurnW)+' kcal</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#a1a1aa">Se riposi</span><span style="color:#52525b">~'+dt.base+' kcal</span></div>'
+    +'</div>';
+  })()
+  +'<div style="background:#1c2a1c;border:1px solid #22c55e20;border-radius:14px;padding:14px;margin-bottom:12px">'
+  +'<div class="lbl" style="color:#22c55e;margin-bottom:8px">💡 Per domani</div>'
+  +'<div style="color:#d4d4d8;font-size:13px;line-height:1.6">'+advice+'</div>'
+  +'</div>'
+  +(a.note?'<div class="card"><div class="lbl" style="margin-bottom:6px">Note</div><div style="color:#a1a1aa;font-size:13px">'+a.note+'</div></div>':'')
+  +'<button class="btn" style="background:#22c55e" onclick="saveNutrition()">Salva →</button>'
+  +'</div>';
+}
+function hadWorkoutOn(date){
+ return (S.history||[]).some(function(h){return h.date&&h.date.split('T')[0]===date;});
+}
+function calcNutScore(a){
+ var s=0,m=0;
+ function add(v,pts,max){if(v){s+=pts[v-1]||0;m+=max;}}
+ var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var workout=hadWorkoutOn(targetDate);
+ add(a.protein,[10,25,40,50,50],50);
+ add(a.carbs,[10,25,45,50,40],50);
+ add(a.fats,[10,25,50,40,25],50);
+ // Calorie: giorno di allenamento → surplus è ottimale; giorno di riposo → mantenimento è ottimale
+ if(workout){
+  add(a.calories,[5,20,45,50],50);
+ } else {
+  add(a.calories,[10,50,40,20],50);
+ }
+ add(a.water,[10,20,30,40],40);
+ add(a.sleep,[10,20,30,40],40);
+ add(a.stress,[10,20,30,40],40);
+ return m>0?Math.round((s/m)*100):0;
+}
+function getNutAdvice(a){
+ var tips=[];
+ var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var workout=hadWorkoutOn(targetDate);
+ if(!a.protein||a.protein<=2)tips.push('🥩 Proteine basse: aggiungi una fonte proteica domani (200g petto pollo +45g, 4 uova +24g, 200g ricotta +24g).');
+ else if(a.protein>=4)tips.push('✅ Ottimo apporto proteico — sintesi muscolare supportata al massimo.');
+ if(!a.carbs||a.carbs<=2)tips.push('🍚 Carboidrati bassi: mangia carb complessi prima dell\'allenamento domani (riso, avena, patate dolci).');
+ if(!a.calories||a.calories<=2){
+  if(workout)tips.push('📈 Deficit calorico in un giorno di allenamento — stai bruciando più di quanto mangi. Aggiungi 400-600kcal post-workout per recuperare e crescere.');
+  else tips.push('📈 Sei in deficit calorico — costruire massa così è difficile. Aggiungi 300-400kcal (frutta secca + pasto più abbondante).');
+ } else if(a.calories===4&&!workout){
+  tips.push('⚠️ Surplus alto in un giorno di riposo — parte delle calorie extra potrebbe andare in grasso. Riserva i pasti abbondanti ai giorni di allenamento.');
+ }
+ if(!a.water||a.water<=2)tips.push('💧 Idratazione scarsa: inizia domani con 500ml appena sveglio. Obiettivo 3L totali.');
+ if(!a.sleep||a.sleep<=2)tips.push('😴 Riposo insufficiente: GH peak nelle prime 2h di sonno. Prova a dormire 30min prima stasera.');
+ if(!a.stress||a.stress<=2)tips.push('🧘 Stress alto: 10 min di respirazione o camminata abbassano cortisolo e migliorano il recupero.');
+ if(tips.length===0)tips.push(workout?'💪 Giornata di allenamento perfetta! Nutrizione e recupero allineati — crescita garantita.':'💪 Giornata quasi perfetta! Mantieni questo standard — hai tutto ciò che serve per crescere.');
+ return tips.join('<br><br>');
+}
+function pickNut(v){S.qAns[NQ[S.qStep].key]=v;S.qStep++;render();}
+function saveNutNote(){var el=document.getElementById('nut-note');if(el)S.qAns.note=el.value;S.qStep++;render();}
+
+// ─── MEAL PHOTO / VISION API ─────────────────────────────────────────────────
+function calcDailyMacrosFromPhotos(date){
+ var meals=(S.aiDB.mealLog&&S.aiDB.mealLog[date])||[];
+ if(!meals.length)return null;
+ return meals.reduce(function(tot,m){
+  return{protein_g:tot.protein_g+(m.protein_g||0),carbs_g:tot.carbs_g+(m.carbs_g||0),fats_g:tot.fats_g+(m.fats_g||0),calories:tot.calories+(m.calories||0)};
+ },{protein_g:0,carbs_g:0,fats_g:0,calories:0});
+}
+function macrosToScoreLevel(macros){
+ function bucket(val,th){for(var i=0;i<th.length;i++)if(val<th[i])return i+1;return th.length+1;}
+ return{protein:bucket(macros.protein_g,[60,100,130,160]),carbs:bucket(macros.carbs_g,[80,150,250,350]),fats:bucket(macros.fats_g,[30,50,80,110]),calories:Math.min(4,bucket(macros.calories,[2400,2500,2900]))};
+}
+async function estimateMealFromText(description){
+ var prompt='Stima i macronutrienti di questo pasto descritto a testo: "'+description+'"'
+  +'\nRispondi SOLO con JSON valido senza markdown:\n{"protein_g":N,"carbs_g":N,"fats_g":N,"calories":N,"foodDescription":"breve descrizione","confidence":"alta|media|bassa"}';
+ var resp=await fetch('https://api.anthropic.com/v1/messages',{
+  method:'POST',
+  headers:{'x-api-key':getApiKey(),'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+  body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,messages:[{role:'user',content:prompt}]})
+ });
+ var data=await resp.json();
+ var block=data.content&&data.content.find(function(b){return b.type==='text';});
+ if(!block)throw new Error('Nessuna risposta');
+ return JSON.parse(block.text.replace(/```json|```/g,'').trim());
+}
+async function addManualTextMeal(){
+ var el=document.getElementById('nut-manual-text');
+ if(!el||!el.value.trim())return;
+ var desc=el.value.trim();
+ el.value='';
+ var idx=(S.nutPhotoUploads||[]).length;
+ S.nutPhotoUploads=(S.nutPhotoUploads||[]).concat([{status:'loading',source:'text'}]);
+ render();
+ try{
+  var est=await estimateMealFromText(desc);
+  S.nutPhotoUploads[idx]={status:'done',estimate:est,source:'text'};
+ }catch(e){
+  S.nutPhotoUploads[idx]={status:'error',source:'text'};
+ }
+ render();
+}
+async function estimateMealFromPhoto(base64,mediaType,noteText){
+ var prompt='Stima i macronutrienti di questo pasto.'+(noteText?' Dettagli aggiuntivi: '+noteText:'')
+  +'\nRispondi SOLO con JSON valido senza markdown:\n{"protein_g":N,"carbs_g":N,"fats_g":N,"calories":N,"foodDescription":"breve descrizione","confidence":"alta|media|bassa"}';
+ var resp=await fetch('https://api.anthropic.com/v1/messages',{
+  method:'POST',
+  headers:{'x-api-key':getApiKey(),'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+  body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:prompt}]}]})
+ });
+ var data=await resp.json();
+ var block=data.content&&data.content.find(function(b){return b.type==='text';});
+ if(!block)throw new Error('Nessuna risposta');
+ return JSON.parse(block.text.replace(/```json|```/g,'').trim());
+}
+async function saveMealToLog(date,estimate){
+ if(!S.aiDB.mealLog)S.aiDB.mealLog={};
+ if(!S.aiDB.mealLog[date])S.aiDB.mealLog[date]=[];
+ S.aiDB.mealLog[date].push(Object.assign({},estimate,{loggedAt:new Date().toISOString()}));
+ await sv('ai',S.aiDB);
+}
+function openMealPhoto(){
+ var today=new Date().toISOString().split('T')[0];
+ S.mealPhotoState={date:today,note:'',loading:false,estimate:null,error:''};
+ go('meal_photo');
+}
+function rMealPhoto(){
+ var ps=S.mealPhotoState;
+ var today=new Date().toISOString().split('T')[0];
+ // Lista pasti già loggati per la data selezionata
+ var existing=(S.aiDB.mealLog&&S.aiDB.mealLog[ps.date])||[];
+ var existingHtml=existing.length?'<div style="margin-bottom:14px">'
+  +'<div class="lbl" style="margin-bottom:6px">Pasti loggati per questo giorno</div>'
+  +existing.map(function(m,i){
+   return '<div style="background:#18181b;border:1px solid #27272a;border-radius:10px;padding:8px 12px;margin-bottom:6px;font-size:12px">'
+    +'<div style="color:#a1a1aa">'+m.foodDescription+'</div>'
+    +'<div style="color:#52525b;margin-top:2px">P:'+Math.round(m.protein_g||0)+'g · C:'+Math.round(m.carbs_g||0)+'g · F:'+Math.round(m.fats_g||0)+'g · '+Math.round(m.calories||0)+'kcal'
+    +' <span style="color:'+(m.confidence==='alta'?'#22c55e':m.confidence==='media'?'#f59e0b':'#ef4444')+'">'+m.confidence+'</span></div>'
+    +'</div>';
+  }).join('')
+  +'</div>':'';
+ var estimateHtml=ps.estimate?'<div style="background:#1a2a1a;border:1px solid #22c55e40;border-radius:14px;padding:14px;margin-bottom:14px">'
+  +'<div class="lbl" style="color:#22c55e;margin-bottom:8px">Stima AI — '+ps.estimate.foodDescription+'</div>'
+  +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+  +'<div class="card" style="margin:0;text-align:center;padding:8px"><div style="font-size:16px;font-weight:900;color:#818cf8">'+Math.round(ps.estimate.protein_g)+'g</div><div class="lbl" style="font-size:9px">Proteine</div></div>'
+  +'<div class="card" style="margin:0;text-align:center;padding:8px"><div style="font-size:16px;font-weight:900;color:#f59e0b">'+Math.round(ps.estimate.carbs_g)+'g</div><div class="lbl" style="font-size:9px">Carboidrati</div></div>'
+  +'<div class="card" style="margin:0;text-align:center;padding:8px"><div style="font-size:16px;font-weight:900;color:#22c55e">'+Math.round(ps.estimate.fats_g)+'g</div><div class="lbl" style="font-size:9px">Grassi</div></div>'
+  +'<div class="card" style="margin:0;text-align:center;padding:8px"><div style="font-size:16px;font-weight:900;color:#ef4444">'+Math.round(ps.estimate.calories)+'</div><div class="lbl" style="font-size:9px">Kcal</div></div>'
+  +'</div>'
+  +'<div style="font-size:11px;color:#52525b;margin-bottom:10px">Precisione: <span style="color:'+(ps.estimate.confidence==='alta'?'#22c55e':ps.estimate.confidence==='media'?'#f59e0b':'#ef4444')+'">'+ps.estimate.confidence+'</span> · Stima visiva, non una bilancia.</div>'
+  +'<button class="btn" style="background:#22c55e;margin-bottom:8px" onclick="confirmMealEstimate()">Salva questo pasto ✓</button>'
+  +'<button class="btn-ghost" style="margin:0" onclick="S.mealPhotoState.estimate=null;render()">Riprova</button>'
+  +'</div>':'';
+ return '<div class="pg">'
+  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">✕</button><span style="font-weight:800;font-size:16px">📸 CARICA PASTO</span></div>'
+  +'<div style="margin-bottom:14px">'
+  +'<div class="lbl" style="margin-bottom:5px">Data del pasto</div>'
+  +'<input type="date" id="meal-date" value="'+ps.date+'" max="'+today+'" onchange="S.mealPhotoState.date=this.value;S.mealPhotoState.estimate=null;render()" style="width:100%;background:#18181b;border:1px solid #27272a;border-radius:10px;padding:10px;color:#fafafa;font-size:14px">'
+  +'</div>'
+  +existingHtml
+  +(ps.estimate?estimateHtml:'')
+  +(!ps.estimate?'<div style="margin-bottom:14px">'
+   +'<div class="lbl" style="margin-bottom:5px">Foto del pasto</div>'
+   +'<label style="display:block;background:#18181b;border:2px dashed #27272a;border-radius:14px;padding:24px;text-align:center;cursor:pointer">'
+   +'<div style="font-size:40px;margin-bottom:8px">📷</div>'
+   +'<div style="color:#a1a1aa;font-size:13px">Tocca per scegliere dalla galleria</div>'
+   +'<input type="file" id="meal-photo" accept="image/*" style="display:none" onchange="handleMealPhotoFile(event)">'
+   +'</label>'
+   +'</div>'
+   +'<div style="margin-bottom:14px">'
+   +'<div class="lbl" style="margin-bottom:5px">Dettagli aggiuntivi (opzionale)</div>'
+   +'<textarea id="meal-note" rows="2" placeholder="Es: +1 cucchiaio olio, niente sale, porzione abbondante..." style="width:100%;background:#18181b;border:1px solid #27272a;border-radius:10px;padding:10px;color:#fafafa;font-size:13px;resize:none">'+(ps.note||'')+'</textarea>'
+   +'</div>':'')
+  +(ps.loading?'<div style="text-align:center;padding:20px;color:#f97316">⏳ Analisi in corso...</div>':'')
+  +(ps.error?'<div style="background:#1a0000;border:1px solid #ef444450;border-radius:10px;padding:10px;margin-bottom:12px;color:#f87171;font-size:13px">'+ps.error+'</div>':'')
+  +'</div>';
+}
+async function handleMealPhotoFile(event){
+ var file=event.target.files&&event.target.files[0];
+ if(!file)return;
+ if(!getApiKey()){S.mealPhotoState.error='API key mancante.';render();return;}
+ var noteEl=document.getElementById('meal-note');
+ S.mealPhotoState.note=noteEl?noteEl.value:'';
+ S.mealPhotoState.loading=true;S.mealPhotoState.error='';render();
+ var reader=new FileReader();
+ reader.onload=async function(){
+  try{
+   var base64=reader.result.split(',')[1];
+   var est=await estimateMealFromPhoto(base64,file.type,S.mealPhotoState.note);
+   S.mealPhotoState.estimate=est;
+  }catch(e){S.mealPhotoState.error='Errore analisi: '+e.message;}
+  S.mealPhotoState.loading=false;render();
+ };
+ reader.readAsDataURL(file);
+}
+async function confirmMealEstimate(){
+ var ps=S.mealPhotoState;
+ if(!ps.estimate)return;
+ await saveMealToLog(ps.date,ps.estimate);
+ S.mealPhotoState.estimate=null;
+ S.mealPhotoState.loading=false;
+ render(); // refresh to show in existing list
+}
+
+function nutLogAsArray(log){
+ return Object.keys(log||{}).map(function(d){return Object.assign({date:d},log[d]);});
+}
+
+async function skipNutDay(){
+ var target=S.nutTarget;
+ if(!target)return;
+ // Non sovrascrivere se c'è già dati reali (score presente = compilazione vera)
+ var existing=S.aiDB.nutritionLog&&S.aiDB.nutritionLog[target.date];
+ if(existing&&!existing.skipped&&existing.score!=null){
+  // giorno già compilato: avanza senza scrivere nulla
+ } else {
+  if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};
+  S.aiDB.nutritionLog[target.date]={skipped:true,savedAt:new Date().toISOString()};
+ }
+ // Avanza nella coda o chiudi
+ if(S.nutQueue.length>0&&S.nutQueueIdx<S.nutQueue.length-1){
+  S.nutQueueIdx++;
+  S.nutTarget=S.nutQueue[S.nutQueueIdx];
+  S.nutPhotoUploads=[];S.nutQty={};
+  go('nutrition',{qStep:-1,qAns:{}});
+ } else {
+  S.nutQueue=[];S.nutQueueIdx=0;S.nutTarget=null;
+  go('home');
+ }
+}
+function openNutrition(){
+ var missing=getMissingNutritionDays();
+ var queue=missing.map(function(d){return{date:d};});
+ S.nutQueue=queue;
+ S.nutQueueIdx=0;
+ S.nutPhotoUploads=[];
+ // Se non ci sono giorni mancanti, offri comunque ieri
+ var yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
+ S.nutTarget=queue.length>0?queue[0]:{date:yesterday};
+ go('nutrition',{qStep:-1,qAns:{}});
+}
+
+async function saveNutrition(){
+ if(S.trialNutMode){S.trialNutMode=false;S.nutQueue=[];S.nutTarget=null;go('home');return;}
+ var target=S.nutTarget;
+ var targetDate=target?target.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ // Auto-popola macro da foto se disponibili
+ var photoMacros=calcDailyMacrosFromPhotos(targetDate);
+ if(photoMacros){
+  var levels=macrosToScoreLevel(photoMacros);
+  S.qAns=Object.assign({},S.qAns,{protein:levels.protein,carbs:levels.carbs,fats:levels.fats,calories:levels.calories,fromPhotos:true});
+ }
+ // Quantità già pre-popolate in S.nutQty da rNutSummary (read-only, nessun input DOM)
+ var qty=S.nutQty||{};
+ S.nutQty={};
+ var data=Object.assign({},S.qAns,{savedAt:new Date().toISOString(),score:calcNutScore(S.qAns)},qty);
+ S.nutrition=data;
+ // Salva nel log per data (struttura principale)
+ if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};
+ S.aiDB.nutritionLog[targetDate]=data;
+ // Mantieni retrocompatibilità con il vecchio array
+ S.aiDB.nutrition=(S.aiDB.nutrition||[]).filter(function(n){return n.date!==targetDate;}).concat([Object.assign({date:targetDate},data)]);
+ await sv('nd',data);await sv('ai',S.aiDB);syncToDrive();
+ runNutritionReasoning(); // fire-and-forget
+ // Se ci sono altri giorni in coda, passa al successivo
+ if(S.nutQueue.length>0&&S.nutQueueIdx<S.nutQueue.length-1){
+  S.nutQueueIdx++;
+  S.nutTarget=S.nutQueue[S.nutQueueIdx];
+  S.nutPhotoUploads=[];S.nutQty={};
+  go('nutrition',{qStep:-1,qAns:{}});
+ } else {
+  S.nutQueue=[];S.nutQueueIdx=0;S.nutTarget=null;
+  go('home');
+ }
+}
+
+async function runNutritionReasoning(){
+ if(!getApiKey())return;
+ try{
+  var log=S.aiDB.nutritionLog||{};
+  var dates=Object.keys(log).sort().slice(-5);
+  var recentNut=dates.map(function(d){return Object.assign({date:d},log[d]);});
+  var recentWorkouts=S.history.slice(-5).map(function(h){return{date:h.date&&h.date.split('T')[0],energy:h.quiz&&h.quiz.energy,difficulty:h.quiz&&h.quiz.difficulty};});
+  var prompt='Sei un coach. Analizza pattern multi-giorno, NON un singolo giorno isolato.\n'
+   +'NUTRIZIONE ULTIMI GIORNI: '+JSON.stringify(recentNut)+'\n'
+   +'ALLENAMENTI ULTIMI GIORNI: '+JSON.stringify(recentWorkouts)+'\n\n'
+   +'Rispondi SOLO con JSON valido senza markdown:\n'
+   +'{"compensationAdvice":"max 50 parole, consiglio pratico per domani (cibo/acqua/sonno)","recoveryFlag":false,"recoveryAction":"stringa azione se flag true, altrimenti vuota","reasoning":"breve"}\n'
+   +'Imposta recoveryFlag=true SOLO se vedi un pattern negativo ripetuto su 3+ giorni (sonno<=2 E energia bassa nei workout).';
+  var text=await callAI([{role:'user',content:prompt}],'Sei un coach di forza e calisthenics. Rispondi in italiano.',300);
+  if(text){
+   var clean=text.replace(/```json|```/g,'').trim();
+   var obj=JSON.parse(clean);
+   S.aiDB.nutritionAdvice=obj.compensationAdvice||'';
+   if(typeof obj.recoveryFlag!=='undefined'){
+    S.aiDB.adaptation.recoveryFlag=obj.recoveryFlag;
+    S.aiDB.adaptation.recoveryAction=obj.recoveryAction||'';
+    // Imposta automaticamente setsAdjustment se in recovery
+    if(obj.recoveryFlag){
+     S.aiDB.adaptation.setsAdjustment=-1;
+     S.aiDB.adaptation.repsMultiplier=0.9;
+    }
+   }
+   await sv('ai',S.aiDB);
+   render(); // aggiorna home con eventuale banner recovery
+  }
+ }catch(e){}
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────────────────────
+function buildHistChart(){
+ var log=S.aiDB.nutritionLog||{};
+ var p=S.aiDB.profile||{};
+ var bmr=Math.round(10*(p.peso||74)+6.25*(p.altezza||182)-5*(p.eta||30)+5);
+ var tdee=Math.round(bmr*1.375);
+ var goalAdj=p.obiettivo==='definizione'?-400:p.obiettivo==='mantenimento'?0:300;
+ var maintKcal=tdee+goalAdj; // linea centrale = target riposo
+ var days=[];
+ for(var i=29;i>=0;i--){
+  var d=new Date(Date.now()-i*86400000).toISOString().split('T')[0];
+  days.push({date:d,nut:log[d],workout:(S.history||[]).find(function(h){return h.date&&h.date.split('T')[0]===d;})});
+ }
+ var hasData=days.some(function(d){return d.nut&&!d.nut.skipped;});
+ if(!hasData)return '';
+ var W=340,H=110,pL=28,pR=8,pT=14,pB=18;
+ var cW=W-pL-pR,cH=H-pT-pB;
+ var n=days.length;
+ function xOf(i){return pL+i/(n-1)*cW;}
+ // Kcal: centrato su maintKcal, range ±1000
+ function scaleKcal(k){return Math.max(0,Math.min(100,50+(k-maintKcal)/1000*50));}
+ // Build paths
+ var scorePath='',kcalPath='',prevS=null,prevK=null;
+ days.forEach(function(d,i){
+  var x=xOf(i);
+  if(d.nut&&!d.nut.skipped&&d.nut.score!=null){
+   var y=pT+cH-(d.nut.score/100)*cH;
+   scorePath+=prevS===null?'M'+x+','+y:' L'+x+','+y;
+   prevS=d.nut.score;
+  }
+  if(d.nut&&!d.nut.skipped&&d.nut.calories_kcal){
+   var y2=pT+cH-(scaleKcal(d.nut.calories_kcal)/100)*cH;
+   kcalPath+=prevK===null?'M'+x+','+y2:' L'+x+','+y2;
+   prevK=d.nut.calories_kcal;
+  }
+ });
+ // Maintenance line y
+ var mY=pT+cH-(50/100)*cH; // 50% = center = mantenimento
+ // Workout dots
+ var wDots=days.map(function(d,i){
+  if(!d.workout)return'';
+  var c=d.workout.split?d.workout.split.color:'#52525b';
+  return '<circle cx="'+xOf(i)+'" cy="'+(pT+cH+6)+'" r="2.5" fill="'+c+'"/>';
+ }).join('');
+ // X labels
+ var x0=days[0].date.slice(5),xN=days[n-1].date.slice(5);
+ var xMid=days[Math.floor(n/2)].date.slice(5);
+ return '<div class="card" style="margin-bottom:12px;padding:10px 8px 8px">'
+  +'<div class="lbl" style="margin-bottom:6px;padding-left:4px">ANDAMENTO 30 GIORNI</div>'
+  +'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block;overflow:visible">'
+  // grid
+  +'<line x1="'+pL+'" y1="'+pT+'" x2="'+(pL+cW)+'" y2="'+pT+'" stroke="#27272a" stroke-width="0.5"/>'
+  +'<line x1="'+pL+'" y1="'+(pT+cH/2)+'" x2="'+(pL+cW)+'" y2="'+(pT+cH/2)+'" stroke="#27272a" stroke-width="0.5"/>'
+  +'<line x1="'+pL+'" y1="'+(pT+cH)+'" x2="'+(pL+cW)+'" y2="'+(pT+cH)+'" stroke="#27272a" stroke-width="0.5"/>'
+  // maintenance dashed
+  +'<line x1="'+pL+'" y1="'+mY+'" x2="'+(pL+cW)+'" y2="'+mY+'" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" opacity="0.6"/>'
+  +'<text x="'+(pL+cW+2)+'" y="'+(mY+3)+'" fill="#f59e0b" font-size="7" opacity="0.7">mant.</text>'
+  // lines
+  +(scorePath?'<path d="'+scorePath+'" stroke="#22c55e" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>':'')
+  +(kcalPath?'<path d="'+kcalPath+'" stroke="#818cf8" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5,2"/>':'')
+  // workout dots below
+  +wDots
+  // Y labels
+  +'<text x="'+(pL-3)+'" y="'+(pT+4)+'" fill="#3f3f46" font-size="7" text-anchor="end">100</text>'
+  +'<text x="'+(pL-3)+'" y="'+(pT+cH/2+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">50</text>'
+  +'<text x="'+(pL-3)+'" y="'+(pT+cH+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">0</text>'
+  // X labels
+  +'<text x="'+pL+'" y="'+(H-3)+'" fill="#3f3f46" font-size="7" text-anchor="start">'+x0+'</text>'
+  +'<text x="'+(pL+cW/2)+'" y="'+(H-3)+'" fill="#3f3f46" font-size="7" text-anchor="middle">'+xMid+'</text>'
+  +'<text x="'+(pL+cW)+'" y="'+(H-3)+'" fill="#3f3f46" font-size="7" text-anchor="end">'+xN+'</text>'
+  +'</svg>'
+  +'<div style="display:flex;gap:14px;padding:4px 4px 0;flex-wrap:wrap">'
+  +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:#22c55e"><span style="width:14px;height:2px;background:#22c55e;border-radius:1px;display:inline-block"></span>Score nutrizione</span>'
+  +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:#818cf8"><span style="width:14px;height:2px;border-top:2px dashed #818cf8;display:inline-block"></span>Kcal ingerite</span>'
+  +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:#f59e0b"><span style="width:14px;height:1px;border-top:1px dashed #f59e0b;display:inline-block"></span>Mantenimento ('+maintKcal+' kcal)</span>'
+  +'</div>'
+  +'<div style="font-size:9px;color:#3f3f46;padding:3px 4px 0">I pallini colorati sotto = giorni di allenamento (colore per split)</div>'
+  +'</div>';
+}
+function rHist(){
+ var log=S.aiDB.nutritionLog||{};
+ var avg=S.history.length?Math.round(S.history.reduce(function(s,h){return s+(h.duration||0);},0)/S.history.length):0;
+ var thisWeek=S.history.filter(function(h){return new Date(h.date)>new Date(Date.now()-7*864e5);}).length;
+ // Costruisci lista giorni: dal primo allenamento a oggi
+ var todayStr=new Date().toLocaleDateString('sv'); // "YYYY-MM-DD" locale
+ var firstStr=todayStr;
+ if(S.history&&S.history.length){
+  var sorted=S.history.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  firstStr=sorted[0].date.split('T')[0];
+ }
+ var days=[];
+ var cur=new Date(todayStr);
+ var first=new Date(firstStr);
+ while(cur>=first){
+  var d=cur.toLocaleDateString('sv');
+  var workout=(S.history||[]).find(function(h){return h.date&&h.date.split('T')[0]===d;});
+  var nut=log[d];
+  days.push({date:d,workout:workout,nut:nut});
+  cur=new Date(cur.getTime()-86400000);
+ }
+ function nutCard(nut,date){
+  var score=nut&&!nut.skipped&&nut.score!=null?nut.score:null;
+  var sc=score===null?'#3f3f46':score>=75?'#22c55e':score>=50?'#f59e0b':'#ef4444';
+  var kcal=nut&&!nut.skipped&&nut.calories_kcal?nut.calories_kcal:null;
+  var calLabel='',calColor='#52525b';
+  if(kcal){
+   var dt=calcDayCalTarget(date);
+   var delta=kcal-dt.target;
+   if(Math.abs(delta)<=150){calLabel='Mantenimento';calColor='#22c55e';}
+   else if(delta>400){calLabel='Surplus alto';calColor='#ef4444';}
+   else if(delta>0){calLabel='Surplus';calColor='#f97316';}
+   else if(delta>-400){calLabel='Deficit lieve';calColor='#818cf8';}
+   else{calLabel='Deficit';calColor='#818cf8';}
+  }
+  return {scoreBadge:'<div style="width:38px;height:38px;border-radius:50%;border:2.5px solid '+sc+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:'+sc+';flex-shrink:0">'+(score!==null?score:'—')+'</div>',
+   kcalHtml:kcal?'<div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:#d4d4d8">'+kcal+' kcal</div><div style="font-size:10px;font-weight:700;color:'+calColor+'">'+calLabel+'</div></div>':'<div style="color:#3f3f46;font-size:10px;flex-shrink:0">'+(nut&&nut.skipped?'saltato':'nut. n/d')+'</div>'};
+ }
+ var cards=days.map(function(day){
+  var date=day.date;
+  var h=day.workout;
+  var nut=day.nut;
+  var isRest=!h;
+  var sp=h&&h.split;var q=h&&h.quiz;
+  var nc=nutCard(nut,date);
+  var dateStr=new Date(date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+  return '<div style="background:'+(isRest?'#111':'#18181b')+';border:1px solid '+(isRest?'#1f1f23':'#27272a')+';border-radius:14px;padding:12px;margin-bottom:8px">'
+   +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:'+(q?8:0)+'px">'
+   +nc.scoreBadge
+   +'<div style="flex:1;min-width:0">'
+   +'<div style="font-weight:700;font-size:13px;color:#fafafa">'+dateStr+'</div>'
+   +'<div style="font-size:11px;color:#71717a;margin-top:1px">'+(isRest?'Riposo':(sp?sp.name:'Workout')+' · '+(h.duration||'?')+'min · '+(h.sets||'?')+' serie')+'</div>'
+   +'</div>'
+   +nc.kcalHtml
+   +'</div>'
+   +(q?'<div style="display:flex;gap:16px;border-top:1px solid #27272a;padding-top:7px">'
+    +'<span style="color:#71717a;font-size:11px">Energia '+(q.energy||'?')+'/4</span>'
+    +'<span style="color:#71717a;font-size:11px">Difficolta '+(q.difficulty||'?')+'/4</span>'
+    +(q.muscleWork?'<span style="color:#71717a;font-size:11px">Pompa '+(q.muscleWork||'?')+'/4</span>':'')
+    +'</div>':'')
+   +'</div>';
+ }).join('');
+ return '<div class="pg">'
+  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">←</button><span style="font-weight:800;font-size:16px">STORICO</span></div>'
+  +'<div class="g3" style="margin-bottom:12px">'
+  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:18px;font-weight:900">'+S.history.length+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Sessioni</div></div>'
+  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:18px;font-weight:900">'+avg+'m</div><div class="lbl" style="font-size:9px;margin-top:2px">Media</div></div>'
+  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:18px;font-weight:900">'+thisWeek+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Questa sett.</div></div>'
+  +'</div>'
+  +buildHistChart()
+  +(!days.length?'<div style="text-align:center;color:#52525b;margin-top:60px"><p>Nessun allenamento ancora</p></div>':cards)
+  +'</div>';
+}
+
+// ─── AI COACH (pagina completa) ───────────────────────────────────────────────
+function buildCtx(){
+ var p=S.aiDB.patterns||{};
+ var a=S.aiDB.adaptation||{};
+ var recent=S.history.slice(-10).map(function(h){return{
+  d:h.date&&h.date.split('T')[0],s:h.split&&h.split.id,dur:h.duration,
+  e:h.quiz&&h.quiz.energy,diff:h.quiz&&h.quiz.difficulty,ns:h.nutrition&&h.nutrition.score,
+  pump:h.quiz&&h.quiz.muscleWork,domsExp:h.quiz&&h.quiz.domsExpected,
+  domsAct:h.preCheck&&h.preCheck.domsActual,recov:h.preCheck&&h.preCheck.recoveryFeel
+ };});
+ var chatSummary=(S.aiDB.chatLog||[]).slice(-8).map(function(c){
+  var when=c.date?c.date.split('T')[0]:'?';
+  var exLabel=c.exerciseName||c.exercise||'generale';
+  return when+' ['+exLabel+']: utente="'+c.userMsg+'" coach="'+(c.reply||'').slice(0,80)+'"';
+ }).join('\n');
+ var lastWeekly=(S.aiDB.weeklyReports||[]).slice(-1)[0];
+ var lastMonthly=(S.aiDB.monthlyReports||[]).slice(-3).map(function(r){return r.month+'/'+r.year+': '+r.summary;}).join(' || ');
+ return 'ATLETA: 182cm 74kg maschio. Massa muscolare. 5-6gg/sett 30-45min. Curl 35kg(10x4), Press spalle 35kg(10x4). Elastici: 1x5kg+1x10kg+1x15kg+2x25kg (combinabili, max 80kg).\n'
+  +'NOTA ELASTICI: le resistenze sono elastici aggregabili, NON bilancieri a carico fisso. Ragiona in termini di RPE percepito e progressione (reps, tempo sotto tensione, variante più difficile, kg elastico aggiunto) — non di "carico sensato" da palestra tradizionale.\n'
+  +'SISTEMA REP: ogni esercizio ha TARGET (reps tecniche ottimali, in arancio) e MAX (sforzo massimo, in rosso). Se atleta fa reps vicino al MAX su set multipli → considera progressione carico/difficoltà.\n'
+  +'LEGENDA RECENTI: pump=muscleWork(1-4: per niente→molto), domsExp=DOMS attesi(1-4: no→sicuramente), domsAct=DOMS effettivi sessione prec(1-4: no→forte), recov=recupero pre-sessione(1-4: spossato→carico). Usa pump+domsAct per calibrare volume.\n'
+  +'PATTERN: sessioni='+p.totalSessions+', energia_media='+p.avgEnergy+'/4, difficolta_media='+p.avgDifficulty+'/4.\n'
+  +'RECENTI: '+JSON.stringify(recent)+'\n'
+  +'ADATTAMENTO: intensita='+a.intensity+', focus='+a.nextFocus+'\n'
+  +(function(){var log=S.aiDB.nutritionLog||{};var days=Object.keys(log).sort().slice(-3);if(!days.length)return'NUTRIZIONE: non disponibile\n';return'NUTRIZIONE ULTIMI GIORNI: '+days.map(function(d){var n=log[d];return d+' prot='+n.protein+'/5 carb='+n.carbs+'/5 sleep='+n.sleep+'/4 score='+n.score;}).join(' | ')+'\n';}())
+  +(lastWeekly?'RIEPILOGO SETTIMANA SCORSA ('+lastWeekly.weekStart+'→'+lastWeekly.weekEnd+'): '+lastWeekly.summary+'\n':'')
+  +(lastMonthly?'RIEPILOGHI MENSILI PRECEDENTI: '+lastMonthly+'\n':'')
+  +(Object.keys(S.aiDB.loads||{}).length?'CARICHI REALI RIPORTATI DALL\'ATLETA VIA CHAT: '+Object.keys(S.aiDB.loads).map(function(id){var l=S.aiDB.loads[id];return l.name+' → '+l.kg+'kg ('+l.date+')';}).join(', ')+'\n':'')
+  +(chatSummary?'FEEDBACK E COMMENTI DELL\'ATLETA DURANTE GLI ALLENAMENTI RECENTI:\n'+chatSummary:'');
+}
+
+// ─── RIEPILOGHI AUTO ──────────────────────────────────────────────────────────
+function isoDate(d){return d.toISOString().split('T')[0];}
+async function generateWeeklySummary(){
+ if(!getApiKey())return;
+ var now=new Date();
+ // Finestra 14 giorni per non perdere sessioni in settimane con gap
+ var twoWeeksAgo=new Date(now-14*24*3600*1000);
+ var weekAgo=new Date(now-7*24*3600*1000);
+ var weekSessions=S.history.filter(function(h){return h.date&&new Date(h.date)>=twoWeeksAgo;});
+ if(weekSessions.length===0)return;
+ var weekNut=nutLogAsArray(S.aiDB.nutritionLog).filter(function(n){return n.date&&new Date(n.date)>=twoWeeksAgo;});
+ // sessStr robusto: gestisce split mancante o malformato
+ var sessStr=weekSessions.map(function(h){
+  var splitName=(h.split&&(h.split.name||h.split.id))||'?';
+  var energia=(h.quiz&&h.quiz.energy)||'?';
+  var diff=(h.quiz&&h.quiz.difficulty)||'?';
+  var dur=h.duration||'?';
+  var d=h.date?h.date.split('T')[0]:'?';
+  return d+' '+splitName+' energia='+energia+'/4 diff='+diff+'/4 '+dur+'min';
+ }).join('\n');
+ if(!sessStr.replace(/\s/g,''))return; // sicurezza extra: sessStr vuota
+ var nutStr=weekNut.length?'Nutrizione: prot='+Math.round(weekNut.reduce(function(a,n){return a+n.protein;},0)/weekNut.length)+'/5 score='+Math.round(weekNut.reduce(function(a,n){return a+n.score;},0)/weekNut.length)+'/100':'Nessun dato nutrizione';
+ var profStr=S.aiDB.profile?S.aiDB.profile.altezza+'cm '+(S.aiDB.profile.peso)+'kg, obiettivo '+(S.aiDB.profile.obiettivo||'massa'):'182cm 74kg, obiettivo massa';
+ var prompt='Atleta: '+profStr+', avanzato, elastici 5+10+15+25kg.\n'
+  +'Ultime 2 settimane ('+isoDate(twoWeeksAgo)+' → '+isoDate(now)+'), '+weekSessions.length+' sessioni:\n'
+  +sessStr+'\n'+nutStr+'\n\n'
+  +'Fai un riepilogo tecnico (max 120 parole): progressi, punti critici, indicazioni per la prossima settimana. Diretto, senza frasi generiche.';
+ try{
+  var text=await callAI([{role:'user',content:prompt}],'Sei un coach di forza e calisthenics. Rispondi in italiano.',500);
+  if(text){
+   var report={weekStart:isoDate(twoWeeksAgo),weekEnd:isoDate(now),sessions:weekSessions.length,summary:text,generatedAt:now.toISOString()};
+   S.aiDB.weeklyReports=(S.aiDB.weeklyReports||[]).concat([report]).slice(-52);
+   await sv('ai',S.aiDB);syncToDrive();
+  }
+ }catch(e){}
+}
+async function generateMonthlySummary(){
+ if(!getApiKey())return;
+ var now=new Date();
+ var month=now.getMonth()+1;
+ var year=now.getFullYear();
+ // prendi ultime 13 settimane (3 mesi) di report settimanali
+ var recentWeeks=(S.aiDB.weeklyReports||[]).slice(-13);
+ // ultimi 3 mesi report mensili per confronto
+ var prev3=(S.aiDB.monthlyReports||[]).slice(-3).map(function(r){return r.month+'/'+r.year+': '+r.summary;}).join('\n');
+ if(recentWeeks.length===0&&S.history.length===0)return;
+ // sessioni degli ultimi 3 mesi per stats aggregate
+ var threeMonthsAgo=new Date(now);threeMonthsAgo.setMonth(threeMonthsAgo.getMonth()-3);
+ var mSessions=S.history.filter(function(h){return h.date&&new Date(h.date)>=threeMonthsAgo;});
+ var mNut=nutLogAsArray(S.aiDB.nutritionLog).filter(function(n){return n.date&&new Date(n.date)>=threeMonthsAgo;});
+ var avgEnergy=mSessions.length?Math.round(10*mSessions.reduce(function(a,h){return a+((h.quiz&&h.quiz.energy)||0);},0)/mSessions.length)/10:0;
+ var avgDiff=mSessions.length?Math.round(10*mSessions.reduce(function(a,h){return a+((h.quiz&&h.quiz.difficulty)||0);},0)/mSessions.length)/10:0;
+ var avgNutScore=mNut.length?Math.round(mNut.reduce(function(a,n){return a+n.score;},0)/mNut.length):null;
+ var weeksStr=recentWeeks.map(function(r){return r.weekStart+': '+r.summary.slice(0,200);}).join('\n---\n');
+ var prompt='Atleta: '+(S.aiDB.profile?S.aiDB.profile.altezza+'cm '+(S.aiDB.profile.peso)+'kg, obiettivo '+(S.aiDB.profile.obiettivo||'massa'):'182cm 74kg, obiettivo massa')+', avanzato, elastici 5+10+15+25kg.\n\n'
+  +'MESE: '+month+'/'+year+'\n'
+  +'Sessioni negli ultimi 3 mesi: '+mSessions.length+' | Energia media: '+avgEnergy+'/4 | Difficoltà media: '+avgDiff+'/4'+(avgNutScore?' | Score nutrizione medio: '+avgNutScore+'/100':'')+'\n\n'
+  +'RIEPILOGHI SETTIMANALI:\n'+weeksStr+'\n\n'
+  +(prev3?'MESI PRECEDENTI:\n'+prev3+'\n\n':'')
+  +'Scrivi un riepilogo mensile tecnico (max 200 parole): trend di progressione, pattern di recupero, adattamenti da fare al programma, confronto con mesi precedenti se disponibili. Diretto e operativo.';
+ try{
+  var text=await callAI([{role:'user',content:prompt}],'Sei un coach di forza e calisthenics. Rispondi in italiano.',700);
+  if(text){
+   var report={month:month,year:year,sessions:mSessions.length,weeksIncluded:recentWeeks.length,summary:text,generatedAt:now.toISOString()};
+   S.aiDB.monthlyReports=(S.aiDB.monthlyReports||[]).concat([report]).slice(-24);
+   await sv('ai',S.aiDB);syncToDrive();
+  }
+ }catch(e){}
+}
+async function checkAndGenerateSummaries(){
+ if(!APIKEY||!S.history||S.history.length===0)return;
+ var now=new Date();
+ // ─ weekly: se l'ultimo report ha >6 giorni o non esiste
+ var lastW=(S.aiDB.weeklyReports||[]).slice(-1)[0];
+ var needWeekly=!lastW||(now-new Date(lastW.generatedAt))>6*24*3600*1000;
+ if(needWeekly)generateWeeklySummary();
+ // ─ monthly: se non c'è un report per questo mese
+ var lastM=(S.aiDB.monthlyReports||[]).slice(-1)[0];
+ var needMonthly=!lastM||(lastM.month!==(now.getMonth()+1)||lastM.year!==now.getFullYear());
+ if(needMonthly)setTimeout(generateMonthlySummary,3000); // piccolo delay per non sovrapporre chiamate
+}
+function rReports(){
+ var weekly=(S.aiDB.weeklyReports||[]);
+ var monthly=(S.aiDB.monthlyReports||[]);
+ if(!weekly.length&&!monthly.length)return '';
+ var lastW=weekly.slice(-1)[0];
+ var lastM=monthly.slice(-1)[0];
+ var wCard=lastW?'<div style="background:#1a0a00;border:1px solid #f9731630;border-radius:14px;padding:12px;margin-bottom:8px">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+  +'<span class="lbl" style="color:#60a5fa">📅 Riepilogo settimanale</span>'
+  +'<span style="color:#3f3f46;font-size:10px">'+lastW.weekStart+'</span></div>'
+  +'<div style="color:#d4d4d8;font-size:12px;line-height:1.6">'+lastW.summary.replace(/\n/g,'<br>')+'</div>'
+  +(weekly.length>1?'<div style="color:#3f3f46;font-size:10px;margin-top:6px">'+weekly.length+' report settimanali in archivio</div>':'')
+  +'</div>':'';
+ var mCard=lastM?'<div style="background:#0c1a1a;border:1px solid #14b8a630;border-radius:14px;padding:12px;margin-bottom:8px">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+  +'<span class="lbl" style="color:#2dd4bf">📆 Riepilogo mensile</span>'
+  +'<span style="color:#3f3f46;font-size:10px">'+lastM.month+'/'+lastM.year+' · '+lastM.sessions+' sessioni</span></div>'
+  +'<div style="color:#d4d4d8;font-size:12px;line-height:1.6">'+lastM.summary.replace(/\n/g,'<br>')+'</div>'
+  +(monthly.length>1?'<div style="color:#3f3f46;font-size:10px;margin-top:6px">'+monthly.length+' report mensili in archivio</div>':'')
+  +'</div>':'';
+ return '<div style="margin-bottom:10px">'+wCard+mCard+'</div>';
+}
+function rAI(){
+ var rec=S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.shortRec;
+ var p=S.aiDB&&S.aiDB.patterns;
+ var msgs=S.aiChat.map(function(m){
+  return '<div class="chat-msg" style="background:'+(m.role==='user'?'#431407':'#27272a')+';margin-'+(m.role==='user'?'left':'right')+':40px">'+m.content.replace(/\n/g,'<br>')+'</div>';
+ }).join('');
+ return '<div class="pg">'
+  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">←</button><span style="font-weight:800;font-size:16px">🤖 AI COACH</span></div>'
+  +'<div class="card" style="margin-bottom:10px"><div class="lbl" style="margin-bottom:5px">Profilo attivo</div><div style="color:#d4d4d8;font-size:13px">182cm · 74kg · 5-6gg/sett · Massa · Elastici 1×5+1×10+1×15+2×25kg (max 80kg)</div></div>'
+  +(rec?'<div style="background:#1c3a1c;border:1px solid #22c55e30;border-radius:14px;padding:12px;margin-bottom:10px"><div class="lbl" style="color:#22c55e;margin-bottom:5px">📈 ADATTAMENTO AUTOMATICO</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+rec+'</div></div>':'<div style="color:#52525b;font-size:12px;text-align:center;margin-bottom:12px">Completa la prima sessione+quiz per attivare l\'adattamento automatico</div>')
+  +(p&&p.totalSessions?'<div class="card" style="margin-bottom:10px"><div class="lbl" style="margin-bottom:6px">📊 Pattern</div><div style="display:flex;gap:12px;flex-wrap:wrap"><span style="color:#a1a1aa;font-size:12px">Sessioni: '+p.totalSessions+'</span><span style="color:#a1a1aa;font-size:12px">Energia: '+p.avgEnergy+'/4</span><span style="color:#a1a1aa;font-size:12px">Difficoltà: '+p.avgDifficulty+'/4</span></div></div>':'')
+  +rReports()
+  +'<div id="ai-msgs" style="margin-bottom:10px">'+msgs+'</div>'
+  +(S.aiLoading?'<div style="text-align:center;color:#71717a;margin-bottom:10px;font-size:13px">⏳ Il coach ragiona...</div>':'')
+  +(S.aiErr?'<div style="background:#450a0a;border:1px solid #ef4444;border-radius:12px;padding:12px;margin-bottom:10px;color:#fca5a5;font-size:13px">'+S.aiErr+'</div>':'')
+  +'<input type="text" id="ai-in" placeholder="Scrivi al coach..." onkeydown="if(event.key===\'Enter\')sendAI()">'
+  +'<button class="btn" style="background:#f97316" onclick="sendAI()">Invia</button>'
+  +(S.aiChat.length?'<button class="btn-ghost" onclick="S.aiChat=[];S.aiErr=\'\';render()">Nuova conversazione</button>':'')
+  +'</div>';
+}
+async function callAI(messages,system,maxTok){
+ if(!getApiKey())return null;
+ var r=await fetch('https://api.anthropic.com/v1/messages',{
+  method:'POST',
+  headers:{
+   'Content-Type':'application/json',
+   'x-api-key':getApiKey(),
+   'anthropic-version':'2023-06-01',
+   'anthropic-dangerous-direct-browser-access':'true'
+  },
+  body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:maxTok||400,system:system||'',messages:messages})
+ });
+ if(!r.ok)throw new Error('HTTP '+r.status);
+ var d=await r.json();
+ var t=d.content&&d.content.find(function(b){return b.type==='text';});
+ return t?t.text:null;
+}
+async function sendAI(){
+ var inp=document.getElementById('ai-in');if(!inp)return;
+ var msg=inp.value.trim();if(!msg)return;
+ inp.value='';
+ S.aiChat.push({role:'user',content:msg});
+ if(!getApiKey()){
+  S.aiChat.push({role:'assistant',content:'⚙️ Aggiungi la tua Anthropic API key nel Profilo → 🔑 API Key.'});
+  render();return;
+ }
+ S.aiLoading=true;S.aiErr='';render();
+ var history=S.aiChat.slice(-8).map(function(m){return{role:m.role,content:m.content};});
+ history[0]={role:'user',content:buildCtx()+'\n\nDomanda: '+history[0].content};
+ try{
+  var text=await callAI(history,'Sei il coach personale AI di questo atleta. Rispondi in italiano, diretto e pratico. Max 150 parole.',600);
+  S.aiChat.push({role:'assistant',content:text||'Errore'});
+ }catch(e){S.aiErr='Errore: '+e.message;}
+ S.aiLoading=false;render();
+ setTimeout(function(){var el=document.getElementById('ai-msgs');if(el)el.scrollTop=el.scrollHeight;},100);
+}
+async function runAdaptation(session){
+ if(!getApiKey())return;
+ try{
+  var ctx=buildCtx();
+  var prompt=ctx+'\n\nSessione appena finita: energia='+session.quiz.energy+'/4 difficolta='+session.quiz.difficulty+'/4 umore='+session.quiz.mood+'/4 durata='+session.duration+'min.\n\nRispondi SOLO con JSON valido senza markdown:\n{"intensity":"aumenta|mantieni|riduci","repsMultiplier":1.0,"setsAdjustment":0,"nextFocus":"stringa breve","avoidExercises":[],"suggestExercises":[],"shortRec":"max 60 parole per la home","reasoning":"breve"}\nrepsMultiplier: es 0.9 = -10% reps, 1.1 = +10%. setsAdjustment: -1, 0, o +1. Modifica solo se c\'è una ragione solida.';
+  var text=await callAI([{role:'user',content:prompt}],null,400);
+  if(text){
+   var clean=text.replace(/```json|```/g,'').trim();
+   var obj=JSON.parse(clean);
+   S.aiDB.adaptation=Object.assign({},obj,{lastUpdated:new Date().toISOString()});
+   await sv('ai',S.aiDB);
+  }
+ }catch(e){}
+}
+
+// ─── FLOATING AI CHAT ────────────────────────────────────────────────────────
+function getFloatCtx(){
+ // Detect if user is mid-exercise → return exercise-specific context
+ if(S.view==='workout'&&S.wSteps&&S.wSteps[S.wStepIdx]&&S.wSteps[S.wStepIdx].type==='work'){
+  var step=S.wSteps[S.wStepIdx];
+  var ex=step.ex;
+  return{
+   type:'exercise',
+   label:'💪 '+ex.name+' — serie '+step.setNum+'/'+step.totalSets,
+   extra:'\n\nCONTESTO ESERCIZIO: stai eseguendo "'+ex.name+'" (serie '+step.setNum+'/'+step.totalSets+')\nMuscoli: '+ex.muscles+'\nDescrizione: '+ex.desc+(ex.band?'\nElastico target: '+ex.band:'')+(S.aiDB.loads&&S.aiDB.loads[ex.id]?'\nCarico reale ultima volta: '+S.aiDB.loads[ex.id].kg+'kg ('+S.aiDB.loads[ex.id].date+')':'')
+  };
+ }
+ // General context
+ var viewLabel={home:'🏠 Home',post_quiz:'🏁 Post-workout',nutrition:'🥗 Nutrizione',history:'📊 Storico',workout:'⏱ Riposo'};
+ return{type:'general',label:'🗣 Feedback generale — '+(viewLabel[S.view]||S.view),extra:''};
+}
+function rFloatingAI(){
+ var ctx=getFloatCtx();
+ var msgs=S.floatChat.map(function(m){
+  return '<div class="chat-msg" style="background:'+(m.role==='user'?'#431407':'#27272a')+';margin-'+(m.role==='user'?'left':'right')+':30px;font-size:13px">'+m.content.replace(/\n/g,'<br>')+'</div>';
+ }).join('');
+ return (S.aiOpen?'':'<button class="ai-fab" onclick="toggleFloatAI()" title="Chiedi al coach">AI</button>')
+  +'<div class="ai-slide '+(S.aiOpen?'open':'')+'">'
+  +'<div class="ai-slide-head">'
+  +'<div>'
+  +'<div style="font-size:11px;font-weight:800;color:#fafafa;margin-bottom:4px">🤖 COACH AI</div>'
+  +'<div class="ai-ctx-pill">'+ctx.label+'</div>'
+  +'</div>'
+  +'<div style="display:flex;align-items:center;gap:8px">'
+  +(S.floatChat.length?'<button onclick="S.floatChat=[];updateFloatAI()" style="background:transparent;border:none;color:#52525b;font-size:11px;cursor:pointer">Pulisci</button>':'')
+  +'<button onclick="toggleFloatAI()" style="background:transparent;border:none;color:#a1a1aa;font-size:20px;cursor:pointer;line-height:1;padding:2px 4px">✕</button>'
+  +'</div>'
+  +'</div>'
+  +'<div class="ai-slide-msgs" id="float-msgs">'
+  +(!S.floatChat.length?'<div style="color:#52525b;font-size:13px;text-align:center;padding:20px 0">Scrivi una domanda sull\'esercizio o un feedback generale</div>':'')
+  +msgs
+  +(S.floatLoading?'<div style="color:#71717a;font-size:12px;text-align:center;padding:8px">⏳ Il coach risponde...</div>':'')
+  +'</div>'
+  +'<div class="ai-slide-input">'
+  +'<input type="text" id="float-ai-in" placeholder="Chiedi o dai feedback..." onkeydown="if(event.key===\'Enter\')sendFloatAI()">'
+  +'<button class="ai-send-btn" onclick="sendFloatAI()">↑</button>'
+  +'</div>'
+  +'</div>';
+}
+function toggleFloatAI(){
+ S.aiOpen=!S.aiOpen;
+ updateFloatAI();
+ if(S.aiOpen){
+  setTimeout(function(){
+   var el=document.getElementById('float-ai-in');if(el)el.focus();
+   var msgs=document.getElementById('float-msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;
+  },320);
+ }
+}
+function skipCoreCircuit(){
+ clearInterval(TI);
+ // Trova il primo step non-core dopo la posizione attuale
+ var next=-1;
+ for(var i=S.wStepIdx+1;i<S.wSteps.length;i++){
+  var s=S.wSteps[i];
+  var isCore=(s.type==='work'&&s.ex&&s.ex.isCore)||s.isCoreBreak||s.isTransition||s.type==='core_intro'||s.isCoreEntry;
+  if(!isCore){next=i;break;}
+ }
+ if(next===-1){finishWorkout();}
+ else{S.wStepIdx=next;S.wTimer=0;S.wPaused=false;render();}
+}
+function parseLoad(msg){
+ // Match "50kg", "50 kg", "50 chili", "con 50", "ho usato 50" etc.
+ var m=msg.match(/(\d+(?:[.,]\d+)?)\s*(?:kg|chili|kili)/i);
+ if(m)return parseFloat(m[1].replace(',','.'));
+ return null;
+}
+function findExerciseByName(name){
+ var q=(name||'').toLowerCase();
+ var cats=['push','pull','shoulders','legs','core'];
+ for(var i=0;i<cats.length;i++){
+  var list=DB[cats[i]]||[];
+  for(var j=0;j<list.length;j++){
+   if(list[j].name.toLowerCase().includes(q)||q.includes(list[j].name.toLowerCase().split(' ')[0]))return list[j];
+  }
+ }
+ return null;
+}
+async function sendFloatAI(){
+ var inp=document.getElementById('float-ai-in');if(!inp)return;
+ var msg=inp.value.trim();if(!msg||S.floatLoading)return;
+ inp.value='';
+ var ctx=getFloatCtx();
+ S.floatChat.push({role:'user',content:msg});
+ if(!getApiKey()){
+  S.floatChat.push({role:'assistant',content:'⚙️ Aggiungi la tua Anthropic API key nel Profilo → 🔑 API Key.'});
+  updateFloatAI();return;
+ }
+ S.floatLoading=true;updateFloatAI();
+ var system='Sei il personal trainer AI di un atleta avanzato (182cm 74kg, obiettivo massa, corpo libero + elastici). '
+  +(ctx.type==='exercise'
+   ?'La domanda riguarda un esercizio specifico. Rispondi con consigli tecnici precisi: forma, respiro, errori comuni, modifiche. Diretto e pratico.'
+   :'È un feedback o domanda generale. Tienilo in conto per adattare i futuri allenamenti. Rispondi e conferma che hai registrato il feedback.')
+  +' Rispondi in italiano, max 120 parole.'
+  +' Rispondi SEMPRE con JSON valido: {"reply":"testo risposta","action":{"type":"avoid_exercise","exerciseName":"nome"} oppure null}.'
+  +' action è non-null SOLO se l\'utente chiede esplicitamente di rimuovere/evitare/sostituire un esercizio specifico.';
+ var baseCtx=buildCtx()+ctx.extra;
+ var history=S.floatChat.slice(-6).map(function(m){return{role:m.role,content:m.content};});
+ history[0]={role:'user',content:baseCtx+'\n\nDomanda/Feedback: '+history[0].content};
+ try{
+  var text=await callAI(history,system,400);
+  var reply=text||'Errore nella risposta.';
+  // Prova a parsare JSON strutturato {reply, action}
+  try{
+   var clean=reply.replace(/```json|```/g,'').trim();
+   var parsed=JSON.parse(clean);
+   if(parsed.reply){
+    reply=parsed.reply;
+    // Esegui azione se presente
+    if(parsed.action&&parsed.action.type==='avoid_exercise'&&parsed.action.exerciseName){
+     var match=findExerciseByName(parsed.action.exerciseName);
+     if(match){
+      var avoid=S.aiDB.adaptation.avoidExercises||[];
+      if(!avoid.includes(match.id)){
+       S.aiDB.adaptation.avoidExercises=avoid.concat([match.id]);
+       reply+=' ✓ Ho registrato di evitare '+match.name+' nelle prossime sessioni.';
+      }
+     }
+    }
+   }
+  }catch(pe){/* fallback: tratta la risposta come testo normale */}
+  S.floatChat.push({role:'assistant',content:reply});
+  // Save to chatLog for future adaptation
+  var exStep=ctx.type==='exercise'&&S.wSteps&&S.wSteps[S.wStepIdx]?S.wSteps[S.wStepIdx]:null;
+  S.aiDB.chatLog=(S.aiDB.chatLog||[]).concat([{
+   date:new Date().toISOString(),
+   contextType:ctx.type,
+   exercise:exStep?exStep.ex.id:null,
+   exerciseName:exStep?exStep.ex.name:null,
+   userMsg:msg,
+   reply:reply
+  }]);
+  // In trial mode: don't persist anything
+  if(S.trialMode){S.floatLoading=false;updateFloatAI();setTimeout(function(){var el=document.getElementById('float-msgs');if(el)el.scrollTop=el.scrollHeight;},100);return;}
+  // Detect and save reported load during exercise
+  if(exStep){
+   var detectedKg=parseLoad(msg);
+   if(detectedKg){
+    if(!S.aiDB.loads)S.aiDB.loads={};
+    S.aiDB.loads[exStep.ex.id]={kg:detectedKg,name:exStep.ex.name,date:new Date().toISOString().split('T')[0]};
+   }
+  }
+  // Persist floatChat so it survives panel close/reopen
+  S.aiDB.currentChat={date:new Date().toDateString(),msgs:S.floatChat.slice(-30)};
+  sv('ai',S.aiDB);
+  syncToDrive();
+ }catch(e){
+  S.floatChat.push({role:'assistant',content:'⚠️ Errore: '+e.message});
+ }
+ S.floatLoading=false;updateFloatAI();
+ setTimeout(function(){var el=document.getElementById('float-msgs');if(el)el.scrollTop=el.scrollHeight;},100);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+loadData().then(function(){S.qStep=0;render();checkAndGenerateSummaries();});
+</script>
+</body>
+</html>
