@@ -377,7 +377,7 @@ async function restoreFromDrive(){
   var r=await fetch(DRIVE_URL,{redirect:'follow'});
   var data=await r.json();
   if(!data.ok){alert('Errore: '+(data.error||'risposta non valida'));if(btn){btn.textContent='☁️ Ripristina da Drive';btn.disabled=false;}return;}
-  if(data.history)await sv('history',data.history);
+  if(data.history)await sv('wh',data.history);
   if(data.aiDB)await sv('ai',data.aiDB);
   if(data.splits)await sv('splits',data.splits);
   alert('✅ Dati ripristinati da Drive!\n'+((data.history||[]).length)+' sessioni caricate.\nRicarico...');
