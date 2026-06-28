@@ -13,15 +13,13 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <title>💪 Coach</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:radial-gradient(135% 55% at 50% -8%, rgba(249,115,22,.13), transparent 58%), #09090b;color:#fafafa;font-family:"Barlow",-apple-system,"Helvetica Neue",system-ui,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;letter-spacing:-.005em;max-width:440px;margin:0 auto;min-height:100vh;overscroll-behavior:contain}
-/* Display font atletico per titoli, numeri e bottoni */
-.btn,.lbl{font-family:"Barlow Condensed","Barlow",sans-serif}
-.btn{letter-spacing:.04em}
-.font-display{font-family:"Barlow Condensed","Barlow",sans-serif}
+body{background:#09090b;color:#fafafa;font-family:"Space Grotesk",-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;letter-spacing:-.01em;max-width:440px;margin:0 auto;min-height:100vh;overscroll-behavior:contain}
+.btn,.lbl,.font-display{font-family:"Space Grotesk",sans-serif}
+.lbl{letter-spacing:2px}
 .pg{padding:18px;min-height:100vh;padding-bottom:90px}
 .card{background:linear-gradient(180deg,#212126,#161619);border:1px solid #30303a;border-radius:18px;padding:15px;margin-bottom:11px;box-shadow:0 1px 2px rgba(0,0,0,.35),0 14px 30px -16px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04)}
 .lbl{color:#52525b;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
@@ -65,6 +63,15 @@ textarea,input[type=text]{background:#18181b;border:1px solid #27272a;border-rad
 .tag-band{transition:transform .15s cubic-bezier(.2,.8,.2,1)}
 .tag-band:active{transform:scale(.98)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+/* ── BRUTALISM tokens ── */
+.card{border-radius:0;border:2px solid #27272a;background:#0e0e11;box-shadow:none}
+.btn{border-radius:0;text-transform:uppercase;letter-spacing:.05em;box-shadow:none;font-weight:700}
+.btn-ghost,.back,.opt{border-radius:0}
+.opt{border-width:2px}
+.lbl{text-transform:uppercase}
+.marq-wrap{overflow:hidden;white-space:nowrap;background:#F97316;color:#000}
+.marq{display:inline-block;padding:7px 0;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;animation:marq 18s linear infinite}
+@keyframes marq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 </style>
 </head>
 <body>
@@ -505,54 +512,46 @@ function rHome(){
  var cycle='';
  PLAN.forEach(function(sp,i){
   var cur=i===S.splitIdx%6,done=i<S.splitIdx%6;
-  cycle+='<div style="display:flex;align-items:center;gap:10px;padding:6px;border-radius:10px;background:'+(cur?'#27272a':'transparent')+';margin-bottom:2px">'
-   +'<div style="width:20px;height:20px;border-radius:50%;background:'+(done?sp.color:cur?sp.color+'25':'#27272a')+';border:2px solid '+(cur||done?sp.color:'#3f3f46')+';display:flex;align-items:center;justify-content:center;font-size:9px;color:'+(done?'#fff':cur?sp.color:'#52525b')+';font-weight:800;flex-shrink:0">'+(done?'✓':i+1)+'</div>'
-   +'<span style="color:'+(cur?'#fafafa':done?'#3f3f46':'#71717a')+';font-size:13px;font-weight:'+(cur?700:400)+';flex:1">'+sp.emoji+' '+sp.name+'</span>'
-   +'<span style="color:#3f3f46;font-size:10px">'+sp.desc.split(' · ')[0]+'</span></div>';
+  var bg=cur?'#F97316':done?'#27272a':'transparent',fg=cur?'#000':done?'#fafafa':'#52525b',bd=cur?'#F97316':'#27272a';
+  cycle+='<div style="flex:1;border:2px solid '+bd+';background:'+bg+';color:'+fg+';text-align:center;padding:11px 0;font-weight:700;font-size:15px">'+('0'+(i+1))+'</div>';
  });
  var prof=S.aiDB.profile||{};
  var profLabel=(prof.altezza||'?')+'cm · '+(prof.peso||'?')+'kg';
  var goalLabel=prof.obiettivo==='massa'?'Massa muscolare':prof.obiettivo==='definizione'?'Definizione':prof.obiettivo==='ricomposizione'?'Ricomposizione':'Mantenimento';
- return '<div class="pg">'
-  +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">'
-  +'<div><div class="lbl" style="margin-bottom:4px">Il Tuo Coach</div><div style="font-size:22px;font-weight:900">'+profLabel+'</div><div style="color:#52525b;font-size:12px;margin-top:2px">'+goalLabel+' · Corpo libero + Elastici</div></div>'
-  +'<div style="display:flex;gap:6px;align-items:flex-start">'
-  +'<button onclick="go(\'profile\')" style="background:#27272a;border:none;border-radius:10px;padding:9px 12px;color:#a1a1aa;font-size:15px;cursor:pointer">⚙️</button>'
-  +'<div class="card" style="padding:10px 14px;text-align:right;margin:0"><div style="color:'+t.color+';font-size:22px;font-weight:900;line-height:1">'+wk+'</div><div class="lbl" style="font-size:9px">/ 6 sett.</div></div>'
+ var marqTxt=(t.desc+'  ·  ').repeat(6);
+ return '<div class="pg" style="padding:0 0 90px">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #27272a;padding:14px 16px">'
+  +'<span class="lbl" style="font-size:12px">COACH // SIMONE</span>'
+  +'<button onclick="go(\'profile\')" style="background:none;border:none;color:#F97316;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:Space Grotesk">GIORNO 0'+((S.splitIdx%6)+1)+'/6 ⚙</button>'
   +'</div>'
-  +'</div>'
-  +'<div style="background:linear-gradient(150deg,'+t.color+'2e,'+t.bg+' 45%,#141417);border:1px solid '+t.color+'55;border-radius:26px;padding:30px 24px 26px;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:0 22px 50px -24px '+t.color+'55">'
-  +'<div style="position:absolute;top:-22px;right:-16px;font-size:140px;opacity:.10;line-height:1">'+t.emoji+'</div>'
-  +'<div class="lbl" style="color:'+t.color+';margin-bottom:8px;font-size:11px">Oggi · Giorno '+((S.splitIdx%6)+1)+'/6</div>'
-  +'<div class="font-display" style="font-size:52px;font-weight:800;letter-spacing:-.5px;line-height:.9;margin-bottom:8px;text-transform:uppercase">'+t.name+'</div>'
-  +'<div style="color:#a1a1aa;font-size:14px;margin-bottom:22px">'+t.desc+'</div>'
+  +'<div class="marq-wrap"><span class="marq">'+marqTxt+marqTxt+'</span></div>'
+  +'<div style="padding:20px 16px">'
+  +'<div class="lbl" style="color:#a1a1aa;font-size:13px;margin-bottom:0">Oggi ▸ Allenamento</div>'
+  +'<div class="font-display" style="font-size:76px;font-weight:700;letter-spacing:-3px;line-height:.85;text-transform:uppercase;margin:2px 0 6px">'+t.name+'</div>'
+  +'<div style="color:#a1a1aa;font-size:13px;margin-bottom:18px">'+t.desc+'</div>'
   +(S.nutReminder
-   ?'<div style="background:#1a1200;border:1px solid #f59e0b50;border-radius:14px;padding:12px 14px;margin-bottom:12px">'
-    +'<div style="color:#f59e0b;font-size:12px;font-weight:700;margin-bottom:6px">📅 '+S.nutReminderCount+' giorn'+(S.nutReminderCount===1?'o':'i')+' senza nutrizione</div>'
-    +'<div style="display:flex;gap:8px">'
-    +'<button class="btn-ghost" style="margin:0;flex:1;font-size:12px" onclick="S.nutReminder=false;startWorkout()">Fai dopo</button>'
-    +'<button class="btn" style="background:#f59e0b;margin:0;flex:1;font-size:12px" onclick="S.nutReminder=false;openNutrition()">Compila →</button>'
-    +'</div></div>'
+   ?'<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px"><div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:8px">⚠ '+S.nutReminderCount+' giorni senza nutrizione</div><div style="display:flex;gap:8px"><button class="btn" style="background:#27272a;color:#fff;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;startWorkout()">Fai dopo</button><button class="btn" style="background:#f59e0b;color:#000;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;openNutrition()">Compila</button></div></div>'
    :'')
-  +'<button class="btn" style="background:'+t.color+';margin:0" onclick="startWorkout()">INIZIA ▶</button>'
+  +'<button class="btn" style="background:#F97316;color:#000;border:2px solid #fafafa;margin:0;padding:20px;font-size:20px" onclick="startWorkout()">Inizia ▶</button>'
+  +'<div style="display:flex;border:2px solid #27272a;margin-top:16px">'
+  +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+S.history.length+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Sessioni</div></div>'
+  +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+(last?last.duration+"'":'—')+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Durata</div></div>'
+  +'<div style="flex:1;padding:16px"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+wk+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">/6 sett</div></div>'
   +'</div>'
-  +'<div class="g3">'
-  +'<div class="card" style="text-align:center;margin:0"><div class="font-display" style="font-size:34px;font-weight:800;letter-spacing:0">'+S.history.length+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Sessioni</div></div>'
-  +'<div class="card" style="text-align:center;margin:0"><div class="font-display" style="font-size:34px;font-weight:800;letter-spacing:0">'+(last?last.duration+'m':'—')+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Ultima</div></div>'
-  +'<div class="card" style="text-align:center;margin:0"><div class="font-display" style="font-size:34px;font-weight:800;letter-spacing:0">'+(last?last.split.emoji:'—')+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Split prec.</div></div>'
+  +'<div class="lbl" style="font-size:11px;color:#a1a1aa;margin:18px 0 8px">Ciclo 6 giorni</div>'
+  +'<div style="display:flex;gap:6px">'+cycle+'</div>'
+  +'<div style="display:flex;gap:6px;margin-top:16px">'
+  +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #27272a;color:#fff;margin:0;padding:16px;font-size:14px" onclick="openNutrition()">Nutrizione</button>'
+  +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #27272a;color:#fff;margin:0;padding:16px;font-size:14px" onclick="go(\'history\')">Storico</button>'
+  +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #F97316;color:#F97316;margin:0;padding:16px;font-size:14px" onclick="go(\'ai\')">AI</button>'
   +'</div>'
-  +'<div class="card"><div class="lbl" style="margin-bottom:10px">Ciclo 6 Giorni</div>'+cycle+'</div>'
-  +'<div class="g3">'
-  +'<button class="card" style="text-align:center;margin:0;cursor:pointer" onclick="openNutrition()"><div style="font-size:13px;font-weight:900;color:#a1a1aa;margin-bottom:3px">NUT</div><div style="color:#52525b;font-size:10px;letter-spacing:1px">Nutrizione</div></button>'
-  +'<button class="card" style="text-align:center;margin:0;cursor:pointer" onclick="go(\'history\')"><div style="font-size:13px;font-weight:900;color:#a1a1aa;margin-bottom:3px">LOG</div><div style="color:#52525b;font-size:10px;letter-spacing:1px">Storico</div></button>'
-  +'<button class="card" style="text-align:center;margin:0;cursor:pointer" onclick="go(\'ai\')"><div style="font-size:13px;font-weight:900;color:#f97316;margin-bottom:3px">AI</div><div style="color:#52525b;font-size:10px;letter-spacing:1px">Coach</div></button>'
+  +(S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.recoveryFlag&&S.aiDB.adaptation.recoveryAction?'<div style="border:2px solid #ef4444;background:#1a0000;padding:12px;margin-top:14px"><div class="lbl" style="color:#ef4444;font-size:11px;margin-bottom:6px">⚠ Recovery — allenamento adattato</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.adaptation.recoveryAction+'</div></div>':'')
+  +(S.aiDB&&S.aiDB.nutritionAdvice?'<div style="border:2px solid #22c55e;background:#0a1a0a;padding:12px;margin-top:14px"><div class="lbl" style="color:#22c55e;font-size:11px;margin-bottom:6px">▸ Nutrizione — consiglio domani</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.nutritionAdvice+'</div></div>':'')
+  +(rec?'<div style="border:2px solid #F97316;background:#1a0a00;padding:12px;margin-top:14px"><div class="lbl" style="color:#F97316;font-size:11px;margin-bottom:6px">Adattamento attivo</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+rec+'</div></div>':'')
+  +'<div style="display:flex;gap:6px;margin-top:16px">'
+  +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialWorkout()">Sessione prova</button>'
+  +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialNutrition()">Survey prova</button>'
   +'</div>'
-  +(S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.recoveryFlag&&S.aiDB.adaptation.recoveryAction?'<div style="background:#1a0000;border:1px solid #ef444450;border-radius:14px;padding:12px;margin-bottom:10px"><div class="lbl" style="color:#ef4444;margin-bottom:4px">⚠ RECOVERY — allenamento adattato</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.adaptation.recoveryAction+'</div></div>':'')
-  +(S.aiDB&&S.aiDB.nutritionAdvice?'<div style="background:#0a1a0a;border:1px solid #22c55e30;border-radius:14px;padding:12px;margin-bottom:10px"><div class="lbl" style="color:#22c55e;margin-bottom:4px">💡 NUTRIZIONE — consiglio per domani</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.nutritionAdvice+'</div></div>':'')
-  +(rec?'<div style="background:#1a0a00;border:1px solid #f9731630;border-radius:14px;padding:12px;margin-bottom:10px"><div class="lbl" style="color:#f97316;margin-bottom:4px">ADATTAMENTO ATTIVO</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+rec+'</div></div>':'')
-  +'<div style="display:flex;gap:8px;margin-bottom:8px">'
-  +'<button onclick="startTrialWorkout()" style="flex:1;background:#1c1c1e;border:1px solid #2c2c2e;border-radius:12px;padding:12px;font-size:12px;font-weight:700;color:#6b6b70;cursor:pointer;letter-spacing:.5px">SESSIONE PROVA</button>'
-  +'<button onclick="startTrialNutrition()" style="flex:1;background:#1c1c1e;border:1px solid #2c2c2e;border-radius:12px;padding:12px;font-size:12px;font-weight:700;color:#6b6b70;cursor:pointer;letter-spacing:.5px">SURVEY PROVA</button>'
   +'</div>'
   +'</div>';
 }
