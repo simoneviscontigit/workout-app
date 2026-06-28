@@ -1831,17 +1831,17 @@ function rHist(){
  var avg=S.history.length?Math.round(S.history.reduce(function(s,h){return s+(h.duration||0);},0)/S.history.length):0;
  var thisWeek=S.history.filter(function(h){return new Date(h.date)>new Date(Date.now()-7*864e5);}).length;
  // Costruisci lista giorni: dal primo allenamento a oggi
- var todayStr=new Date().toLocaleDateString('sv'); // "YYYY-MM-DD" locale
+ var todayStr=new Date().toISOString().split('T')[0]; // UTC, come le chiavi nutritionLog e le sessioni
  var firstStr=todayStr;
  if(S.history&&S.history.length){
   var sorted=S.history.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);});
   firstStr=sorted[0].date.split('T')[0];
  }
  var days=[];
- var cur=new Date(todayStr);
- var first=new Date(firstStr);
+ var cur=new Date(todayStr+'T12:00:00Z');
+ var first=new Date(firstStr+'T12:00:00Z');
  while(cur>=first){
-  var d=cur.toLocaleDateString('sv');
+  var d=cur.toISOString().split('T')[0];
   var workout=(S.history||[]).find(function(h){return h.date&&h.date.split('T')[0]===d;});
   var nut=log[d];
   days.push({date:d,workout:workout,nut:nut});
