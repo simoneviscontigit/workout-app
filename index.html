@@ -495,7 +495,7 @@ function rHome(){
  });
  var prof=S.aiDB.profile||{};
  var profLabel=(prof.altezza||'?')+'cm · '+(prof.peso||'?')+'kg';
- var goalLabel=prof.obiettivo==='massa'?'Massa muscolare':prof.obiettivo==='definizione'?'Definizione':'Mantenimento';
+ var goalLabel=prof.obiettivo==='massa'?'Massa muscolare':prof.obiettivo==='definizione'?'Definizione':prof.obiettivo==='ricomposizione'?'Ricomposizione':'Mantenimento';
  return '<div class="pg">'
   +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">'
   +'<div><div class="lbl" style="margin-bottom:4px">Il Tuo Coach</div><div style="font-size:22px;font-weight:900">'+profLabel+'</div><div style="color:#52525b;font-size:12px;margin-top:2px">'+goalLabel+' · Corpo libero + Elastici</div></div>'
@@ -1248,7 +1248,7 @@ function calcDayCalTarget(date){
  var bmr=Math.round(10*peso+6.25*alt-5*eta+5); // Mifflin-St Jeor uomo
  var tdee=Math.round(bmr*1.375); // moderatamente attivo
  var goal=p.obiettivo||'massa';
- var goalAdj=goal==='massa'?300:goal==='definizione'?-400:0;
+ var goalAdj=goal==='massa'?300:goal==='definizione'?-400:goal==='ricomposizione'?100:0;
  var base=tdee+goalAdj;
  var session=(S.history||[]).find(function(h){return h.date&&h.date.split('T')[0]===date;});
  var burned=0;
@@ -1261,8 +1261,8 @@ function calcDayCalTarget(date){
 }
 function rProfile(){
  var p=S.aiDB.profile||{};
- var objs=['massa','definizione','mantenimento'];
- var objLabels=['💪 Massa','🎯 Definizione','⚖️ Mantenimento'];
+ var objs=['massa','ricomposizione','definizione','mantenimento'];
+ var objLabels=['💪 Massa','🔁 Ricomp','🎯 Definizione','⚖️ Mantenimento'];
  var objBtns=objs.map(function(o,i){
   var sel=p.obiettivo===o;
   return '<button onclick="S.aiDB.profile.obiettivo=\''+o+'\';render()" style="flex:1;padding:10px 6px;border-radius:10px;border:2px solid '+(sel?'#818cf8':'#27272a')+';background:'+(sel?'#1e1b4b':'#18181b')+';color:'+(sel?'#818cf8':'#71717a')+';font-size:12px;font-weight:700;cursor:pointer">'+objLabels[i]+'</button>';
@@ -1289,7 +1289,7 @@ function rProfile(){
    var tmp=Object.assign({},p,{peso:p.peso||74,altezza:p.altezza||182,eta:p.eta||30});
    var bmr=Math.round(10*tmp.peso+6.25*tmp.altezza-5*tmp.eta+5);
    var tdee=Math.round(bmr*1.375);
-   var adj=tmp.obiettivo==='massa'?300:tmp.obiettivo==='definizione'?-400:0;
+   var adj=tmp.obiettivo==='massa'?300:tmp.obiettivo==='definizione'?-400:tmp.obiettivo==='ricomposizione'?100:0;
    return '<div class="card" style="background:#0f1a0f;border-color:#22c55e30">'
     +'<div class="lbl" style="color:#22c55e;margin-bottom:8px">📊 STIMA TDEE</div>'
     +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">BMR</span><span style="color:#d4d4d8">'+bmr+' kcal</span></div>'
