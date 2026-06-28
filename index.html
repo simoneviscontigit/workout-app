@@ -435,7 +435,7 @@ async function restoreFromDrive(){
  var btn=document.getElementById('restore-btn');
  if(btn){btn.textContent='⏳ Scaricando...';btn.disabled=true;}
  try{
-  var r=await fetch(DRIVE_URL,{redirect:'follow'});
+  var r=await fetch(DRIVE_URL+'?t='+Date.now(),{redirect:'follow',cache:'no-store'});
   var data=await r.json();
   if(!data.ok){alert('Errore: '+(data.error||'risposta non valida'));if(btn){btn.textContent='☁️ Ripristina da Drive';btn.disabled=false;}return;}
   if(data.history)await sv('wh',data.history);
