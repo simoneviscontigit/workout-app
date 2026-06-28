@@ -414,6 +414,8 @@ async function loadData(){
  }catch(e){}
 }
 const DRIVE_URL='https://script.google.com/macros/s/AKfycbxtbx4x2KZZxgCvzOtibFtFTI8h0Bxg1-xalRboisHzyP_w8QD14Hb2-ZiAgTTDNQPP/exec';
+// Sandbox: sui domini di test (Vercel) NON scriviamo mai su Drive (solo lettura per caricare i dati veri).
+const TEST_MODE=(typeof location!=='undefined'&&/vercel\.app$/i.test(location.hostname));
 async function sv(k,v){try{localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}}
 async function restoreFromDrive(){
  var btn=document.getElementById('restore-btn');
@@ -433,6 +435,7 @@ async function restoreFromDrive(){
  }
 }
 async function syncToDrive(){
+ if(TEST_MODE)return; // sandbox: niente scrittura su Drive
  try{
   var payload={history:S.history,nutrition:S.nutrition,aiDB:S.aiDB,skipped:S.skipped,savedAt:new Date().toISOString()};
   fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload)});
