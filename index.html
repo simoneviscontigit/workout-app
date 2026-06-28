@@ -452,6 +452,10 @@ async function loadData(){
   }
   // Restore today's chat session
   if(S.aiDB.currentChat&&S.aiDB.currentChat.date===new Date().toDateString())S.floatChat=S.aiDB.currentChat.msgs||[];
+  // Auto-fetch del coachPlan da Drive: le istruzioni del coach notturno (Sumi) arrivano da sole
+  fetch(DRIVE_URL+'?t='+Date.now(),{cache:'no-store',redirect:'follow'}).then(function(r){return r.json();}).then(function(dd){
+   if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.coachPlan){S.aiDB.coachPlan=dd.aiDB.coachPlan;sv('ai',S.aiDB);if(typeof render==='function')render();}
+  }).catch(function(){});
  }catch(e){}
 }
 const DRIVE_URL='https://script.google.com/macros/s/AKfycbxtbx4x2KZZxgCvzOtibFtFTI8h0Bxg1-xalRboisHzyP_w8QD14Hb2-ZiAgTTDNQPP/exec';
