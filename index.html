@@ -880,7 +880,7 @@ function rWorkout(){
   +'</div>'
   +'</div>'
   +'<div style="font-size:22px;font-weight:900;margin-bottom:8px;line-height:1.15">'+ex.name+'</div>'
-  +'<div class="tag-band" onclick="setLoad(\''+ex.id+'\')" style="cursor:pointer">🔴 Elastico: '+(ex.band||'tocca per impostare')+' ✏️</div>'
+  +(ex.band?'<div class="tag-band" onclick="setLoad(\''+ex.id+'\')" style="cursor:pointer">🔴 Elastico: '+ex.band+' ✏️</div>':'')
   +(ex.coachNote?'<div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:6px 10px;margin-top:6px;color:#7dd3fc;font-size:11px;line-height:1.4">'+(ex.coachSrc==='sumi'?'🧠 Sumi: ':'⚙️ Coach: ')+ex.coachNote+'</div>':'')
   +mediaHtml(ex)
   +'<div class="card" style="margin-top:10px">'
