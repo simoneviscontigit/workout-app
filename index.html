@@ -535,10 +535,10 @@ function rHome(){
   +(S.nutReminder
    ?'<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px"><div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:8px">'+S.nutReminderCount+' giorni senza nutrizione</div><div style="display:flex;gap:8px"><button class="btn" style="background:#27272a;color:#fff;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;startWorkout()">Fai dopo</button><button class="btn" style="background:#f59e0b;color:#000;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;openNutrition()">Compila</button></div></div>'
    :'')
-  +'<button class="btn" style="background:#F97316;color:#000;border:2px solid #fafafa;margin:0;padding:20px;font-size:20px" onclick="startWorkout()">Inizia ▶</button>'
+  +'<button class="btn" style="background:#F97316;color:#fff;border:2px solid #fafafa;margin:0;padding:26px;font-size:28px" onclick="startWorkout()">Inizia</button>'
   +'<div style="display:flex;border:2px solid #27272a;margin-top:16px">'
   +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+S.history.length+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Sessioni</div></div>'
-  +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+(last?last.duration+"'":'—')+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Durata</div></div>'
+  +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+(last?last.duration+"'":'—')+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Ultima</div></div>'
   +'<div style="flex:1;padding:16px"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+wk+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">/6 sett</div></div>'
   +'</div>'
   +'<div class="lbl" style="font-size:11px;color:#a1a1aa;margin:18px 0 8px">Ciclo 6 giorni</div>'
