@@ -8,3 +8,4 @@ backups/
 LIVE_*.html
 index_backup_*.html
 workout_standalone.html
+.vercel

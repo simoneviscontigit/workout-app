@@ -248,6 +248,51 @@ function applyAdaptation(ex){
  newEx.sets=Math.max(2,(ex.sets||3)+setsAdj);
  return newEx;
 }
+// ─── PROGRESSIONE CARICHI (regola meccanica + override coach) ─────────────────
+function nextBandStep(band){
+ // Elastici: alza di 5kg (la banda più piccola) ogni numero nel range
+ if(!band)return band;
+ return band.replace(/\d+/g,function(m){return String(parseInt(m,10)+5);});
+}
+function withCoachOverride(e){
+ // Precedenza: coachPlan (Sumi) > progression (regola meccanica in-app) > DB
+ var cp=(S.aiDB.coachPlan&&S.aiDB.coachPlan.perExercise&&S.aiDB.coachPlan.perExercise[e.id]);
+ var pr=(S.aiDB.progression&&S.aiDB.progression[e.id]);
+ var o=cp||pr;
+ if(!o)return e;
+ var ov={};
+ if(o.band)ov.band=o.band;
+ if(o.reps)ov.reps=o.reps;
+ if(o.repsMax)ov.repsMax=o.repsMax;
+ ov.coachNote=o.note||'';
+ ov.coachSrc=cp?'sumi':'mech';
+ return Object.assign({},e,ov);
+}
+function computeProgression(session){
+ // Doppia progressione dalle reps loggate per-serie. Sincrona, offline.
+ try{
+  var reps=session.reps||{};
+  if(!S.aiDB.progression)S.aiDB.progression={};
+  Object.keys(reps).forEach(function(id){
+   var r=reps[id];if(!r||!r.reps||!r.reps.length)return;
+   var sets=r.reps,max=r.max||r.target||8,target=r.target||8,nSets=sets.length;
+   var allTop=sets.every(function(x){return x>=max;});
+   var allBelow=sets.every(function(x){return x<target;});
+   var cur=(S.aiDB.progression[id]&&S.aiDB.progression[id].band)||r.band||'';
+   var entry={name:r.name,date:new Date().toISOString().split('T')[0],lastReps:sets};
+   if(allTop&&nSets>=2){
+    entry.band=nextBandStep(cur);
+    entry.note=(cur?'+5kg: ':'progredisci (variante più dura): ')+'chiuso il max ('+sets.join(',')+')';
+   } else if(allBelow&&nSets>=2){
+    entry.band=cur;entry.note='Sotto target ('+sets.join(',')+') — mantieni e consolida';
+   } else {
+    entry.band=cur;entry.note='In progressione ('+sets.join(',')+') — punta a chiudere il range';
+   }
+   S.aiDB.progression[id]=Object.assign({},S.aiDB.progression[id],entry);
+  });
+  sv('ai',S.aiDB);
+ }catch(e){console.error('computeProgression:',e);}
+}
 function genWorkout(splitIdx,skipped){
  var split=PLAN[splitIdx%6];
  var adapt=S.aiDB.adaptation||{};
@@ -259,7 +304,7 @@ function genWorkout(splitIdx,skipped){
   var preferred=DB[cat].filter(function(e){return suggest.includes(e.id)&&!skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id);});
   var pool=DB[cat].filter(function(e){return !skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&!preferred.find(function(p){return p.id===e.id;});});
   var sel=preferred.concat(shuf(pool)).slice(0,count);
-  sel.forEach(function(e){exercises.push(applyAdaptation(e));used.push(e.id);});
+  sel.forEach(function(e){exercises.push(applyAdaptation(withCoachOverride(e)));used.push(e.id);});
  });
  // Scegli un circuito core casuale e costruisci la sequenza
  var circuit=shuf(DB.coreCircuits)[0];
@@ -599,7 +644,7 @@ function pickRecovery(v){
 function launchWorkout(){
  var w=genWorkout(S.splitIdx,S.skipped);
  S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
- S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();
+ S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;
  S.trialMode=false;
  go('workout');
 }
@@ -623,7 +668,7 @@ function startTrialWorkout(){
  var idx=(S.splitIdx+Math.floor(Math.random()*5)+1)%6;
  var w=genWorkout(idx,[]);
  S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
- S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();
+ S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;
  S.trialMode=true;
  go('workout');
 }
@@ -706,6 +751,21 @@ function rWorkout(){
  if(!step)return rHome();
  var prog=S.wStepIdx/S.wSteps.length;
  var sp=S.wSplit;
+
+ // ── LOGGING REPS: dopo "SET COMPLETATO" su esercizi a carico ────────────────
+ if(S.wAwaitReps&&step.type==='work'&&step.ex&&!step.ex.isTime&&!step.ex.isCore){
+  var rx=step.ex,lo=rx.reps||8,hi=rx.repsMax||lo,btns='';
+  btns+='<button class="btn-ghost" style="width:auto;padding:14px 16px;margin:4px" onclick="logReps('+(lo-1)+')">‹'+lo+'</button>';
+  for(var rn=lo;rn<=hi;rn++){btns+='<button class="btn" style="width:auto;padding:14px 18px;margin:4px;background:'+sp.color+'" onclick="logReps('+rn+')">'+rn+'</button>';}
+  btns+='<button class="btn" style="width:auto;padding:14px 16px;margin:4px;background:#ef4444" onclick="logReps('+(hi+1)+')">'+hi+'+ 💪</button>';
+  return '<div class="center" style="background:#09090b;padding:24px">'
+   +'<div style="font-size:20px;font-weight:900;margin-bottom:6px;text-align:center">'+rx.name+'</div>'
+   +'<div class="lbl" style="margin-bottom:4px">SERIE '+step.setNum+'/'+step.totalSets+'</div>'
+   +'<div style="color:#a1a1aa;font-size:14px;margin-bottom:24px">Quante ripetizioni hai fatto?</div>'
+   +'<div style="display:flex;flex-wrap:wrap;justify-content:center;max-width:340px">'+btns+'</div>'
+   +'<div style="color:#52525b;font-size:11px;margin-top:18px">Target '+lo+' · Max '+hi+'</div>'
+   +'</div>';
+ }
 
  // ── REST: transizione core (8s), pausa core (30s), riposo normale ───────────
  if(step.type==='core_intro'){
@@ -807,6 +867,7 @@ function rWorkout(){
   +'</div>'
   +'<div style="font-size:22px;font-weight:900;margin-bottom:8px;line-height:1.15">'+ex.name+'</div>'
   +(ex.band?'<div class="tag-band">🔴 Elastico: '+ex.band+'</div>':'')
+  +(ex.coachNote?'<div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:6px 10px;margin-top:6px;color:#7dd3fc;font-size:11px;line-height:1.4">'+(ex.coachSrc==='sumi'?'🧠 Sumi: ':'⚙️ Coach: ')+ex.coachNote+'</div>':'')
   +mediaHtml(ex)
   +'<div class="card" style="margin-top:10px">'
   +'<p style="color:#d4d4d8;font-size:14px;line-height:1.6;margin:0">'+ex.desc+'</p>'
@@ -854,6 +915,7 @@ function rWorkout(){
 function startTimer(){
  clearInterval(TI);
  var step=S.wSteps[S.wStepIdx];if(!step)return;
+ if(S.wAwaitReps)return; // nessun timer mentre selezioni le reps
  if(step.type==='core_intro'){return;} // nessun timer — l'utente preme PRONTO
  if(step.type==='rest'){
   S.wTimer=step.dur;
@@ -884,7 +946,17 @@ function startTimer(){
  }
 }
 function advStep(){S.wStepIdx++;if(S.wStepIdx>=S.wSteps.length){finishWorkout();return;}render();}
-function workoutDone(){clearInterval(TI);S.wSets++;advStep();}
+function workoutDone(){
+ var step=S.wSteps[S.wStepIdx];var ex=step&&step.ex;
+ // Esercizi a carico (a reps, non a tempo, non core): chiedi quante reps fatte
+ if(ex&&!ex.isTime&&!ex.isCore&&!S.wAwaitReps){clearInterval(TI);S.wAwaitReps=true;render();return;}
+ clearInterval(TI);S.wAwaitReps=false;S.wSets++;advStep();
+}
+function logReps(n){
+ var step=S.wSteps[S.wStepIdx];var ex=step&&step.ex;
+ if(ex){if(!S.wReps[ex.id])S.wReps[ex.id]={name:ex.name,target:ex.reps,max:ex.repsMax||ex.reps,band:ex.band||'',reps:[]};S.wReps[ex.id].reps.push(n);}
+ S.wAwaitReps=false;S.wSets++;advStep();
+}
 function skipRest(){clearInterval(TI);advStep();}
 function pauseCore(){S.wPaused=true;var e=document.getElementById('core-pause-btn');if(e){e.textContent='▶ Riprendi';e.onclick=resumeCore;}}
 function resumeCore(){S.wPaused=false;var e=document.getElementById('core-pause-btn');if(e){e.textContent='⏸ Pausa';e.onclick=pauseCore;}}
@@ -916,7 +988,7 @@ function finishWorkout(){
  clearInterval(TI);
  if(S.trialMode){S.trialMode=false;go('home');return;}
  var dur=Math.round((Date.now()-S.wStartTime)/60000)||1;
- S.pending={split:S.wSplit,exercises:S.wEx,sets:S.wSets,duration:dur};
+ S.pending={split:S.wSplit,exercises:S.wEx,sets:S.wSets,duration:dur,reps:S.wReps||{}};
  S.qStep=0;S.qAns={};go('post_quiz');
 }
 
@@ -1010,6 +1082,7 @@ async function finishSession(){
   S.splitIdx=(S.splitIdx||0)+1;
   await sv('wh',nh);
   await sv('si',String(S.splitIdx));
+  computeProgression(session); // regola meccanica: aggiorna carichi/progressione dalle reps
   syncToDrive();
   runAdaptation(session);
  }catch(e){console.error('finishSession:',e);}
