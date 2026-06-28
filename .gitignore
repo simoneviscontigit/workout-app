@@ -1,0 +1,10 @@
+# Mai committare credenziali o dati personali
+*-sa.json
+workout_data*.json
+chiavi/
+backups/
+.DS_Store
+# Vecchie versioni con API key in chiaro / snapshot di rollback
+LIVE_*.html
+index_backup_*.html
+workout_standalone.html
