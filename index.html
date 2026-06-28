@@ -1751,8 +1751,9 @@ function buildHistChart(){
  var days=[];
  var START='2026-06-22'; // il grafico parte da lunedì 22 giugno
  var todayS=new Date().toISOString().split('T')[0];
- for(var dt=new Date(START+'T00:00:00');dt.toISOString().split('T')[0]<=todayS;dt.setDate(dt.getDate()+1)){
-  var d=dt.toISOString().split('T')[0];
+ for(var t=Date.parse(START+'T00:00:00Z');;t+=86400000){
+  var d=new Date(t).toISOString().split('T')[0];
+  if(d>todayS)break;
   days.push({date:d,nut:log[d],workout:(S.history||[]).find(function(h){return h.date&&h.date.split('T')[0]===d;})});
  }
  var hasData=days.some(function(d){return d.nut&&!d.nut.skipped;});
