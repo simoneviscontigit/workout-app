@@ -1749,8 +1749,10 @@ function buildHistChart(){
  var goalAdj=p.obiettivo==='definizione'?-400:p.obiettivo==='mantenimento'?0:300;
  var maintKcal=tdee+goalAdj; // linea centrale = target riposo
  var days=[];
- for(var i=29;i>=0;i--){
-  var d=new Date(Date.now()-i*86400000).toISOString().split('T')[0];
+ var START='2026-06-22'; // il grafico parte da lunedì 22 giugno
+ var todayS=new Date().toISOString().split('T')[0];
+ for(var dt=new Date(START+'T00:00:00');dt.toISOString().split('T')[0]<=todayS;dt.setDate(dt.getDate()+1)){
+  var d=dt.toISOString().split('T')[0];
   days.push({date:d,nut:log[d],workout:(S.history||[]).find(function(h){return h.date&&h.date.split('T')[0]===d;})});
  }
  var hasData=days.some(function(d){return d.nut&&!d.nut.skipped;});
@@ -1782,13 +1784,13 @@ function buildHistChart(){
  var wDots=days.map(function(d,i){
   if(!d.workout)return'';
   var c=d.workout.split?d.workout.split.color:'#52525b';
-  return '<circle cx="'+xOf(i)+'" cy="'+(pT+cH+6)+'" r="2.5" fill="'+c+'"/>';
+  return '<rect x="'+(xOf(i)-2.5)+'" y="'+(pT+cH+4)+'" width="5" height="5" fill="'+c+'"/>';
  }).join('');
  // X labels
  var x0=days[0].date.slice(5),xN=days[n-1].date.slice(5);
  var xMid=days[Math.floor(n/2)].date.slice(5);
  return '<div class="card" style="margin-bottom:12px;padding:10px 8px 8px">'
-  +'<div class="lbl" style="margin-bottom:6px;padding-left:4px">ANDAMENTO 30 GIORNI</div>'
+  +'<div class="lbl" style="margin-bottom:6px;padding-left:4px">Andamento · dal 22 giu</div>'
   +'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block;overflow:visible">'
   // grid
   +'<line x1="'+pL+'" y1="'+pT+'" x2="'+(pL+cW)+'" y2="'+pT+'" stroke="#27272a" stroke-width="0.5"/>'
@@ -1798,8 +1800,8 @@ function buildHistChart(){
   +'<line x1="'+pL+'" y1="'+mY+'" x2="'+(pL+cW)+'" y2="'+mY+'" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" opacity="0.6"/>'
   +'<text x="'+(pL+cW+2)+'" y="'+(mY+3)+'" fill="#f59e0b" font-size="7" opacity="0.7">mant.</text>'
   // lines
-  +(scorePath?'<path d="'+scorePath+'" stroke="#22c55e" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>':'')
-  +(kcalPath?'<path d="'+kcalPath+'" stroke="#818cf8" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5,2"/>':'')
+  +(scorePath?'<path d="'+scorePath+'" stroke="#22c55e" stroke-width="2.5" fill="none" stroke-linejoin="miter"/>':'')
+  +(kcalPath?'<path d="'+kcalPath+'" stroke="#818cf8" stroke-width="2.5" fill="none" stroke-linejoin="miter" stroke-dasharray="5,3"/>':'')
   // workout dots below
   +wDots
   // Y labels
@@ -1816,7 +1818,7 @@ function buildHistChart(){
   +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:#818cf8"><span style="width:14px;height:2px;border-top:2px dashed #818cf8;display:inline-block"></span>Kcal ingerite</span>'
   +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:#f59e0b"><span style="width:14px;height:1px;border-top:1px dashed #f59e0b;display:inline-block"></span>Mantenimento ('+maintKcal+' kcal)</span>'
   +'</div>'
-  +'<div style="font-size:9px;color:#3f3f46;padding:3px 4px 0">I pallini colorati sotto = giorni di allenamento (colore per split)</div>'
+  +'<div style="font-size:9px;color:#3f3f46;padding:3px 4px 0">Quadratini sotto = giorni di allenamento (colore per tipo)</div>'
   +'</div>';
 }
 function rHist(){
