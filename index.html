@@ -514,11 +514,11 @@ function rHome(){
   +'<div class="card" style="padding:10px 14px;text-align:right;margin:0"><div style="color:'+t.color+';font-size:22px;font-weight:900;line-height:1">'+wk+'</div><div class="lbl" style="font-size:9px">/ 6 sett.</div></div>'
   +'</div>'
   +'</div>'
-  +'<div style="background:linear-gradient(135deg,'+t.bg+',#18181b);border:1px solid '+t.color+'40;border-radius:20px;padding:22px;margin-bottom:12px;position:relative;overflow:hidden">'
-  +'<div style="position:absolute;top:-10px;right:-10px;font-size:80px;opacity:.07">'+t.emoji+'</div>'
-  +'<div class="lbl" style="color:'+t.color+';margin-bottom:5px">Oggi · Giorno '+((S.splitIdx%6)+1)+'/6</div>'
-  +'<div style="font-size:28px;font-weight:900;letter-spacing:-1px;line-height:1;margin-bottom:4px">'+t.emoji+' '+t.name+'</div>'
-  +'<div style="color:#a1a1aa;font-size:13px;margin-bottom:16px">'+t.desc+'</div>'
+  +'<div style="background:linear-gradient(150deg,'+t.color+'2e,'+t.bg+' 45%,#141417);border:1px solid '+t.color+'55;border-radius:26px;padding:30px 24px 26px;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:0 22px 50px -24px '+t.color+'55">'
+  +'<div style="position:absolute;top:-22px;right:-16px;font-size:140px;opacity:.10;line-height:1">'+t.emoji+'</div>'
+  +'<div class="lbl" style="color:'+t.color+';margin-bottom:8px;font-size:11px">Oggi · Giorno '+((S.splitIdx%6)+1)+'/6</div>'
+  +'<div style="font-size:46px;font-weight:900;letter-spacing:-2px;line-height:.92;margin-bottom:8px">'+t.name+'</div>'
+  +'<div style="color:#a1a1aa;font-size:14px;margin-bottom:22px">'+t.desc+'</div>'
   +(S.nutReminder
    ?'<div style="background:#1a1200;border:1px solid #f59e0b50;border-radius:14px;padding:12px 14px;margin-bottom:12px">'
     +'<div style="color:#f59e0b;font-size:12px;font-weight:700;margin-bottom:6px">📅 '+S.nutReminderCount+' giorn'+(S.nutReminderCount===1?'o':'i')+' senza nutrizione</div>'
@@ -530,9 +530,9 @@ function rHome(){
   +'<button class="btn" style="background:'+t.color+';margin:0" onclick="startWorkout()">INIZIA ▶</button>'
   +'</div>'
   +'<div class="g3">'
-  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:19px;font-weight:900">'+S.history.length+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Sessioni</div></div>'
-  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:19px;font-weight:900">'+(last?last.duration+'m':'—')+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Ultima</div></div>'
-  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:19px;font-weight:900">'+(last?last.split.emoji:'—')+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Split prec.</div></div>'
+  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:28px;font-weight:900;letter-spacing:-.5px">'+S.history.length+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Sessioni</div></div>'
+  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:28px;font-weight:900;letter-spacing:-.5px">'+(last?last.duration+'m':'—')+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Ultima</div></div>'
+  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:28px;font-weight:900;letter-spacing:-.5px">'+(last?last.split.emoji:'—')+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Split prec.</div></div>'
   +'</div>'
   +'<div class="card"><div class="lbl" style="margin-bottom:10px">Ciclo 6 Giorni</div>'+cycle+'</div>'
   +'<div class="g3">'
@@ -896,7 +896,7 @@ function rWorkout(){
   +'<button onclick="S.wConfirmClose=true;render()" style="background:transparent;border:none;color:#3f3f46;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;padding:4px 0">CHIUDI ✕</button>'
   +'</div>'
   +'</div>'
-  +'<div style="font-size:22px;font-weight:900;margin-bottom:8px;line-height:1.15">'+ex.name+'</div>'
+  +'<div style="font-size:31px;font-weight:900;letter-spacing:-.8px;margin-bottom:10px;line-height:1.05">'+ex.name+'</div>'
   +(ex.band?'<div class="tag-band" onclick="setLoad(\''+ex.id+'\')" style="cursor:pointer">🔴 Elastico: '+ex.band+' ✏️</div>':'')
   +(ex.coachNote?'<div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:6px 10px;margin-top:6px;color:#7dd3fc;font-size:11px;line-height:1.4">'+(ex.coachSrc==='sumi'?'🧠 Sumi: ':'⚙️ Coach: ')+ex.coachNote+'</div>':'')
   +mediaHtml(ex)
