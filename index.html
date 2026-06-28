@@ -255,17 +255,27 @@ function nextBandStep(band){
  return band.replace(/\d+/g,function(m){return String(parseInt(m,10)+5);});
 }
 function withCoachOverride(e){
- // Precedenza: coachPlan (Sumi) > progression (regola meccanica in-app) > DB
+ // Precedenza: coachPlan (Sumi) > progression (regola meccanica) > carico reale (chat/manuale) > DB
  var cp=(S.aiDB.coachPlan&&S.aiDB.coachPlan.perExercise&&S.aiDB.coachPlan.perExercise[e.id]);
  var pr=(S.aiDB.progression&&S.aiDB.progression[e.id]);
  var o=cp||pr;
- if(!o)return e;
  var ov={};
- if(o.band)ov.band=o.band;
- if(o.reps)ov.reps=o.reps;
- if(o.repsMax)ov.repsMax=o.repsMax;
- ov.coachNote=o.note||'';
- ov.coachSrc=cp?'sumi':'mech';
+ if(o){
+  if(o.band)ov.band=o.band;
+  if(o.reps)ov.reps=o.reps;
+  if(o.repsMax)ov.repsMax=o.repsMax;
+  ov.coachNote=o.note||'';
+  ov.coachSrc=cp?'sumi':'mech';
+ }
+ // Nessuna band dal coach? Usa il tuo carico reale (chat o impostato a mano) al posto del range generico
+ if(!ov.band){
+  var ld=S.aiDB.loads&&S.aiDB.loads[e.id];
+  if(ld&&(ld.kg||ld.kg===0)){
+   ov.band=(''+ld.kg).replace(/kg/i,'')+'kg';
+   if(!ov.coachNote){ov.coachNote='tuo carico'+(ld.manual?'':' (da chat)')+' · '+(ld.date||'');ov.coachSrc='mech';}
+  }
+ }
+ if(!o&&!ov.band)return e;
  return Object.assign({},e,ov);
 }
 function computeProgression(session){
@@ -757,16 +767,17 @@ function rWorkout(){
 
  // ── LOGGING REPS: dopo "SET COMPLETATO" su esercizi a carico ────────────────
  if(S.wAwaitReps&&step.type==='work'&&step.ex&&!step.ex.isTime&&!step.ex.isCore){
-  var rx=step.ex,lo=rx.reps||8,hi=rx.repsMax||lo,btns='';
-  btns+='<button class="btn-ghost" style="width:auto;padding:14px 16px;margin:4px" onclick="logReps('+(lo-1)+')">‹'+lo+'</button>';
-  for(var rn=lo;rn<=hi;rn++){btns+='<button class="btn" style="width:auto;padding:14px 18px;margin:4px;background:'+sp.color+'" onclick="logReps('+rn+')">'+rn+'</button>';}
-  btns+='<button class="btn" style="width:auto;padding:14px 16px;margin:4px;background:#ef4444" onclick="logReps('+(hi+1)+')">'+hi+'+ 💪</button>';
-  return '<div class="center" style="background:#09090b;padding:24px">'
-   +'<div style="font-size:20px;font-weight:900;margin-bottom:6px;text-align:center">'+rx.name+'</div>'
-   +'<div class="lbl" style="margin-bottom:4px">SERIE '+step.setNum+'/'+step.totalSets+'</div>'
-   +'<div style="color:#a1a1aa;font-size:14px;margin-bottom:24px">Quante ripetizioni hai fatto?</div>'
-   +'<div style="display:flex;flex-wrap:wrap;justify-content:center;max-width:340px">'+btns+'</div>'
-   +'<div style="color:#52525b;font-size:11px;margin-top:18px">Target '+lo+' · Max '+hi+'</div>'
+  var rx=step.ex,lo=rx.reps||8,hi=rx.repsMax||lo,nums='';
+  for(var rn=lo;rn<hi;rn++){nums+='<button class="btn" style="flex:1;min-width:58px;padding:18px 0;margin:0;background:#27272a;border:1px solid #3f3f46;font-size:21px;font-weight:900" onclick="logReps('+rn+')">'+rn+'</button>';}
+  return '<div style="display:flex;flex-direction:column;justify-content:center;min-height:100vh;background:#09090b;padding:20px;gap:12px">'
+   +'<div style="text-align:center;margin-bottom:6px">'
+   +'<div style="font-size:21px;font-weight:900">'+rx.name+'</div>'
+   +'<div class="lbl" style="margin-top:6px">SERIE '+step.setNum+'/'+step.totalSets+' · quante reps?</div>'
+   +'</div>'
+   +'<button class="btn" style="width:100%;padding:24px;margin:0;background:#ef4444;font-size:19px;font-weight:900;box-shadow:0 4px 16px rgba(239,68,68,.3)" onclick="logReps('+hi+')">💪 '+hi+'+ · CHIUSO IL MAX</button>'
+   +(nums?'<div style="display:flex;gap:8px;flex-wrap:wrap">'+nums+'</div>':'')
+   +'<button class="btn" style="width:100%;padding:18px;margin:0;background:#1c1c1f;border:1px solid #3f3f46;color:#a1a1aa;font-size:15px;font-weight:700" onclick="logReps('+(lo-1)+')">‹ sotto le '+lo+'</button>'
+   +'<div style="text-align:center;color:#52525b;font-size:11px;margin-top:6px">Target '+lo+' · Max '+hi+'</div>'
    +'</div>';
  }
 
@@ -869,7 +880,7 @@ function rWorkout(){
   +'</div>'
   +'</div>'
   +'<div style="font-size:22px;font-weight:900;margin-bottom:8px;line-height:1.15">'+ex.name+'</div>'
-  +(ex.band?'<div class="tag-band">🔴 Elastico: '+ex.band+'</div>':'')
+  +'<div class="tag-band" onclick="setLoad(\''+ex.id+'\')" style="cursor:pointer">🔴 Elastico: '+(ex.band||'tocca per impostare')+' ✏️</div>'
   +(ex.coachNote?'<div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:6px 10px;margin-top:6px;color:#7dd3fc;font-size:11px;line-height:1.4">'+(ex.coachSrc==='sumi'?'🧠 Sumi: ':'⚙️ Coach: ')+ex.coachNote+'</div>':'')
   +mediaHtml(ex)
   +'<div class="card" style="margin-top:10px">'
@@ -959,6 +970,21 @@ function logReps(n){
  var step=S.wSteps[S.wStepIdx];var ex=step&&step.ex;
  if(ex){if(!S.wReps[ex.id])S.wReps[ex.id]={name:ex.name,target:ex.reps,max:ex.repsMax||ex.reps,band:ex.band||'',reps:[]};S.wReps[ex.id].reps.push(n);}
  S.wAwaitReps=false;S.wSets++;advStep();
+}
+function setLoad(id){
+ var ex=(S.wEx||[]).find(function(x){return x.id===id;})||{};
+ var cur=(ex.band||'').replace(/kg/i,'');
+ var v=prompt('Carico reale per "'+(ex.name||'')+'" (es. 40 oppure 35-45). Vuoto = togli:',cur);
+ if(v===null)return;
+ v=(''+v).trim();
+ if(!S.aiDB.loads)S.aiDB.loads={};
+ if(v===''){if(S.aiDB.loads[id])delete S.aiDB.loads[id];if(ex)ex.band=undefined;}
+ else{
+  var disp=/^[\d\s.\-]+$/.test(v)?v.replace(/\s/g,'')+'kg':v;
+  S.aiDB.loads[id]={kg:v.replace(/kg/i,'').replace(/\s/g,''),name:ex.name,date:new Date().toISOString().split('T')[0],manual:true};
+  if(ex)ex.band=disp;
+ }
+ sv('ai',S.aiDB);render();
 }
 function skipRest(){clearInterval(TI);advStep();}
 function pauseCore(){S.wPaused=true;var e=document.getElementById('core-pause-btn');if(e){e.textContent='▶ Riprendi';e.onclick=resumeCore;}}
