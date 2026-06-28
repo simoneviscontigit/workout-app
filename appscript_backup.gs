@@ -5,6 +5,9 @@
 
 var FILE_NAME  = 'workout_data.json';
 var SHEET_NAME = 'Workout Storia';
+// Cartella canonica su Drive: l'app deve usare SEMPRE i file qui dentro,
+// non cercarli per nome in tutto il Drive (evita doppioni → dati persi).
+var FOLDER_ID  = '1PU5FwW9LXPTAqdfXhsffjBSNQ8oF7qk_';
 
 // ── GET: restituisce il JSON completo di backup ───────────────
 function doGet(e) {
@@ -38,7 +41,7 @@ function saveJson_(data) {
   if (existing) {
     existing.setContent(content);
   } else {
-    DriveApp.createFile(FILE_NAME, content, MimeType.PLAIN_TEXT);
+    DriveApp.getFolderById(FOLDER_ID).createFile(FILE_NAME, content, MimeType.PLAIN_TEXT);
   }
 }
 
@@ -403,16 +406,20 @@ function writeChatTab_(ss, chatLog) {
 //  UTILITY
 // ─────────────────────────────────────────────────────────────
 function findFile_(name) {
-  var files = DriveApp.getFilesByName(name);
+  // Cerca SOLO dentro la cartella canonica (deterministico, niente doppioni)
+  var files = DriveApp.getFolderById(FOLDER_ID).getFilesByName(name);
   return files.hasNext() ? files.next() : null;
 }
 
 function findOrCreateSheet_() {
-  var files = DriveApp.getFilesByName(SHEET_NAME);
+  var folder = DriveApp.getFolderById(FOLDER_ID);
+  var files = folder.getFilesByName(SHEET_NAME);
   if (files.hasNext()) {
     return SpreadsheetApp.open(files.next());
   }
-  return SpreadsheetApp.create(SHEET_NAME);
+  var ss = SpreadsheetApp.create(SHEET_NAME);
+  try { DriveApp.getFileById(ss.getId()).moveTo(folder); } catch (e) {}
+  return ss;
 }
 
 function getOrCreateTab_(ss, name) {
