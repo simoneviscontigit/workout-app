@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Coach 💪">
+<meta name="apple-mobile-web-app-title" content="Coach ">
 <meta name="theme-color" content="#09090b">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
-<title>💪 Coach</title>
+<title>Coach</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:#09090b;color:#fafafa;font-family:"Space Grotesk",-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;letter-spacing:-.01em;max-width:440px;margin:0 auto;min-height:100vh;overscroll-behavior:contain}
@@ -78,7 +78,7 @@ textarea,input[type=text]{background:#18181b;border:1px solid #27272a;border-rad
 </style>
 </head>
 <body>
-<div id="app"><div class="center"><span style="font-size:40px">💪</span></div></div>
+<div id="app"><div class="center"><span style="font-size:40px"></span></div></div>
 <script>
 // ─── CONFIG ─────────────────────────────────────────────────────────────────
 // Chiave API Anthropic — salvata in localStorage, mai nel codice
@@ -235,7 +235,7 @@ function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 function imgFb(ex){
  var cc={push:'#ef4444',pull:'#8b5cf6',shoulders:'#818cf8',legs:'#14b8a6',core:'#f59e0b'};
  var col=cc[ex.cat]||'#52525b';
- var icon=ex.isCore?'🔥':'💪';
+ var icon=ex.isCore?'':'';
  return '<div class="img-fb" style="display:flex;background:'+col+'15;border:1px solid '+col+'30"><span style="font-size:40px">'+icon+'</span><span style="color:'+col+';font-size:12px;font-weight:700">'+ex.muscles+'</span></div>';
 }
 function mediaErr(el){
@@ -460,19 +460,19 @@ const TEST_MODE=(typeof location!=='undefined'&&/vercel\.app$/i.test(location.ho
 async function sv(k,v){try{localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}}
 async function restoreFromDrive(){
  var btn=document.getElementById('restore-btn');
- if(btn){btn.textContent='⏳ Scaricando...';btn.disabled=true;}
+ if(btn){btn.textContent='Scaricando...';btn.disabled=true;}
  try{
   var r=await fetch(DRIVE_URL+'?t='+Date.now(),{redirect:'follow',cache:'no-store'});
   var data=await r.json();
-  if(!data.ok){alert('Errore: '+(data.error||'risposta non valida'));if(btn){btn.textContent='☁️ Ripristina da Drive';btn.disabled=false;}return;}
+  if(!data.ok){alert('Errore: '+(data.error||'risposta non valida'));if(btn){btn.textContent='Ripristina da Drive';btn.disabled=false;}return;}
   if(data.history)await sv('wh',data.history);
   if(data.aiDB)await sv('ai',data.aiDB);
   if(data.splits)await sv('splits',data.splits);
-  alert('✅ Dati ripristinati da Drive!\n'+((data.history||[]).length)+' sessioni caricate.\nRicarico...');
+  alert('Dati ripristinati da Drive!\n'+((data.history||[]).length)+' sessioni caricate.\nRicarico...');
   location.reload();
  }catch(e){
   alert('Errore connessione: '+e.message);
-  if(btn){btn.textContent='☁️ Ripristina da Drive';btn.disabled=false;}
+  if(btn){btn.textContent='Ripristina da Drive';btn.disabled=false;}
  }
 }
 async function syncToDrive(){
@@ -499,8 +499,8 @@ function render(){
 function updateFloatAI(){
  var c=document.getElementById('ai-float-c');
  if(!c){c=document.createElement('div');c.id='ai-float-c';document.body.appendChild(c);}
- // Hide floating button on the full AI page
- if(S.view==='ai'){c.innerHTML='';return;}
+ // Nascondi il fab dove l'AI è già accessibile: home (tasto griglia), allenamento (inline), pagina AI
+ if(S.view==='ai'||S.view==='workout'||S.view==='home'){c.innerHTML='';return;}
  c.innerHTML=rFloatingAI();
  // Scroll msgs to bottom
  setTimeout(function(){var el=document.getElementById('float-msgs');if(el)el.scrollTop=el.scrollHeight;},50);
@@ -525,7 +525,7 @@ function rHome(){
  return '<div class="pg" style="padding:0 0 90px">'
   +'<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #27272a;padding:14px 16px">'
   +'<span class="lbl" style="font-size:12px">COACH // SIMONE</span>'
-  +'<button onclick="go(\'profile\')" style="background:none;border:none;color:#F97316;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:Space Grotesk">GIORNO 0'+((S.splitIdx%6)+1)+'/6 ⚙</button>'
+  +'<button onclick="go(\'profile\')" style="background:none;border:none;color:#F97316;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:Space Grotesk">GIORNO 0'+((S.splitIdx%6)+1)+'/6 </button>'
   +'</div>'
   +'<div class="marq-wrap"><span class="marq">'+marqTxt+marqTxt+'</span></div>'
   +'<div style="padding:20px 16px">'
@@ -533,7 +533,7 @@ function rHome(){
   +'<div class="font-display" style="font-size:76px;font-weight:700;letter-spacing:-3px;line-height:.85;text-transform:uppercase;margin:2px 0 6px">'+t.name+'</div>'
   +'<div style="color:#a1a1aa;font-size:13px;margin-bottom:18px">'+t.desc+'</div>'
   +(S.nutReminder
-   ?'<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px"><div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:8px">⚠ '+S.nutReminderCount+' giorni senza nutrizione</div><div style="display:flex;gap:8px"><button class="btn" style="background:#27272a;color:#fff;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;startWorkout()">Fai dopo</button><button class="btn" style="background:#f59e0b;color:#000;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;openNutrition()">Compila</button></div></div>'
+   ?'<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px"><div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:8px">'+S.nutReminderCount+' giorni senza nutrizione</div><div style="display:flex;gap:8px"><button class="btn" style="background:#27272a;color:#fff;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;startWorkout()">Fai dopo</button><button class="btn" style="background:#f59e0b;color:#000;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;openNutrition()">Compila</button></div></div>'
    :'')
   +'<button class="btn" style="background:#F97316;color:#000;border:2px solid #fafafa;margin:0;padding:20px;font-size:20px" onclick="startWorkout()">Inizia ▶</button>'
   +'<div style="display:flex;border:2px solid #27272a;margin-top:16px">'
@@ -548,7 +548,7 @@ function rHome(){
   +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #27272a;color:#fff;margin:0;padding:16px;font-size:14px" onclick="go(\'history\')">Storico</button>'
   +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #F97316;color:#F97316;margin:0;padding:16px;font-size:14px" onclick="go(\'ai\')">AI</button>'
   +'</div>'
-  +(S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.recoveryFlag&&S.aiDB.adaptation.recoveryAction?'<div style="border:2px solid #ef4444;background:#1a0000;padding:12px;margin-top:14px"><div class="lbl" style="color:#ef4444;font-size:11px;margin-bottom:6px">⚠ Recovery — allenamento adattato</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.adaptation.recoveryAction+'</div></div>':'')
+  +(S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.recoveryFlag&&S.aiDB.adaptation.recoveryAction?'<div style="border:2px solid #ef4444;background:#1a0000;padding:12px;margin-top:14px"><div class="lbl" style="color:#ef4444;font-size:11px;margin-bottom:6px">Recovery — allenamento adattato</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.adaptation.recoveryAction+'</div></div>':'')
   +(S.aiDB&&S.aiDB.nutritionAdvice?'<div style="border:2px solid #22c55e;background:#0a1a0a;padding:12px;margin-top:14px"><div class="lbl" style="color:#22c55e;font-size:11px;margin-bottom:6px">▸ Nutrizione — consiglio domani</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.nutritionAdvice+'</div></div>':'')
   +(rec?'<div style="border:2px solid #F97316;background:#1a0a00;padding:12px;margin-top:14px"><div class="lbl" style="color:#F97316;font-size:11px;margin-bottom:6px">Adattamento attivo</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+rec+'</div></div>':'')
   +'<div style="display:flex;gap:6px;margin-top:16px">'
@@ -589,21 +589,21 @@ function buildPreWorkoutComment(){
  var overlap=sore.filter(function(m){return todayMuscles.indexOf(m)>=0;});
  var domsWord=doms===2?'lieve':doms===3?'moderato':'forte';
  if(doms<=1||sore.length===0){
-  if(recov>=4)return '🔥 Nessun indolenzimento e ti senti carico: recupero perfetto. Oggi spingiamo senza limitazioni.';
-  if(recov>=3)return '✅ Nessun indolenzimento, ti senti riposato. Procedi con il piano standard.';
-  if(recov>=2)return '👍 Nessun indolenzimento. Ti senti nella norma — nella norma si va avanti, niente scuse.';
-  return '⚠️ Ti senti spossato senza indolenzimento muscolare: può essere fatica sistemica o sonno scarso. Tieni d\'occhio la qualità degli esercizi, non forzare oltre il 70%.';
+  if(recov>=4)return 'Nessun indolenzimento e ti senti carico: recupero perfetto. Oggi spingiamo senza limitazioni.';
+  if(recov>=3)return 'Nessun indolenzimento, ti senti riposato. Procedi con il piano standard.';
+  if(recov>=2)return 'Nessun indolenzimento. Ti senti nella norma — nella norma si va avanti, niente scuse.';
+  return 'Ti senti spossato senza indolenzimento muscolare: può essere fatica sistemica o sonno scarso. Tieni d\'occhio la qualità degli esercizi, non forzare oltre il 70%.';
  }
  if(overlap.length===0){
-  return '✅ DOMS '+domsWord+' in '+sore.join(', ')+' — ma oggi lavori '+todaySplit.desc+'. Nessun conflitto: puoi spingere normalmente. L\'indolenzimento che non tocca i muscoli di oggi è un buon segnale che hanno lavorato.';
+  return 'DOMS '+domsWord+' in '+sore.join(', ')+' — ma oggi lavori '+todaySplit.desc+'. Nessun conflitto: puoi spingere normalmente. L\'indolenzimento che non tocca i muscoli di oggi è un buon segnale che hanno lavorato.';
  }
  if(doms>=4&&overlap.length>=2){
-  return '🔴 DOMS forte in '+sore.join(', ')+' con overlap su oggi ('+todaySplit.name+'). Considera se valga la pena aspettare un giorno o fare solo la parte non infiammata. Se procedi: -1 serie per i muscoli dolenti, niente failure.';
+  return 'DOMS forte in '+sore.join(', ')+' con overlap su oggi ('+todaySplit.name+'). Considera se valga la pena aspettare un giorno o fare solo la parte non infiammata. Se procedi: -1 serie per i muscoli dolenti, niente failure.';
  }
  if(doms>=3){
-  return '⚠️ DOMS moderato in '+overlap.join(', ')+'. Questi muscoli lavorano anche oggi — normale, non ti bloccare. Adatto: -1 serie su '+overlap.join('/')+'e riscaldamento più lungo su queste zone. Le altre partiranno al 100%.';
+  return 'DOMS moderato in '+overlap.join(', ')+'. Questi muscoli lavorano anche oggi — normale, non ti bloccare. Adatto: -1 serie su '+overlap.join('/')+'e riscaldamento più lungo su queste zone. Le altre partiranno al 100%.';
  }
- return '✅ DOMS lieve in '+overlap.join(', ')+' — sei nei range normali post-allenamento. Significa che hai stimolato bene. Si va avanti con il piano, magari 2-3 minuti extra di mobilità prima dei gruppi interessati.';
+ return 'DOMS lieve in '+overlap.join(', ')+' — sei nei range normali post-allenamento. Significa che hai stimolato bene. Si va avanti con il piano, magari 2-3 minuti extra di mobilità prima dei gruppi interessati.';
 }
 function rPreWorkoutCheck(){
  var lastSession=(S.history||[]).slice(-1)[0];
@@ -616,7 +616,7 @@ function rPreWorkoutCheck(){
   +'<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#52525b;margin-bottom:4px;text-align:center">PRIMA DI INIZIARE</div>'
   +(lastSession?'<div style="font-size:11px;color:#3f3f46;text-align:center;margin-bottom:16px">Ultima: <span style="color:#71717a">'+lastSplit+' · '+lastDate+'</span></div>':'<div style="margin-bottom:16px"></div>');
  if(phase==='doms'){
-  var dOpts=['✅ No','⚡ Lieve','😬 Moderato','🔴 Forte'].map(function(o,i){
+  var dOpts=['No','Lieve','Moderato','Forte'].map(function(o,i){
    var sel=S.preWQAns.domsActual===i+1;
    return '<button class="opt'+(sel?' sel':'')+'" onclick="pickDoms('+(i+1)+')" style="border-color:'+(sel?'#818cf8':'')+'">'+o+'</button>';
   }).join('');
@@ -639,7 +639,7 @@ function rPreWorkoutCheck(){
  }
  if(phase==='recovery'){
   var back=S.preWQAns.domsActual>=2?'muscles':'doms';
-  var rOpts=['😩 Spossato','😐 Nella norma','😊 Riposato','🔥 Carico'].map(function(o,i){
+  var rOpts=['Spossato','Nella norma','Riposato','Carico'].map(function(o,i){
    var sel=S.preWQAns.recoveryFeel===i+1;
    return '<button class="opt'+(sel?' sel':'')+'" onclick="pickRecovery('+(i+1)+')" style="border-color:'+(sel?'#818cf8':'')+'">'+o+'</button>';
   }).join('');
@@ -652,7 +652,7 @@ function rPreWorkoutCheck(){
  var comment=buildPreWorkoutComment();
  return wrap
   +'<div style="background:#18181b;border:1px solid #27272a;border-radius:16px;padding:16px;margin-bottom:14px">'
-  +'<div style="font-size:11px;font-weight:700;color:#f97316;letter-spacing:1px;margin-bottom:8px">💬 COACH</div>'
+  +'<div style="font-size:11px;font-weight:700;color:#f97316;letter-spacing:1px;margin-bottom:8px">COACH</div>'
   +'<div style="color:#d4d4d8;font-size:14px;line-height:1.7">'+comment+'</div>'
   +'</div>'
   +'<div style="background:#1a1a2e;border:1px solid #818cf840;border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">'
@@ -794,15 +794,15 @@ function rWorkout(){
  // ── LOGGING REPS: dopo "SET COMPLETATO" su esercizi a carico ────────────────
  if(S.wAwaitReps&&step.type==='work'&&step.ex&&!step.ex.isTime&&!step.ex.isCore){
   var rx=step.ex,lo=rx.reps||8,hi=rx.repsMax||lo,nums='';
-  for(var rn=lo;rn<hi;rn++){nums+='<button class="btn" style="flex:1;min-width:58px;padding:18px 0;margin:0;background:#27272a;border:1px solid #3f3f46;font-size:21px;font-weight:900" onclick="logReps('+rn+')">'+rn+'</button>';}
+  for(var rn=lo;rn<hi;rn++){nums+='<button class="btn" style="flex:1;min-width:58px;padding:18px 0;margin:0;background:#141417;border:2px solid '+sp.color+';color:#fff;font-size:21px;font-weight:700" onclick="logReps('+rn+')">'+rn+'</button>';}
   return '<div style="display:flex;flex-direction:column;justify-content:center;min-height:100vh;background:#09090b;padding:20px;gap:12px">'
    +'<div style="text-align:center;margin-bottom:6px">'
-   +'<div style="font-size:21px;font-weight:900">'+rx.name+'</div>'
-   +'<div class="lbl" style="margin-top:6px">SERIE '+step.setNum+'/'+step.totalSets+' · quante reps?</div>'
+   +'<div class="font-display" style="font-size:28px;font-weight:700;text-transform:uppercase">'+rx.name+'</div>'
+   +'<div class="lbl" style="margin-top:6px;color:'+sp.color+'">Serie '+step.setNum+'/'+step.totalSets+' · quante reps?</div>'
    +'</div>'
-   +'<button class="btn" style="width:100%;padding:24px;margin:0;background:#ef4444;font-size:19px;font-weight:900;box-shadow:0 4px 16px rgba(239,68,68,.3)" onclick="logReps('+hi+')">💪 '+hi+'+ · CHIUSO IL MAX</button>'
+   +'<button class="btn" style="width:100%;padding:24px;margin:0;background:'+sp.color+';color:#000;font-size:19px;font-weight:700" onclick="logReps('+hi+')">'+hi+'+ · CHIUSO IL MAX</button>'
    +(nums?'<div style="display:flex;gap:8px;flex-wrap:wrap">'+nums+'</div>':'')
-   +'<button class="btn" style="width:100%;padding:18px;margin:0;background:#1c1c1f;border:1px solid #3f3f46;color:#a1a1aa;font-size:15px;font-weight:700" onclick="logReps('+(lo-1)+')">‹ sotto le '+lo+'</button>'
+   +'<button class="btn" style="width:100%;padding:18px;margin:0;background:#141417;border:2px solid #3f3f46;color:#a1a1aa;font-size:15px;font-weight:700" onclick="logReps('+(lo-1)+')">‹ sotto le '+lo+'</button>'
    +'<div style="text-align:center;color:#52525b;font-size:11px;margin-top:6px">Target '+lo+' · Max '+hi+'</div>'
    +'</div>';
  }
@@ -810,10 +810,10 @@ function rWorkout(){
  // ── REST: transizione core (8s), pausa core (30s), riposo normale ───────────
  if(step.type==='core_intro'){
   return '<div class="center" style="background:#09090b">'
-   +'<div style="font-size:60px;margin-bottom:12px">🔥</div>'
+   +'<div style="font-size:60px;margin-bottom:12px"></div>'
    +'<div style="font-size:30px;font-weight:900;margin-bottom:8px;letter-spacing:1px">ADDOMINALI</div>'
    +'<div style="color:#52525b;font-size:13px;margin-bottom:32px">Preparati per il circuito core</div>'
-   +'<button class="btn" style="background:#f97316;width:auto;padding:16px 40px;font-size:16px" onclick="advStep()">PRONTO ⚡</button>'
+   +'<button class="btn" style="background:#f97316;width:auto;padding:16px 40px;font-size:16px" onclick="advStep()">PRONTO </button>'
    +'</div>';
  }
  if(step.type==='rest'){
@@ -821,9 +821,9 @@ function rWorkout(){
    // 10s countdown verde prima del primo esercizio core
    return '<div class="center" style="background:#09090b">'
     +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#22c55e"></div></div></div>'
-    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:12px">🔥 ADDOMINALI — PRONTI IN</div>'
+    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:12px">ADDOMINALI — PRONTI IN</div>'
     +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;color:#22c55e;line-height:1;margin-bottom:20px">'+S.wTimer+'</div>'
-    +'<button class="btn" style="background:#22c55e;width:auto;padding:14px 36px" onclick="skipRest()">INIZIA ⚡</button>'
+    +'<button class="btn" style="background:#22c55e;width:auto;padding:14px 36px" onclick="skipRest()">INIZIA </button>'
     +'</div>';
   }
   if(step.isTransition){
@@ -833,18 +833,18 @@ function rWorkout(){
     +'<div style="color:#52525b;font-size:11px;letter-spacing:2px;margin-bottom:12px">PROSSIMO</div>'
     +'<div style="font-size:24px;font-weight:900;margin-bottom:20px;text-align:center;padding:0 20px">'+step.nextName+'</div>'
     +'<div id="wt-rest" style="font-size:72px;font-weight:900;font-family:monospace;color:#22c55e;line-height:1">'+S.wTimer+'</div>'
-    +'<button id="core-pause-btn" class="btn-ghost" style="margin-top:20px;width:auto;padding:10px 28px" onclick="pauseCore()">'+(S.wPaused?'▶ Riprendi':'⏸ Pausa')+'</button>'
+    +'<button id="core-pause-btn" class="btn-ghost" style="margin-top:20px;width:auto;padding:10px 28px" onclick="pauseCore()">'+(S.wPaused?'▶ Riprendi':'Pausa')+'</button>'
     +'</div>';
   }
   if(step.isCoreBreak){
    // 30 secondi di pausa nel circuito core — verde
    return '<div class="center" style="background:#09090b">'
     +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#22c55e"></div></div></div>'
-    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:8px">🔥 CORE CIRCUIT</div>'
+    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:8px">CORE CIRCUIT</div>'
     +'<div style="color:#52525b;font-size:13px;margin-bottom:6px">RIPOSO</div>'
     +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;color:#22c55e;line-height:1;margin-bottom:10px">'+S.wTimer+'</div>'
     +(step.nextName?'<div style="color:#52525b;font-size:11px;margin-bottom:4px">Prossimo blocco</div><div style="font-size:16px;font-weight:700;margin-bottom:20px">'+step.nextName+'</div>':'')
-    +'<button id="core-pause-btn" class="btn-ghost" style="width:auto;padding:10px 28px" onclick="pauseCore()">'+(S.wPaused?'▶ Riprendi':'⏸ Pausa')+'</button>'
+    +'<button id="core-pause-btn" class="btn-ghost" style="width:auto;padding:10px 28px" onclick="pauseCore()">'+(S.wPaused?'▶ Riprendi':'Pausa')+'</button>'
     +'</div>';
   }
   // Riposo normale tra esercizi/serie
@@ -854,8 +854,8 @@ function rWorkout(){
    +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;line-height:1;margin-bottom:10px;color:'+sp.color+'">'+S.wTimer+'</div>'
    +'<div style="color:#52525b;font-size:12px;margin-bottom:4px">Prossimo:</div>'
    +'<div style="font-size:18px;font-weight:700;margin-bottom:14px;text-align:center">'+step.nextName+'</div>'
-   +(step.nextBand?'<div class="tag-band" style="margin-bottom:14px">🔴 Prepara elastico: '+step.nextBand+'</div>':'')
-   +'<button class="btn" style="background:'+sp.color+';width:auto;padding:14px 36px;margin-bottom:12px" onclick="skipRest()">PRONTO ⚡</button>'
+   +(step.nextBand?'<div class="tag-band" style="margin-bottom:14px">Prepara elastico: '+step.nextBand+'</div>':'')
+   +'<button class="btn" style="background:'+sp.color+';width:auto;padding:14px 36px;margin-bottom:12px" onclick="skipRest()">PRONTO </button>'
    +'<button class="back" onclick="wBack()">← Torna indietro</button>'
    +'</div>';
  }
@@ -872,7 +872,7 @@ function rWorkout(){
   var coreTotal=coreSteps.length;
   return '<div style="display:flex;flex-direction:column;height:100vh;background:#09090b;align-items:center;justify-content:center;text-align:center;padding:20px;position:relative">'
    +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#f59e0b"></div></div></div>'
-   +'<div style="color:#f59e0b;font-size:10px;letter-spacing:2px;margin-bottom:6px">🔥 CORE CIRCUIT · '+(coreIdx+1)+'/'+coreTotal+'</div>'
+   +'<div style="color:#f59e0b;font-size:10px;letter-spacing:2px;margin-bottom:6px">CORE CIRCUIT · '+(coreIdx+1)+'/'+coreTotal+'</div>'
    +'<div style="font-size:26px;font-weight:900;line-height:1.2;margin-bottom:6px;max-width:300px">'+ex.name+'</div>'
    +'<div style="color:#71717a;font-size:13px;margin-bottom:28px;max-width:280px;line-height:1.5">'+ex.muscles+'</div>'
    +'<div id="wt-core-timer" style="font-size:110px;font-weight:900;font-family:monospace;color:#f59e0b;line-height:1;margin-bottom:6px">'+S.wTimer+'</div>'
@@ -881,7 +881,7 @@ function rWorkout(){
    +'<p style="color:#a1a1aa;font-size:13px;line-height:1.5;margin:0">'+ex.desc+'</p>'
    +'</div>'
    +'<div style="display:flex;gap:10px;justify-content:center">'
-   +'<button id="core-pause-btn" class="btn-ghost" style="width:auto;padding:12px 28px" onclick="pauseCore()">'+(S.wPaused?'▶ Riprendi':'⏸ Pausa')+'</button>'
+   +'<button id="core-pause-btn" class="btn-ghost" style="width:auto;padding:12px 28px" onclick="pauseCore()">'+(S.wPaused?'▶ Riprendi':'Pausa')+'</button>'
    +'<button class="btn-ghost" style="width:auto;padding:12px 20px;color:#52525b;font-size:12px" onclick="skipCoreCircuit()">Salta core ›</button>'
    +'</div>'
    +'</div>';
@@ -906,12 +906,12 @@ function rWorkout(){
   +'</div>'
   +'</div>'
   +'<div class="font-display" style="font-size:34px;font-weight:800;letter-spacing:-.2px;margin-bottom:10px;line-height:1">'+ex.name+'</div>'
-  +(ex.band?'<div class="tag-band" onclick="setLoad(\''+ex.id+'\')" style="cursor:pointer">🔴 Elastico: '+ex.band+' ✏️</div>':'')
-  +(ex.coachNote?'<div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:6px 10px;margin-top:6px;color:#7dd3fc;font-size:11px;line-height:1.4">'+(ex.coachSrc==='sumi'?'🧠 Sumi: ':'⚙️ Coach: ')+ex.coachNote+'</div>':'')
+  +(ex.band?'<div style="border:2px solid '+ac+';color:'+ac+';padding:9px 12px;margin-bottom:8px;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase">Elastico · '+ex.band+'</div>':'')
+  +(ex.coachNote?'<div style="border:2px solid #1e3a5f;background:#0a1420;padding:7px 11px;margin-bottom:8px;color:#7dd3fc;font-size:11px;line-height:1.4;letter-spacing:.5px"><b>'+(ex.coachSrc==='sumi'?'SUMI':'COACH')+'</b> · '+ex.coachNote+'</div>':'')
   +mediaHtml(ex)
   +'<div class="card" style="margin-top:10px">'
   +'<p style="color:#d4d4d8;font-size:14px;line-height:1.6;margin:0">'+ex.desc+'</p>'
-  +'<p style="color:#52525b;font-size:12px;margin-top:8px;margin-bottom:0">💪 '+ex.muscles+'</p>'
+  +'<p style="color:#52525b;font-size:12px;margin-top:8px;margin-bottom:0">'+ex.muscles+'</p>'
   +'</div>'
   +'</div>'
   +'<div style="background:#09090b;border-top:1px solid #27272a;padding:18px 16px 24px;flex-shrink:0">'
@@ -945,8 +945,9 @@ function rWorkout(){
   +'</div>'
   +'<button class="btn" style="background:'+ac+';margin-bottom:12px;padding:18px" onclick="workoutDone()">✓ SET COMPLETATO!</button>'
   +'<div style="display:flex;gap:8px">'
-  +'<button class="btn-ghost" style="margin:0;flex:1;padding:14px" onclick="wBack()">← Indietro</button>'
-  +'<button class="btn-ghost" style="margin:0;flex:1;padding:14px" onclick="skipExercise()">🔄 Cambia</button>'
+  +'<button class="btn-ghost" style="margin:0;flex:1;padding:14px" onclick="wBack()">Indietro</button>'
+  +'<button class="btn-ghost" style="margin:0;flex:1;padding:14px;border-color:'+ac+';color:'+ac+'" onclick="toggleFloatAI()">AI Coach</button>'
+  +'<button class="btn-ghost" style="margin:0;flex:1;padding:14px" onclick="skipExercise()">Cambia</button>'
   +'</div>'
   +'</div>'
   +'</div>';
@@ -1014,7 +1015,7 @@ function setLoad(id){
 }
 function skipRest(){clearInterval(TI);advStep();}
 function pauseCore(){S.wPaused=true;var e=document.getElementById('core-pause-btn');if(e){e.textContent='▶ Riprendi';e.onclick=resumeCore;}}
-function resumeCore(){S.wPaused=false;var e=document.getElementById('core-pause-btn');if(e){e.textContent='⏸ Pausa';e.onclick=pauseCore;}}
+function resumeCore(){S.wPaused=false;var e=document.getElementById('core-pause-btn');if(e){e.textContent='Pausa';e.onclick=pauseCore;}}
 function wBack(){
  clearInterval(TI);
  var prev=S.wStepIdx-1;
@@ -1049,10 +1050,10 @@ function finishWorkout(){
 
 // ─── POST QUIZ ────────────────────────────────────────────────────────────────
 var PQ=[
- {key:'energy',q:'Come ti senti fisicamente?',opts:['😴 Esausto','😐 Stanco ma ok','💪 Energico','🔥 Carico!']},
- {key:'difficulty',q:"Com'era la difficoltà?",opts:['😴 Troppo facile','👌 Giusta','💦 Difficile','💀 Massacrante']},
- {key:'mood',q:'Soddisfazione?',opts:['😞 Bassa','😐 Media','😊 Alta','🤩 Massima']},
- {key:'muscleWork',q:'Hai sentito i muscoli lavorare?',opts:['❌ Per niente','😐 Un po\'','💪 Sì','🔥 Molto']},
+ {key:'energy',q:'Come ti senti fisicamente?',opts:['Esausto','Stanco ma ok','Energico','Carico!']},
+ {key:'difficulty',q:"Com'era la difficoltà?",opts:['Troppo facile','Giusta','Difficile','Massacrante']},
+ {key:'mood',q:'Soddisfazione?',opts:['Bassa','Media','Alta','Massima']},
+ {key:'muscleWork',q:'Hai sentito i muscoli lavorare?',opts:['Per niente','Un po\'','Sì','Molto']},
  {key:'domsExpected',q:'Pensi di sentire indolenzimento domani?',opts:['No','Forse','Sì','Sicuramente']},
 ];
 function rPQ(){
@@ -1147,19 +1148,19 @@ async function finishSession(){
 // ─── NUTRITION ───────────────────────────────────────────────────────────────
 var NQ=[
  {key:'protein',q:'Proteine oggi?',sub:'Target massa: 130-150g · Carne, uova, latticini, legumi',
-  opts:[{l:'Pochissimo (<60g)',e:'🔴',v:1},{l:'Poco (60-100g)',e:'🟠',v:2},{l:'Equilibrato (100-130g)',e:'🟡',v:3},{l:'Tanto (130-160g)',e:'🟢',v:4},{l:'Tantissimo (>160g)',e:'💚',v:5}]},
+  opts:[{l:'Pochissimo (<60g)',e:'',v:1},{l:'Poco (60-100g)',e:'',v:2},{l:'Equilibrato (100-130g)',e:'',v:3},{l:'Tanto (130-160g)',e:'',v:4},{l:'Tantissimo (>160g)',e:'',v:5}]},
  {key:'carbs',q:'Carboidrati oggi?',sub:'Carburante · Pasta, riso, patate, frutta, pane',
-  opts:[{l:'Pochissimo (<80g)',e:'🔴',v:1},{l:'Poco (80-150g)',e:'🟠',v:2},{l:'Equilibrato (150-250g)',e:'🟡',v:3},{l:'Tanto (250-350g)',e:'🟢',v:4},{l:'Tantissimo (>350g)',e:'💚',v:5}]},
+  opts:[{l:'Pochissimo (<80g)',e:'',v:1},{l:'Poco (80-150g)',e:'',v:2},{l:'Equilibrato (150-250g)',e:'',v:3},{l:'Tanto (250-350g)',e:'',v:4},{l:'Tantissimo (>350g)',e:'',v:5}]},
  {key:'fats',q:'Grassi oggi?',sub:'Grassi buoni · Olio EVO, avocado, frutta secca, pesce',
-  opts:[{l:'Pochissimo (<30g)',e:'🔴',v:1},{l:'Poco (30-50g)',e:'🟠',v:2},{l:'Equilibrato (50-80g)',e:'🟢',v:3},{l:'Tanto (80-110g)',e:'🟡',v:4},{l:'Tantissimo (>110g)',e:'🟠',v:5}]},
+  opts:[{l:'Pochissimo (<30g)',e:'',v:1},{l:'Poco (30-50g)',e:'',v:2},{l:'Equilibrato (50-80g)',e:'',v:3},{l:'Tanto (80-110g)',e:'',v:4},{l:'Tantissimo (>110g)',e:'',v:5}]},
  {key:'calories',q:'Calorie totali stimate?',sub:'Per massa: circa 2700-2900 kcal (mantenimento ~2500)',
-  opts:[{l:'Deficit (<2400kcal)',e:'📉',v:1},{l:'Mantenimento (~2500)',e:'⚖️',v:2},{l:'Surplus lieve (2700-2900)',e:'📈',v:3},{l:'Surplus alto (>3000)',e:'🍖',v:4}]},
+  opts:[{l:'Deficit (<2400kcal)',e:'',v:1},{l:'Mantenimento (~2500)',e:'',v:2},{l:'Surplus lieve (2700-2900)',e:'',v:3},{l:'Surplus alto (>3000)',e:'',v:4}]},
  {key:'water',q:'Idratazione?',sub:'Almeno 2.5L per metabolismo e recupero muscolare',
-  opts:[{l:'Scarsa (<1.5L)',e:'🔴',v:1},{l:'Insufficiente (1.5-2L)',e:'🟠',v:2},{l:'Buona (2-2.5L)',e:'🟡',v:3},{l:'Ottima (>2.5L)',e:'💧',v:4}]},
+  opts:[{l:'Scarsa (<1.5L)',e:'',v:1},{l:'Insufficiente (1.5-2L)',e:'',v:2},{l:'Buona (2-2.5L)',e:'',v:3},{l:'Ottima (>2.5L)',e:'',v:4}]},
  {key:'sleep',q:'Sonno scorsa notte?',sub:'Il muscolo cresce durante il sonno profondo',
-  opts:[{l:'Scarso (<5h o agitato)',e:'🔴',v:1},{l:'Sufficiente (5-6h)',e:'🟠',v:2},{l:'Buono (7-8h)',e:'🟢',v:3},{l:'Ottimo (>8h o profondo)',e:'😴',v:4}]},
+  opts:[{l:'Scarso (<5h o agitato)',e:'',v:1},{l:'Sufficiente (5-6h)',e:'',v:2},{l:'Buono (7-8h)',e:'',v:3},{l:'Ottimo (>8h o profondo)',e:'',v:4}]},
  {key:'stress',q:'Stress e recupero oggi?',sub:'Il cortisolo alto frena la sintesi proteica',
-  opts:[{l:'Alto stress',e:'🔴',v:1},{l:'Moderato',e:'🟡',v:2},{l:'Tranquillo',e:'🟢',v:3},{l:'Recupero ottimale',e:'💚',v:4}]},
+  opts:[{l:'Alto stress',e:'',v:1},{l:'Moderato',e:'',v:2},{l:'Tranquillo',e:'',v:3},{l:'Recupero ottimale',e:'',v:4}]},
  {key:'note',q:'Note extra (opzionale)',sub:'Pasto saltato, stomaco in disordine, integratori...'},
 ];
 var NQ_MACRO_KEYS=['protein','carbs','fats','calories'];
@@ -1174,8 +1175,8 @@ function rNutPhotoScreen(){
  var allDone=uploads.length>0&&uploads.every(function(u){return u.status==='done'||u.status==='error';});
  var anyLoading=uploads.some(function(u){return u.status==='loading';});
  var uploadsHtml=uploads.map(function(u,i){
-  if(u.status==='loading')return '<div style="background:#18181b;border-radius:10px;padding:10px 12px;margin-bottom:6px;color:#71717a;font-size:13px">⏳ Analisi foto '+(i+1)+'...</div>';
-  if(u.status==='error')return '<div style="background:#1a0000;border-radius:10px;padding:10px 12px;margin-bottom:6px;color:#f87171;font-size:12px">⚠️ Foto '+(i+1)+': errore analisi</div>';
+  if(u.status==='loading')return '<div style="background:#18181b;border-radius:10px;padding:10px 12px;margin-bottom:6px;color:#71717a;font-size:13px">Analisi foto '+(i+1)+'...</div>';
+  if(u.status==='error')return '<div style="background:#1a0000;border-radius:10px;padding:10px 12px;margin-bottom:6px;color:#f87171;font-size:12px">Foto '+(i+1)+': errore analisi</div>';
   var e=u.estimate;
   return '<div style="background:#18181b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;margin-bottom:6px">'
    +'<div style="color:#d4d4d8;font-size:13px;font-weight:600;margin-bottom:3px">'+e.foodDescription+'</div>'
@@ -1185,23 +1186,23 @@ function rNutPhotoScreen(){
  }).join('');
  return '<div class="pg">'
   +'<div class="hdr"><button class="back" onclick="S.trialNutMode=false;S.nutPhotoUploads=[];go(\'home\')" style="margin:0">✕</button>'
-  +'<span style="font-weight:800;font-size:16px">🥗 NUTRIZIONE</span></div>'
+  +'<span style="font-weight:800;font-size:16px">NUTRIZIONE</span></div>'
   +(S.trialNutMode?'<div style="background:#1c1c1e;border:1px solid #3f3f46;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#6b6b70;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SURVEY PROVA — non registrata</div>':'')
   +(S.nutQueue&&S.nutQueue.length>1
    ?'<div style="background:#1c1a0e;border:1px solid #f59e0b30;border-radius:12px;padding:10px 14px;margin-bottom:14px">'
-    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="color:#f59e0b;font-size:11px;font-weight:700;letter-spacing:1px">📅 CATCH-UP</div><div style="color:#d4d4d8;font-size:13px;margin-top:2px">'+(S.nutQueueIdx+1)+' di '+S.nutQueue.length+' da compilare</div></div><div style="color:#a1a1aa;font-size:12px">'+dLabel+'</div></div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="color:#f59e0b;font-size:11px;font-weight:700;letter-spacing:1px">CATCH-UP</div><div style="color:#d4d4d8;font-size:13px;margin-top:2px">'+(S.nutQueueIdx+1)+' di '+S.nutQueue.length+' da compilare</div></div><div style="color:#a1a1aa;font-size:12px">'+dLabel+'</div></div>'
     +'<button onclick="skipNutDay()" style="width:100%;padding:6px;border-radius:8px;border:1px solid #3f3f46;background:transparent;color:#52525b;font-size:11px;cursor:pointer">Salta questo giorno (già compilato o non disponibile)</button>'
     +'</div>'
-   :'<div style="background:#18181b;border-radius:12px;padding:8px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><div style="color:#a1a1aa;font-size:13px">📅 <strong style="color:#d4d4d8">'+dLabel+'</strong></div><button onclick="skipNutDay()" style="border:none;background:transparent;color:#3f3f46;font-size:11px;cursor:pointer">Salta ×</button></div>')
+   :'<div style="background:#18181b;border-radius:12px;padding:8px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><div style="color:#a1a1aa;font-size:13px"><strong style="color:#d4d4d8">'+dLabel+'</strong></div><button onclick="skipNutDay()" style="border:none;background:transparent;color:#3f3f46;font-size:11px;cursor:pointer">Salta ×</button></div>')
   +'<div style="font-size:22px;font-weight:900;margin-bottom:6px;line-height:1.2">Cosa hai mangiato?</div>'
   +'<div style="color:#71717a;font-size:13px;margin-bottom:20px">Carica le foto dei tuoi pasti oppure compila manualmente.</div>'
   +uploadsHtml
   +'<label style="display:block;background:#18181b;border:2px dashed '+(uploads.length?'#27272a':'#3f3f46')+';border-radius:14px;padding:'+(uploads.length?'14px':'24px')+';text-align:center;cursor:pointer;margin-bottom:12px">'
-  +(uploads.length?'<div style="color:#71717a;font-size:12px">+ Aggiungi altre foto</div>':'<div style="font-size:36px;margin-bottom:8px">📷</div><div style="color:#a1a1aa;font-size:14px;font-weight:600">Carica foto pasti</div><div style="color:#52525b;font-size:12px;margin-top:4px">Multipli, dalla galleria</div>')
+  +(uploads.length?'<div style="color:#71717a;font-size:12px">+ Aggiungi altre foto</div>':'<div style="font-size:36px;margin-bottom:8px"></div><div style="color:#a1a1aa;font-size:14px;font-weight:600">Carica foto pasti</div><div style="color:#52525b;font-size:12px;margin-top:4px">Multipli, dalla galleria</div>')
   +'<input type="file" accept="image/*" multiple style="display:none" onchange="handleNutPhotos(event)">'
   +'</label>'
   +'<div style="background:#18181b;border:1px solid #27272a;border-radius:14px;padding:12px;margin-bottom:12px">'
-  +'<div style="font-size:11px;font-weight:700;color:#71717a;letter-spacing:1px;margin-bottom:8px">✏️ AGGIUNGI A TESTO</div>'
+  +'<div style="font-size:11px;font-weight:700;color:#71717a;letter-spacing:1px;margin-bottom:8px">AGGIUNGI A TESTO</div>'
   +'<div style="display:flex;gap:8px;align-items:flex-end">'
   +'<textarea id="nut-manual-text" rows="2" placeholder="Es: colazione con 2 uova e pane, 200ml latte..." style="flex:1;font-size:12px;margin:0;min-height:0;padding:8px;resize:none"></textarea>'
   +'<button class="btn" style="width:auto;padding:8px 14px;font-size:12px;background:#818cf8;flex-shrink:0;margin:0" onclick="addManualTextMeal()">Analizza</button>'
@@ -1242,15 +1243,15 @@ function rNut(){
  var queueBanner=S.nutQueue&&S.nutQueue.length>1
   ?'<div style="background:#1c1a0e;border:1px solid #f59e0b30;border-radius:12px;padding:10px 14px;margin-bottom:14px">'
    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-   +'<div><div style="color:#f59e0b;font-size:11px;font-weight:700;letter-spacing:1px">📅 CATCH-UP</div>'
+   +'<div><div style="color:#f59e0b;font-size:11px;font-weight:700;letter-spacing:1px">CATCH-UP</div>'
    +'<div style="color:#d4d4d8;font-size:13px;margin-top:2px">'+(S.nutQueueIdx+1)+' di '+S.nutQueue.length+' da compilare</div></div>'
    +'<div style="color:#a1a1aa;font-size:12px">'+tLabel+'</div>'
    +'</div>'
    +'<button onclick="skipNutDay()" style="width:100%;padding:6px;border-radius:8px;border:1px solid #3f3f46;background:transparent;color:#52525b;font-size:11px;cursor:pointer">Salta questo giorno (già compilato o non disponibile)</button>'
    +'</div>'
-  :(S.nutTarget?'<div style="background:#18181b;border-radius:12px;padding:8px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><div style="color:#a1a1aa;font-size:13px">📅 <strong style="color:#d4d4d8">'+tLabel+'</strong></div><button onclick="skipNutDay()" style="border:none;background:transparent;color:#3f3f46;font-size:11px;cursor:pointer">Salta ×</button></div>':'');
+  :(S.nutTarget?'<div style="background:#18181b;border-radius:12px;padding:8px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><div style="color:#a1a1aa;font-size:13px"><strong style="color:#d4d4d8">'+tLabel+'</strong></div><button onclick="skipNutDay()" style="border:none;background:transparent;color:#3f3f46;font-size:11px;cursor:pointer">Salta ×</button></div>':'');
  return '<div class="pg">'
-  +'<div class="hdr"><button class="back" onclick="S.trialNutMode=false;go(\'home\')" style="margin:0">✕</button><span style="font-weight:800;font-size:16px">🥗 NUTRIZIONE</span></div>'
+  +'<div class="hdr"><button class="back" onclick="S.trialNutMode=false;go(\'home\')" style="margin:0">✕</button><span style="font-weight:800;font-size:16px">NUTRIZIONE</span></div>'
   +(S.trialNutMode?'<div style="background:#1c1c1e;border:1px solid #3f3f46;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#6b6b70;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SURVEY PROVA — non registrata</div>':'')
   +queueBanner
   +'<div style="display:flex;gap:4px;margin-bottom:18px">'+bars+'</div>'
@@ -1281,7 +1282,7 @@ function calcDayCalTarget(date){
 function rProfile(){
  var p=S.aiDB.profile||{};
  var objs=['massa','ricomposizione','definizione','mantenimento'];
- var objLabels=['💪 Massa','🔁 Ricomp','🎯 Definizione','⚖️ Mantenimento'];
+ var objLabels=['Massa','Ricomp','Definizione','Mantenimento'];
  var objBtns=objs.map(function(o,i){
   var sel=p.obiettivo===o;
   return '<button onclick="S.aiDB.profile.obiettivo=\''+o+'\';render()" style="flex:1;padding:10px 6px;border-radius:10px;border:2px solid '+(sel?'#818cf8':'#27272a')+';background:'+(sel?'#1e1b4b':'#18181b')+';color:'+(sel?'#818cf8':'#71717a')+';font-size:12px;font-weight:700;cursor:pointer">'+objLabels[i]+'</button>';
@@ -1296,7 +1297,7 @@ function rProfile(){
    +'</div></div>';
  }
  return '<div class="pg">'
-  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">← Home</button><span style="font-weight:800;font-size:16px">⚙️ PROFILO</span></div>'
+  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">← Home</button><span style="font-weight:800;font-size:16px">PROFILO</span></div>'
   +'<div class="card">'
   +numInput('peso','PESO',p.peso,'kg',40,150)
   +numInput('altezza','ALTEZZA',p.altezza,'cm',140,220)
@@ -1310,7 +1311,7 @@ function rProfile(){
    var tdee=Math.round(bmr*1.375);
    var adj=tmp.obiettivo==='massa'?300:tmp.obiettivo==='definizione'?-400:tmp.obiettivo==='ricomposizione'?100:0;
    return '<div class="card" style="background:#0f1a0f;border-color:#22c55e30">'
-    +'<div class="lbl" style="color:#22c55e;margin-bottom:8px">📊 STIMA TDEE</div>'
+    +'<div class="lbl" style="color:#22c55e;margin-bottom:8px">STIMA TDEE</div>'
     +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">BMR</span><span style="color:#d4d4d8">'+bmr+' kcal</span></div>'
     +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">TDEE (att. moderata)</span><span style="color:#d4d4d8">'+tdee+' kcal</span></div>'
     +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">Aggiustamento obiettivo</span><span style="color:'+(adj>=0?'#22c55e':'#ef4444')+'">'+(adj>=0?'+':'')+adj+' kcal</span></div>'
@@ -1325,13 +1326,13 @@ function rProfile(){
    +'sv(\'ai\',S.aiDB);go(\'home\');'
    +'})()">Salva Profilo</button>'
   +'<div class="card" style="margin-top:12px;background:#0f0f0f;border-color:#27272a">'
-  +'<div class="lbl" style="color:#f59e0b;margin-bottom:8px">🔑 ANTHROPIC API KEY</div>'
+  +'<div class="lbl" style="color:#f59e0b;margin-bottom:8px">ANTHROPIC API KEY</div>'
   +'<input type="password" id="api-key-input" placeholder="sk-ant-api03-..." value="'+(localStorage.getItem('anthropicKey')||'')+'"'
   +' style="width:100%;box-sizing:border-box;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:13px;padding:10px;outline:none;font-family:monospace">'
-  +'<button class="btn" style="background:#78350f;margin-top:8px" onclick="(function(){var k=document.getElementById(\'api-key-input\').value.trim();if(k){localStorage.setItem(\'anthropicKey\',k);alert(\'✅ Chiave salvata!\');}else{localStorage.removeItem(\'anthropicKey\');alert(\'Chiave rimossa.\');}})()">Salva chiave API</button>'
+  +'<button class="btn" style="background:#78350f;margin-top:8px" onclick="(function(){var k=document.getElementById(\'api-key-input\').value.trim();if(k){localStorage.setItem(\'anthropicKey\',k);alert(\'Chiave salvata!\');}else{localStorage.removeItem(\'anthropicKey\');alert(\'Chiave rimossa.\');}})()">Salva chiave API</button>'
   +'<div style="font-size:11px;color:#52525b;margin-top:6px">La chiave è salvata solo su questo dispositivo, mai nel cloud.</div>'
   +'</div>'
-  +'<button id="restore-btn" class="btn" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;margin-top:8px" onclick="restoreFromDrive()">☁️ Ripristina da Drive</button>'
+  +'<button id="restore-btn" class="btn" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;margin-top:8px" onclick="restoreFromDrive()">Ripristina da Drive</button>'
   +'</div>';
 }
 function scoreToQty(key,score){
@@ -1395,12 +1396,12 @@ function rNutSummary(){
  var L4=['Scarso','Insufficiente','Buono','Ottimo'];
  var L4s=['Alto stress','Moderato','Tranquillo','Ottimale'];
  return '<div class="pg">'
-  +'<div class="hdr"><button class="back" onclick="S.qStep=NQ.length-1;render()" style="margin:0">← Modifica</button><span style="font-weight:800;font-size:16px">📊 RECAP NUTRIZIONE</span></div>'
+  +'<div class="hdr"><button class="back" onclick="S.qStep=NQ.length-1;render()" style="margin:0">← Modifica</button><span style="font-weight:800;font-size:16px">RECAP NUTRIZIONE</span></div>'
   +'<div style="text-align:center;margin-bottom:18px">'
   +'<div class="score-ring" style="border-color:'+col+';color:'+col+'">'+score+'</div>'
-  +'<div style="font-size:16px;font-weight:700">'+(score>=75?'💪 Ottima giornata!':score>=50?'👍 Nella norma':'⚠️ Migliorabile')+'</div>'
+  +'<div style="font-size:16px;font-weight:700">'+(score>=75?'Ottima giornata!':score>=50?'Nella norma':'Migliorabile')+'</div>'
   +'<div class="lbl" style="margin-top:4px">'+(S.nutTarget?new Date(S.nutTarget.date):new Date()).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})+'</div>'
-  +(a.fromPhotos?'<div style="margin-top:6px;display:inline-block;background:#1a2a1a;border:1px solid #22c55e40;border-radius:8px;padding:4px 10px;font-size:11px;color:#22c55e">📸 Macro da foto</div>':'')
+  +(a.fromPhotos?'<div style="margin-top:6px;display:inline-block;background:#1a2a1a;border:1px solid #22c55e40;border-radius:8px;padding:4px 10px;font-size:11px;color:#22c55e">Macro da foto</div>':'')
   +'</div>'
   +'<div class="card">'
   +'<div style="font-size:10px;font-weight:700;color:#52525b;letter-spacing:1px;margin-bottom:10px;text-align:right">CATEGORIA · STIMA QUANTITÀ</div>'
@@ -1423,7 +1424,7 @@ function rNutSummary(){
    var tRate=nextPlan&&nextPlan.id==='legs'?8:nextPlan&&nextPlan.id==='full'?7.5:7;
    var tBurnW=Math.round(45*tRate);
    return '<div class="card" style="margin-bottom:10px;background:#12121a;border-color:#3f3f6660">'
-    +'<div class="lbl" style="color:#818cf8;margin-bottom:10px">🔥 BILANCIO CALORICO</div>'
+    +'<div class="lbl" style="color:#818cf8;margin-bottom:10px">BILANCIO CALORICO</div>'
     +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">TDEE base</span><span style="color:#d4d4d8">'+dt.tdee+' kcal</span></div>'
     +(dt.goalAdj!==0?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">Obiettivo ('+dt.goal+')</span><span style="color:'+(dt.goalAdj>0?'#22c55e':'#ef4444')+'">'+(dt.goalAdj>0?'+':'')+dt.goalAdj+' kcal</span></div>':'')
     +(dt.burned>0?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">Allenamento '+dt.session.split.name+' ('+dt.session.duration+'min)</span><span style="color:#f97316">+'+dt.burned+' kcal</span></div>':'')
@@ -1439,7 +1440,7 @@ function rNutSummary(){
     +'</div>';
   })()
   +'<div style="background:#1c2a1c;border:1px solid #22c55e20;border-radius:14px;padding:14px;margin-bottom:12px">'
-  +'<div class="lbl" style="color:#22c55e;margin-bottom:8px">💡 Per domani</div>'
+  +'<div class="lbl" style="color:#22c55e;margin-bottom:8px">Per domani</div>'
   +'<div style="color:#d4d4d8;font-size:13px;line-height:1.6">'+advice+'</div>'
   +'</div>'
   +(a.note?'<div class="card"><div class="lbl" style="margin-bottom:6px">Note</div><div style="color:#a1a1aa;font-size:13px">'+a.note+'</div></div>':'')
@@ -1472,19 +1473,19 @@ function getNutAdvice(a){
  var tips=[];
  var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
  var workout=hadWorkoutOn(targetDate);
- if(!a.protein||a.protein<=2)tips.push('🥩 Proteine basse: aggiungi una fonte proteica domani (200g petto pollo +45g, 4 uova +24g, 200g ricotta +24g).');
- else if(a.protein>=4)tips.push('✅ Ottimo apporto proteico — sintesi muscolare supportata al massimo.');
- if(!a.carbs||a.carbs<=2)tips.push('🍚 Carboidrati bassi: mangia carb complessi prima dell\'allenamento domani (riso, avena, patate dolci).');
+ if(!a.protein||a.protein<=2)tips.push('Proteine basse: aggiungi una fonte proteica domani (200g petto pollo +45g, 4 uova +24g, 200g ricotta +24g).');
+ else if(a.protein>=4)tips.push('Ottimo apporto proteico — sintesi muscolare supportata al massimo.');
+ if(!a.carbs||a.carbs<=2)tips.push('Carboidrati bassi: mangia carb complessi prima dell\'allenamento domani (riso, avena, patate dolci).');
  if(!a.calories||a.calories<=2){
-  if(workout)tips.push('📈 Deficit calorico in un giorno di allenamento — stai bruciando più di quanto mangi. Aggiungi 400-600kcal post-workout per recuperare e crescere.');
-  else tips.push('📈 Sei in deficit calorico — costruire massa così è difficile. Aggiungi 300-400kcal (frutta secca + pasto più abbondante).');
+  if(workout)tips.push('Deficit calorico in un giorno di allenamento — stai bruciando più di quanto mangi. Aggiungi 400-600kcal post-workout per recuperare e crescere.');
+  else tips.push('Sei in deficit calorico — costruire massa così è difficile. Aggiungi 300-400kcal (frutta secca + pasto più abbondante).');
  } else if(a.calories===4&&!workout){
-  tips.push('⚠️ Surplus alto in un giorno di riposo — parte delle calorie extra potrebbe andare in grasso. Riserva i pasti abbondanti ai giorni di allenamento.');
+  tips.push('Surplus alto in un giorno di riposo — parte delle calorie extra potrebbe andare in grasso. Riserva i pasti abbondanti ai giorni di allenamento.');
  }
- if(!a.water||a.water<=2)tips.push('💧 Idratazione scarsa: inizia domani con 500ml appena sveglio. Obiettivo 3L totali.');
- if(!a.sleep||a.sleep<=2)tips.push('😴 Riposo insufficiente: GH peak nelle prime 2h di sonno. Prova a dormire 30min prima stasera.');
- if(!a.stress||a.stress<=2)tips.push('🧘 Stress alto: 10 min di respirazione o camminata abbassano cortisolo e migliorano il recupero.');
- if(tips.length===0)tips.push(workout?'💪 Giornata di allenamento perfetta! Nutrizione e recupero allineati — crescita garantita.':'💪 Giornata quasi perfetta! Mantieni questo standard — hai tutto ciò che serve per crescere.');
+ if(!a.water||a.water<=2)tips.push('Idratazione scarsa: inizia domani con 500ml appena sveglio. Obiettivo 3L totali.');
+ if(!a.sleep||a.sleep<=2)tips.push('Riposo insufficiente: GH peak nelle prime 2h di sonno. Prova a dormire 30min prima stasera.');
+ if(!a.stress||a.stress<=2)tips.push('Stress alto: 10 min di respirazione o camminata abbassano cortisolo e migliorano il recupero.');
+ if(tips.length===0)tips.push(workout?'Giornata di allenamento perfetta! Nutrizione e recupero allineati — crescita garantita.':'Giornata quasi perfetta! Mantieni questo standard — hai tutto ciò che serve per crescere.');
  return tips.join('<br><br>');
 }
 function pickNut(v){S.qAns[NQ[S.qStep].key]=v;S.qStep++;render();}
@@ -1583,7 +1584,7 @@ function rMealPhoto(){
   +'<button class="btn-ghost" style="margin:0" onclick="S.mealPhotoState.estimate=null;render()">Riprova</button>'
   +'</div>':'';
  return '<div class="pg">'
-  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">✕</button><span style="font-weight:800;font-size:16px">📸 CARICA PASTO</span></div>'
+  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">✕</button><span style="font-weight:800;font-size:16px">CARICA PASTO</span></div>'
   +'<div style="margin-bottom:14px">'
   +'<div class="lbl" style="margin-bottom:5px">Data del pasto</div>'
   +'<input type="date" id="meal-date" value="'+ps.date+'" max="'+today+'" onchange="S.mealPhotoState.date=this.value;S.mealPhotoState.estimate=null;render()" style="width:100%;background:#18181b;border:1px solid #27272a;border-radius:10px;padding:10px;color:#fafafa;font-size:14px">'
@@ -1593,7 +1594,7 @@ function rMealPhoto(){
   +(!ps.estimate?'<div style="margin-bottom:14px">'
    +'<div class="lbl" style="margin-bottom:5px">Foto del pasto</div>'
    +'<label style="display:block;background:#18181b;border:2px dashed #27272a;border-radius:14px;padding:24px;text-align:center;cursor:pointer">'
-   +'<div style="font-size:40px;margin-bottom:8px">📷</div>'
+   +'<div style="font-size:40px;margin-bottom:8px"></div>'
    +'<div style="color:#a1a1aa;font-size:13px">Tocca per scegliere dalla galleria</div>'
    +'<input type="file" id="meal-photo" accept="image/*" style="display:none" onchange="handleMealPhotoFile(event)">'
    +'</label>'
@@ -1602,7 +1603,7 @@ function rMealPhoto(){
    +'<div class="lbl" style="margin-bottom:5px">Dettagli aggiuntivi (opzionale)</div>'
    +'<textarea id="meal-note" rows="2" placeholder="Es: +1 cucchiaio olio, niente sale, porzione abbondante..." style="width:100%;background:#18181b;border:1px solid #27272a;border-radius:10px;padding:10px;color:#fafafa;font-size:13px;resize:none">'+(ps.note||'')+'</textarea>'
    +'</div>':'')
-  +(ps.loading?'<div style="text-align:center;padding:20px;color:#f97316">⏳ Analisi in corso...</div>':'')
+  +(ps.loading?'<div style="text-align:center;padding:20px;color:#f97316">Analisi in corso...</div>':'')
   +(ps.error?'<div style="background:#1a0000;border:1px solid #ef444450;border-radius:10px;padding:10px;margin-bottom:12px;color:#f87171;font-size:13px">'+ps.error+'</div>':'')
   +'</div>';
 }
@@ -2012,14 +2013,14 @@ function rReports(){
  var lastM=monthly.slice(-1)[0];
  var wCard=lastW?'<div style="background:#1a0a00;border:1px solid #f9731630;border-radius:14px;padding:12px;margin-bottom:8px">'
   +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-  +'<span class="lbl" style="color:#60a5fa">📅 Riepilogo settimanale</span>'
+  +'<span class="lbl" style="color:#60a5fa">Riepilogo settimanale</span>'
   +'<span style="color:#3f3f46;font-size:10px">'+lastW.weekStart+'</span></div>'
   +'<div style="color:#d4d4d8;font-size:12px;line-height:1.6">'+lastW.summary.replace(/\n/g,'<br>')+'</div>'
   +(weekly.length>1?'<div style="color:#3f3f46;font-size:10px;margin-top:6px">'+weekly.length+' report settimanali in archivio</div>':'')
   +'</div>':'';
  var mCard=lastM?'<div style="background:#0c1a1a;border:1px solid #14b8a630;border-radius:14px;padding:12px;margin-bottom:8px">'
   +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-  +'<span class="lbl" style="color:#2dd4bf">📆 Riepilogo mensile</span>'
+  +'<span class="lbl" style="color:#2dd4bf">Riepilogo mensile</span>'
   +'<span style="color:#3f3f46;font-size:10px">'+lastM.month+'/'+lastM.year+' · '+lastM.sessions+' sessioni</span></div>'
   +'<div style="color:#d4d4d8;font-size:12px;line-height:1.6">'+lastM.summary.replace(/\n/g,'<br>')+'</div>'
   +(monthly.length>1?'<div style="color:#3f3f46;font-size:10px;margin-top:6px">'+monthly.length+' report mensili in archivio</div>':'')
@@ -2033,13 +2034,13 @@ function rAI(){
   return '<div class="chat-msg" style="background:'+(m.role==='user'?'#431407':'#27272a')+';margin-'+(m.role==='user'?'left':'right')+':40px">'+m.content.replace(/\n/g,'<br>')+'</div>';
  }).join('');
  return '<div class="pg">'
-  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">←</button><span style="font-weight:800;font-size:16px">🤖 AI COACH</span></div>'
+  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">←</button><span style="font-weight:800;font-size:16px">AI COACH</span></div>'
   +'<div class="card" style="margin-bottom:10px"><div class="lbl" style="margin-bottom:5px">Profilo attivo</div><div style="color:#d4d4d8;font-size:13px">182cm · 74kg · 5-6gg/sett · Massa · Elastici 1×5+1×10+1×15+2×25kg (max 80kg)</div></div>'
-  +(rec?'<div style="background:#1c3a1c;border:1px solid #22c55e30;border-radius:14px;padding:12px;margin-bottom:10px"><div class="lbl" style="color:#22c55e;margin-bottom:5px">📈 ADATTAMENTO AUTOMATICO</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+rec+'</div></div>':'<div style="color:#52525b;font-size:12px;text-align:center;margin-bottom:12px">Completa la prima sessione+quiz per attivare l\'adattamento automatico</div>')
-  +(p&&p.totalSessions?'<div class="card" style="margin-bottom:10px"><div class="lbl" style="margin-bottom:6px">📊 Pattern</div><div style="display:flex;gap:12px;flex-wrap:wrap"><span style="color:#a1a1aa;font-size:12px">Sessioni: '+p.totalSessions+'</span><span style="color:#a1a1aa;font-size:12px">Energia: '+p.avgEnergy+'/4</span><span style="color:#a1a1aa;font-size:12px">Difficoltà: '+p.avgDifficulty+'/4</span></div></div>':'')
+  +(rec?'<div style="background:#1c3a1c;border:1px solid #22c55e30;border-radius:14px;padding:12px;margin-bottom:10px"><div class="lbl" style="color:#22c55e;margin-bottom:5px">ADATTAMENTO AUTOMATICO</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+rec+'</div></div>':'<div style="color:#52525b;font-size:12px;text-align:center;margin-bottom:12px">Completa la prima sessione+quiz per attivare l\'adattamento automatico</div>')
+  +(p&&p.totalSessions?'<div class="card" style="margin-bottom:10px"><div class="lbl" style="margin-bottom:6px">Pattern</div><div style="display:flex;gap:12px;flex-wrap:wrap"><span style="color:#a1a1aa;font-size:12px">Sessioni: '+p.totalSessions+'</span><span style="color:#a1a1aa;font-size:12px">Energia: '+p.avgEnergy+'/4</span><span style="color:#a1a1aa;font-size:12px">Difficoltà: '+p.avgDifficulty+'/4</span></div></div>':'')
   +rReports()
   +'<div id="ai-msgs" style="margin-bottom:10px">'+msgs+'</div>'
-  +(S.aiLoading?'<div style="text-align:center;color:#71717a;margin-bottom:10px;font-size:13px">⏳ Il coach ragiona...</div>':'')
+  +(S.aiLoading?'<div style="text-align:center;color:#71717a;margin-bottom:10px;font-size:13px">Il coach ragiona...</div>':'')
   +(S.aiErr?'<div style="background:#450a0a;border:1px solid #ef4444;border-radius:12px;padding:12px;margin-bottom:10px;color:#fca5a5;font-size:13px">'+S.aiErr+'</div>':'')
   +'<input type="text" id="ai-in" placeholder="Scrivi al coach..." onkeydown="if(event.key===\'Enter\')sendAI()">'
   +'<button class="btn" style="background:#f97316" onclick="sendAI()">Invia</button>'
@@ -2069,7 +2070,7 @@ async function sendAI(){
  inp.value='';
  S.aiChat.push({role:'user',content:msg});
  if(!getApiKey()){
-  S.aiChat.push({role:'assistant',content:'⚙️ Aggiungi la tua Anthropic API key nel Profilo → 🔑 API Key.'});
+  S.aiChat.push({role:'assistant',content:'Aggiungi la tua Anthropic API key nel Profilo → API Key.'});
   render();return;
  }
  S.aiLoading=true;S.aiErr='';render();
@@ -2105,13 +2106,13 @@ function getFloatCtx(){
   var ex=step.ex;
   return{
    type:'exercise',
-   label:'💪 '+ex.name+' — serie '+step.setNum+'/'+step.totalSets,
+   label:''+ex.name+' — serie '+step.setNum+'/'+step.totalSets,
    extra:'\n\nCONTESTO ESERCIZIO: stai eseguendo "'+ex.name+'" (serie '+step.setNum+'/'+step.totalSets+')\nMuscoli: '+ex.muscles+'\nDescrizione: '+ex.desc+(ex.band?'\nElastico target: '+ex.band:'')+(S.aiDB.loads&&S.aiDB.loads[ex.id]?'\nCarico reale ultima volta: '+S.aiDB.loads[ex.id].kg+'kg ('+S.aiDB.loads[ex.id].date+')':'')
   };
  }
  // General context
- var viewLabel={home:'🏠 Home',post_quiz:'🏁 Post-workout',nutrition:'🥗 Nutrizione',history:'📊 Storico',workout:'⏱ Riposo'};
- return{type:'general',label:'🗣 Feedback generale — '+(viewLabel[S.view]||S.view),extra:''};
+ var viewLabel={home:'Home',post_quiz:'Post-workout',nutrition:'Nutrizione',history:'Storico',workout:'Riposo'};
+ return{type:'general',label:'Feedback generale — '+(viewLabel[S.view]||S.view),extra:''};
 }
 function rFloatingAI(){
  var ctx=getFloatCtx();
@@ -2122,7 +2123,7 @@ function rFloatingAI(){
   +'<div class="ai-slide '+(S.aiOpen?'open':'')+'">'
   +'<div class="ai-slide-head">'
   +'<div>'
-  +'<div style="font-size:11px;font-weight:800;color:#fafafa;margin-bottom:4px">🤖 COACH AI</div>'
+  +'<div style="font-size:11px;font-weight:800;color:#fafafa;margin-bottom:4px">COACH AI</div>'
   +'<div class="ai-ctx-pill">'+ctx.label+'</div>'
   +'</div>'
   +'<div style="display:flex;align-items:center;gap:8px">'
@@ -2133,7 +2134,7 @@ function rFloatingAI(){
   +'<div class="ai-slide-msgs" id="float-msgs">'
   +(!S.floatChat.length?'<div style="color:#52525b;font-size:13px;text-align:center;padding:20px 0">Scrivi una domanda sull\'esercizio o un feedback generale</div>':'')
   +msgs
-  +(S.floatLoading?'<div style="color:#71717a;font-size:12px;text-align:center;padding:8px">⏳ Il coach risponde...</div>':'')
+  +(S.floatLoading?'<div style="color:#71717a;font-size:12px;text-align:center;padding:8px">Il coach risponde...</div>':'')
   +'</div>'
   +'<div class="ai-slide-input">'
   +'<input type="text" id="float-ai-in" placeholder="Chiedi o dai feedback..." onkeydown="if(event.key===\'Enter\')sendFloatAI()">'
@@ -2187,7 +2188,7 @@ async function sendFloatAI(){
  var ctx=getFloatCtx();
  S.floatChat.push({role:'user',content:msg});
  if(!getApiKey()){
-  S.floatChat.push({role:'assistant',content:'⚙️ Aggiungi la tua Anthropic API key nel Profilo → 🔑 API Key.'});
+  S.floatChat.push({role:'assistant',content:'Aggiungi la tua Anthropic API key nel Profilo → API Key.'});
   updateFloatAI();return;
  }
  S.floatLoading=true;updateFloatAI();
@@ -2249,7 +2250,7 @@ async function sendFloatAI(){
   sv('ai',S.aiDB);
   syncToDrive();
  }catch(e){
-  S.floatChat.push({role:'assistant',content:'⚠️ Errore: '+e.message});
+  S.floatChat.push({role:'assistant',content:'Errore: '+e.message});
  }
  S.floatLoading=false;updateFloatAI();
  setTimeout(function(){var el=document.getElementById('float-msgs');if(el)el.scrollTop=el.scrollHeight;},100);
