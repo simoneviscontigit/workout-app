@@ -295,6 +295,8 @@ function withCoachOverride(e){
   if(o.band)ov.band=o.band;
   if(o.reps)ov.reps=o.reps;
   if(o.repsMax)ov.repsMax=o.repsMax;
+  if(o.sets)ov.sets=o.sets;
+  if(o.restSec)ov.restSec=o.restSec;
   ov.coachNote=o.note||'';
   ov.coachSrc=cp?'sumi':'mech';
  }
@@ -387,7 +389,7 @@ function buildSteps(all){
    var ts=ex.sets||3;
    for(var i=1;i<=ts;i++){
     s.push({type:'work',ex:ex,exIdx:ei,setNum:i,totalSets:ts});
-    if(i<ts) s.push({type:'rest',dur:90,isSetRest:true,nextName:ex.name,nextBand:ex.band||null});
+    if(i<ts) s.push({type:'rest',dur:(ex.restSec||90),isSetRest:true,nextName:ex.name,nextBand:ex.band||null});
     else if(ei<all.length-1) s.push({type:'rest',dur:60,isSetRest:false,nextName:all[ei+1].name,nextBand:all[ei+1].band||null});
    }
   }
@@ -1003,17 +1005,16 @@ function logReps(n){
  S.wAwaitReps=false;S.wSets++;advStep();
 }
 function setLoad(id){
+ // Feedback per Sumi: NON cambia la scheda al volo. Sumi lo valuta e decide il carico.
  var ex=(S.wEx||[]).find(function(x){return x.id===id;})||{};
- var cur=(ex.band||'').replace(/kg/i,'');
- var v=prompt('Carico reale per "'+(ex.name||'')+'" (es. 40 oppure 35-45). Vuoto = togli:',cur);
+ var cur=(S.aiDB.loads&&S.aiDB.loads[id]&&S.aiDB.loads[id].kg)||'';
+ var v=prompt('Feedback a Sumi per "'+(ex.name||'')+'" — quanto hai davvero usato (es. 40). Lo valuta Sumi di notte, non cambia subito la scheda. Vuoto = togli:',cur);
  if(v===null)return;
  v=(''+v).trim();
  if(!S.aiDB.loads)S.aiDB.loads={};
- if(v===''){if(S.aiDB.loads[id])delete S.aiDB.loads[id];if(ex)ex.band=undefined;}
+ if(v===''){if(S.aiDB.loads[id])delete S.aiDB.loads[id];}
  else{
-  var disp=/^[\d\s.\-]+$/.test(v)?v.replace(/\s/g,'')+'kg':v;
   S.aiDB.loads[id]={kg:v.replace(/kg/i,'').replace(/\s/g,''),name:ex.name,date:new Date().toISOString().split('T')[0],manual:true};
-  if(ex)ex.band=disp;
  }
  sv('ai',S.aiDB);render();
 }
