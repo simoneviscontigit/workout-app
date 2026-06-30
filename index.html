@@ -108,16 +108,16 @@ const DB={
   {id:'r1',cat:'pull',name:'Band Bent-over Row',video:'Band bent-over row .mp4',
    desc:'Piedi sull\'elastico, busto a 45° (schiena piatta!). Tira i gomiti dietro verso l\'anca, non verso il soffitto. Contrai la schiena in cima. Abbassa 3s.',
    muscles:'Dorsali, Romboidi',reps:12,repsMax:16,sets:4,band:'20-30kg'},
-  {id:'r2',cat:'pull',name:'Band Pullover',video:null,
+  {id:'r2',cat:'pull',name:'Band Pullover',video:'Band Pullover.mp4',
    desc:'Elastico ancorato in ALTO sulla porta. Allontanati, braccia tese sopra la testa. Tira in arco verso le cosce mantenendo i gomiti quasi dritti. La tensione è presente da subito.',
    muscles:'Dorsali, Core',reps:12,repsMax:16,sets:4,band:'15-25kg'},
-  {id:'r3',cat:'pull',name:'Biceps Curl',video:null,
+  {id:'r3',cat:'pull',name:'Biceps Curl',video:'Band Biceps Hammer Curl.mp4',
    desc:'Piedi sull\'elastico, presa supinata. Gomiti fissi ai fianchi — non muoverli mai. Curla supinando il polso in cima 1s. Abbassa lento 3 secondi.',
    muscles:'Bicipiti',reps:10,repsMax:14,sets:4,band:'35kg'},
-  {id:'r4',cat:'pull',name:'Hammer Curl',video:null,
+  {id:'r4',cat:'pull',name:'Hammer Curl',video:'Band Biceps Hammer Curl.mp4',
    desc:'Presa neutra, pollice verso l\'alto per tutta l\'esecuzione. Gomiti fissi. Colpisce brachiale e brachioradiale. Movimento lento e controllato.',
    muscles:'Bicipiti, Brachiale',reps:12,repsMax:16,sets:3,band:'25-35kg'},
-  {id:'r5',cat:'pull',name:'Tricep Overhead',video:null,
+  {id:'r5',cat:'pull',name:'Tricep Overhead',video:'Band Tricep Overhead.mp4',
    desc:'Elastico ancorato basso. Braccio sopra la testa, gomito fisso. Estendi verso l\'alto. Il lungo capo del tricipite è massimamente allungato in questa posizione.',
    muscles:'Tricipiti (lungo capo)',reps:12,repsMax:16,sets:3,band:'15-20kg'},
  ],
@@ -125,7 +125,7 @@ const DB={
   {id:'s1',cat:'shoulders',name:'Band Shoulder Press',video:'Band shoulder press.mp4',
    desc:'Piedi sull\'elastico, maniglie alle orecchie. Premi sopra la testa bloccando i gomiti 1s in cima. Abbassa lento 3s. Compound spalle.',
    muscles:'Deltoide, Tricipiti',reps:10,repsMax:14,sets:4,band:'35kg'},
-  {id:'s2',cat:'shoulders',name:'Lateral Raises',video:null,
+  {id:'s2',cat:'shoulders',name:'Lateral Raises',video:'Band Lateral Raises.mp4',
    desc:'Piedi sull\'elastico. Alza le braccia di lato a gomiti semi-flessi. Pausa 1 secondo in alto. Abbassa 3 secondi. Deltoide medio — insostituibile.',
    muscles:'Deltoide medio',reps:15,repsMax:20,sets:4,band:'10-15kg'},
   {id:'s3',cat:'shoulders',name:'Face Pull',video:'Face pull con elastico.mp4',
@@ -139,7 +139,7 @@ const DB={
   {id:'l2',cat:'legs',name:'Bulgarian Split Squat',video:'Bulgarian split squat con elastico.mp4',
    desc:'Piede posteriore su sedia. Scendi col ginocchio anteriore a 90°. Elastico sulle spalle per overload. Busto eretto, spingi col tallone avanti.',
    muscles:'Quadricipiti, Glutei',reps:10,repsMax:14,sets:4,band:'25kg'},
-  {id:'l3',cat:'legs',name:'Band Squat',video:null,
+  {id:'l3',cat:'legs',name:'Band Squat',video:'Band Squat.mp4',
    desc:'Elastico sulle spalle. Squat profondo, cosce parallele al suolo. Talloni a terra, ginocchia sui piedi. Variante bilaterale con carico progressivo.',
    muscles:'Quadricipiti, Glutei',reps:15,repsMax:20,sets:4,band:'25-35kg'},
   {id:'l4',cat:'legs',name:'Band Leg Curl',video:'Band leg curl .mp4',
@@ -147,50 +147,44 @@ const DB={
    muscles:'Femorali',reps:12,repsMax:16,sets:3,band:'15-25kg'},
  ],
  core:[
-  {id:'c1', cat:'core',name:'Hollow Body Hold',    time:30, desc:'Schiena piatta, lombare incollata. Braccia tese sopra la testa, gambe a 30cm. Spalle alzate. Nessun cedimento.',muscles:'Core completo'},
-  {id:'c2', cat:'core',name:'V-Up',                time:35, desc:'Sdraiato, braccia oltre la testa. Alza gambe tese e busto insieme cercando di toccare le punte. Abbassa controllato senza appoggiarti.',muscles:'Retto addominale'},
-  {id:'c3', cat:'core',name:'Windshield Wiper',    time:35, desc:'Sdraiato, gambe verticali tese. Abbassa lentamente verso destra, centro, sinistra. Zero momentum — è il core che controlla.',muscles:'Obliqui'},
-  {id:'c4', cat:'core',name:'Bicycle',             time:40, desc:'Mani alla nuca, gomiti larghi. Gomito dx verso ginocchio sn, poi inverti. Gambe basse. Ritmo controllato — non correre.',muscles:'Obliqui, Retto'},
-  {id:'c5', cat:'core',name:'Heel Tap',            time:40, desc:'Sdraiato, ginocchia piegate, piedi piatti. Spalle alzate. Tocca tallone dx con mano dx, poi sn con sn. Contrazione laterale.',muscles:'Obliqui laterali'},
-  {id:'c6', cat:'core',name:'Russian Twist',       time:40, desc:'Seduto a 45°, piedi sollevati. Ruota il busto completamente lato a lato, braccia tese. Più lento è più intenso.',muscles:'Obliqui'},
-  {id:'c7', cat:'core',name:'Reverse Crunch',      time:35, desc:'Sdraiato, gambe a 90°. Porta i glutei verso il soffitto sollevando il bacino. Abbassa lento senza toccare terra.',muscles:'Addominali bassi'},
-  {id:'c8', cat:'core',name:'Tabletop Crunch',          time:35, desc:'Gambe a 90° sospese. Alza solo le spalle verso le ginocchia — niente collo. Breve pausa in cima a ogni rep.',muscles:'Retto addominale'},
-  {id:'c9', cat:'core',name:'Tuck Crunch',         time:35, desc:'Porta ginocchia al petto e busto verso le ginocchia contemporaneamente. Distendi parzialmente e ripeti senza appoggiarti.',muscles:'Core completo'},
-  {id:'c10',cat:'core',name:'Horizontal Scissors', time:40, desc:'Gambe a 15-20cm. Incrocia le gambe alternando quale sta sopra — forbice orizzontale. Lombare sempre incollata a terra.',muscles:'Addominali bassi'},
-  {id:'c11',cat:'core',name:'Cross Crunch',        time:35, desc:'Mani alla nuca. Gomito dx verso ginocchio sn alzando il busto, poi inverti. Lento e controllato — non rimbalzare.',muscles:'Obliqui, Retto'},
-  {id:'c12',cat:'core',name:'Mountain Climber',    time:35, desc:'Plank braccia tese. Porta il ginocchio al petto alternando, ritmo sostenuto. Bacino stabile — non alzarlo.',muscles:'Core, Cardio'},
+  {id:'c1', cat:'core',name:'Hollow Body Hold',    video:'core-hollow-body-hold.mp4',    time:30, desc:'Schiena piatta, lombare incollata. Braccia tese sopra la testa, gambe a 30cm. Spalle alzate. Nessun cedimento.',muscles:'Core completo'},
+  {id:'c2', cat:'core',name:'V-Up',                video:'core-v-up.mp4',                time:35, desc:'Sdraiato, braccia oltre la testa. Alza gambe tese e busto insieme cercando di toccare le punte. Abbassa controllato senza appoggiarti.',muscles:'Retto addominale'},
+  {id:'c3', cat:'core',name:'Windshield Wiper',    video:'core-windshield-wiper.mp4',    time:35, desc:'Sdraiato, gambe verticali tese. Abbassa lentamente verso destra, centro, sinistra. Zero momentum — è il core che controlla.',muscles:'Obliqui'},
+  {id:'c4', cat:'core',name:'Bicycle',             video:'core-bicycle.mp4',             time:40, desc:'Mani alla nuca, gomiti larghi. Gomito dx verso ginocchio sn, poi inverti. Gambe basse. Ritmo controllato — non correre.',muscles:'Obliqui, Retto'},
+  {id:'c5', cat:'core',name:'Heel Tap',            video:'core-heel-tap.mp4',            time:40, desc:'Sdraiato, ginocchia piegate, piedi piatti. Spalle alzate. Tocca tallone dx con mano dx, poi sn con sn. Contrazione laterale.',muscles:'Obliqui laterali'},
+  {id:'c7', cat:'core',name:'Reverse Crunch',      video:'core-reverse-crunch.mp4',      time:35, desc:'Sdraiato, gambe a 90°. Porta i glutei verso il soffitto sollevando il bacino. Abbassa lento senza toccare terra.',muscles:'Addominali bassi'},
+  {id:'c8', cat:'core',name:'Tabletop Crunch',     video:'core-tabletop-crunch.mp4',     time:35, desc:'Gambe a 90° sospese. Alza solo le spalle verso le ginocchia — niente collo. Breve pausa in cima a ogni rep.',muscles:'Retto addominale'},
+  {id:'c9', cat:'core',name:'Tuck Crunch',         video:'core-tuck-crunch.mp4',         time:35, desc:'Porta ginocchia al petto e busto verso le ginocchia contemporaneamente. Distendi parzialmente e ripeti senza appoggiarti.',muscles:'Core completo'},
+  {id:'c10',cat:'core',name:'Horizontal Scissors', video:'core-horizontal-scissors.mp4', time:40, desc:'Gambe a 15-20cm. Incrocia le gambe alternando quale sta sopra — forbice orizzontale. Lombare sempre incollata a terra.',muscles:'Addominali bassi'},
+  {id:'c11',cat:'core',name:'Cross Crunch',        video:'core-cross-crunch.mp4',        time:35, desc:'Mani alla nuca. Gomito dx verso ginocchio sn alzando il busto, poi inverti. Lento e controllato — non rimbalzare.',muscles:'Obliqui, Retto'},
+  {id:'c12',cat:'core',name:'Mountain Climber',    video:'core-mountain-climber.mp4',    time:35, desc:'Plank braccia tese. Porta il ginocchio al petto alternando, ritmo sostenuto. Bacino stabile — non alzarlo.',muscles:'Core, Cardio'},
   {id:'c13',cat:'core',name:'Twist Plank',         time:40, desc:'Plank su avambracci. Ruota il bacino verso dx quasi a sfiorare il suolo, poi sn. Il core frena il movimento.',muscles:'Obliqui, Core'},
-  {id:'c14',cat:'core',name:'Alternating Side Crunch',time:35,desc:'Gambe piegate verso dx. Alza il busto verso il ginocchio alto per metà tempo, poi cambia lato. Solo l\'obliquo lavora.',muscles:'Obliqui'},
-  {id:'c15',cat:'core',name:'Sit-up',              time:40, desc:'Piedi a terra, mani alla nuca. Sali col busto fino alla verticale, abbassa lento controllando la discesa. Lombare che striscia a terra.',muscles:'Retto addominale'},
-  {id:'c16',cat:'core',name:'Alternating Toe Touch',time:40, desc:'Sdraiato, gambe tese verso il soffitto. Alza il busto e tocca la punta del piede dx con la mano sn, poi inverti. Torna giù lento.',muscles:'Retto, Obliqui'},
-  {id:'c17',cat:'core',name:'Side Plank',           time:40, desc:'Appoggiati su un avambraccio, corpo in linea retta. Reggi per metà tempo su ogni lato. Fianchi alti, non cedere.',muscles:'Obliqui, Core'},
-  {id:'c18',cat:'core',name:'X Crunch',             time:35, desc:'Sdraiato a X con braccia e gambe aperte. Porta gomito dx verso ginocchio sn sollevando busto e gamba, poi inverti. Movimento diagonale.',muscles:'Obliqui, Retto'},
-  {id:'c19',cat:'core',name:'Leg Raise',            time:40, desc:'Sdraiato, mani sotto i glutei. Tieni le gambe tese e alzale a 90°, abbassa lento fermandoti a 15cm da terra. Lombare incollata.',muscles:'Addominali bassi'},
-  {id:'c20',cat:'core',name:'Double Crunch',        time:35, desc:'Soleva contemporaneamente spalle e ginocchia verso il centro. Le due metà del corpo si avvicinano — contrai forte in cima prima di abbassare.',muscles:'Retto completo'},
-  {id:'c21',cat:'core',name:'Ronaldo Crunch',       time:35, desc:'Sdraiato, una gamba tesa a 45° e l\'altra a terra. Fai crunch verso la gamba alzata. Alterna ogni set. Movimento obliquo verso l\'anca.',muscles:'Retto, Obliqui'},
-  {id:'c22',cat:'core',name:'Plank Jack',           time:35, desc:'Posizione plank braccia tese. Salta aprendo e chiudendo i piedi (jumping jack). Core stabile, bacino fermo, non oscillare.',muscles:'Core, Cardio'},
+  {id:'c14',cat:'core',name:'Alternating Side Crunch',video:'core-alternating-side-crunch.mp4',time:35,desc:'Gambe piegate verso dx. Alza il busto verso il ginocchio alto per metà tempo, poi cambia lato. Solo l\'obliquo lavora.',muscles:'Obliqui'},
+  {id:'c16',cat:'core',name:'Alternating Toe Touch',video:'core-alternating-toe-touch.mp4',time:40, desc:'Sdraiato, gambe tese verso il soffitto. Alza il busto e tocca la punta del piede dx con la mano sn, poi inverti. Torna giù lento.',muscles:'Retto, Obliqui'},
+  {id:'c17',cat:'core',name:'Side Plank',           video:'core-side-plank.mp4',          time:40, desc:'Appoggiati su un avambraccio, corpo in linea retta. Reggi per metà tempo su ogni lato. Fianchi alti, non cedere.',muscles:'Obliqui, Core'},
+  {id:'c19',cat:'core',name:'Leg Raise',            video:'core-leg-raise.mp4',           time:40, desc:'Sdraiato, mani sotto i glutei. Tieni le gambe tese e alzale a 90°, abbassa lento fermandoti a 15cm da terra. Lombare incollata.',muscles:'Addominali bassi'},
+  {id:'c20',cat:'core',name:'Double Crunch',        video:'core-double-crunch.mp4',       time:35, desc:'Soleva contemporaneamente spalle e ginocchia verso il centro. Le due metà del corpo si avvicinano — contrai forte in cima prima di abbassare.',muscles:'Retto completo'},
+  {id:'c22',cat:'core',name:'Plank Jack',           video:'core-plank-jack.mp4',          time:35, desc:'Posizione plank braccia tese. Salta aprendo e chiudendo i piedi (jumping jack). Core stabile, bacino fermo, non oscillare.',muscles:'Core, Cardio'},
   {id:'c23',cat:'core',name:'Karate Kid',           time:40, desc:'In piedi. Solleva il ginocchio dx verso il petto ruotando il busto a dx, poi sn verso sn. Ritmo costante, core contratto per l\'equilibrio.',muscles:'Obliqui, Core, Equilibrio'},
   {id:'c24',cat:'core',name:'Unicorn Crunch',       time:35, desc:'Sdraiato, una gamba tesa alzata, braccio opposto teso. Crunch diagonale portando il gomito verso il ginocchio alzato. Alterna ogni rep.',muscles:'Obliqui, Retto'},
   {id:'c25',cat:'core',name:'V-sit',                time:30, desc:'Seduto, gambe a 45° e busto inclinato indietro — forma a V. Braccia tese parallele alle gambe. Tieni la posizione. Il core regge tutto.',muscles:'Core completo, Flessori anca'},
-  {id:'c26',cat:'core',name:'Tamburello',           time:40, desc:'Sdraiato, gambe a 45°. Scalcia alternando in ritmo (flutter kick) portando le braccia verso la coscia che scende. Ritmo cadenzato.',muscles:'Addominali bassi, Obliqui'},
-  {id:'c27',cat:'core',name:'Frog Reverse Crunch',  time:35, desc:'Sdraiato, suole dei piedi unite (rana). Porta le ginocchia verso il petto sollevando il bacino. Abbassa controllato senza toccare terra.',muscles:'Addominali bassi'},
-  {id:'c28',cat:'core',name:'Vertical Scissors',    time:40, desc:'Sdraiato, gambe tese al soffitto. Abbassa una gamba quasi a terra mentre l\'altra resta su. Alterna il movimento in forbice verticale.',muscles:'Addominali bassi, Flessori'},
-  {id:'c29',cat:'core',name:'Crunch a Libro',       time:35, desc:'Sdraiato, braccia oltre la testa. Porta simultaneamente braccia e gambe tese verso il centro — il corpo si chiude come un libro. Apri lento.',muscles:'Retto completo'},
+  {id:'c26',cat:'core',name:'Flutter Kick',         video:'core-flutter-kick.mp4',        time:40, desc:'Sdraiato, gambe a 45°. Scalcia alternando in ritmo (flutter kick) portando le braccia verso la coscia che scende. Ritmo cadenzato.',muscles:'Addominali bassi, Obliqui'},
+  {id:'c28',cat:'core',name:'Vertical Scissors',    video:'core-vertical-scissors.mp4',   time:40, desc:'Sdraiato, gambe tese al soffitto. Abbassa una gamba quasi a terra mentre l\'altra resta su. Alterna il movimento in forbice verticale.',muscles:'Addominali bassi, Flessori'},
  ],
  // ─ Circuiti predefiniti: seq = IDs degli esercizi, 'B' = pausa 30s
  coreCircuits:[
   {id:'cc1',label:'Retto · ~6 min',
    seq:['c1','c2','c20','c8','c16','c19','B','c7','c12']},
   {id:'cc2',label:'Obliqui & Rotazione · ~6 min',
-   seq:['c25','c3','c6','c4','c11','c5','B','c14','c23']},
+   seq:['c25','c3','c16','c4','c11','c5','B','c14','c23']},
   {id:'cc3',label:'Addominali Bassi · ~6 min',
    seq:['c1','c19','c28','c10','c7','B','c2','c22']},
   {id:'cc4',label:'Isometrico & Anti-rotazione · ~6 min',
    seq:['c1','c25','c17','c13','B','c3','c4','c12']},
   {id:'cc5',label:'Dinamico Mix · ~6 min',
-   seq:['c2','c5','c11','c6','c16','B','c10','c22','c23']},
+   seq:['c2','c5','c11','c14','c16','B','c10','c22','c23']},
   {id:'cc6',label:'Full Core · ~6 min',
-   seq:['c1','c20','c19','c6','B','c28','c13','c3','c12']},
+   seq:['c1','c20','c19','c14','B','c28','c13','c3','c12']},
  ]
 };
 
@@ -203,12 +197,12 @@ const COLOR_VARIANTS={
  '#f59e0b':{light:'#fde68a',dark:'#b45309'}, // CORE — ambra
 };
 const PLAN=[
- {id:'push', name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:2,shoulders:1},desc:'Petto · Tricipiti · Spalle'},
- {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:3},            desc:'Dorsali · Bicipiti · Braccia'},
- {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:3},            desc:'Quadricipiti · Glutei · Femorali'},
- {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:2,shoulders:1},desc:'Petto · Tricipiti · Spalle'},
- {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:2,shoulders:1},desc:'Dorsali · Bicipiti + Spalle'},
- {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:1,legs:1},desc:'Corpo completo · Mix intelligente'},
+ {id:'push', name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:1},desc:'Petto · Tricipiti · Spalle'},
+ {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4},            must:['r3'],desc:'Dorsali · Bicipiti (curl) · Braccia'},
+ {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:4},            desc:'Quadricipiti · Glutei · Femorali'},
+ {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:1},desc:'Petto · Tricipiti · Spalle'},
+ {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:3,shoulders:1},must:['r4'],desc:'Dorsali · Bicipiti (hammer) + Spalle'},
+ {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:1,legs:1,shoulders:1},desc:'Corpo completo · Mix intelligente'},
 ];
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -341,12 +335,21 @@ function genWorkout(splitIdx,skipped){
  var adapt=S.aiDB.adaptation||{};
  var avoid=adapt.avoidExercises||[];
  var suggest=adapt.suggestExercises||[];
+ var must=(split.must||[]).slice(); // esercizi sempre presenti (es. bicipiti garantiti sui pull day)
  var exercises=[],used=[];
  Object.entries(split.cats).forEach(function(entry){
   var cat=entry[0],count=entry[1];
-  var preferred=DB[cat].filter(function(e){return suggest.includes(e.id)&&!skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id);});
-  var pool=DB[cat].filter(function(e){return !skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&!preferred.find(function(p){return p.id===e.id;});});
-  var sel=preferred.concat(shuf(pool)).slice(0,count);
+  // "must" di questa categoria forzati per primi (rispettano skipped/avoid), contano nel count
+  var forced=[];
+  must.forEach(function(id){
+   if(forced.length>=count)return;
+   var e=(DB[cat]||[]).find(function(x){return x.id===id;});
+   if(e&&!skipped.includes(id)&&!avoid.includes(id)&&!used.includes(id))forced.push(e);
+  });
+  var notForced=function(e){return !forced.find(function(p){return p.id===e.id;});};
+  var preferred=DB[cat].filter(function(e){return suggest.includes(e.id)&&!skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&notForced(e);});
+  var pool=DB[cat].filter(function(e){return !skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&!preferred.find(function(p){return p.id===e.id;})&&notForced(e);});
+  var sel=forced.concat(preferred.concat(shuf(pool)).slice(0,Math.max(0,count-forced.length)));
   sel.forEach(function(e){exercises.push(applyAdaptation(withCoachOverride(e)));used.push(e.id);});
  });
  // Scegli un circuito core casuale e costruisci la sequenza
@@ -521,7 +524,6 @@ function rHome(){
  var t=PLAN[S.splitIdx%6];
  var last=S.history[S.history.length-1];
  var wk=S.history.filter(function(h){return new Date(h.date)>new Date(Date.now()-7*864e5);}).length;
- var rec=S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.shortRec;
  var cycle='';
  PLAN.forEach(function(sp,i){
   var cur=i===S.splitIdx%6,done=i<S.splitIdx%6;
@@ -546,6 +548,7 @@ function rHome(){
    ?'<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px"><div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:8px">'+S.nutReminderCount+' giorni senza nutrizione</div><div style="display:flex;gap:8px"><button class="btn" style="background:#27272a;color:#fff;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;startWorkout()">Fai dopo</button><button class="btn" style="background:#f59e0b;color:#000;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;openNutrition()">Compila</button></div></div>'
    :'')
   +'<button class="btn" style="background:#F97316;color:#fff;border:2px solid #fafafa;margin:0;padding:26px;font-size:28px" onclick="startWorkout()">Inizia</button>'
+  +'<button class="btn" style="background:transparent;color:#f97316;border:2px solid #f97316;margin:10px 0 0;padding:14px;font-size:14px;font-weight:700;letter-spacing:1px" onclick="startExtra()">✦ EXTRA 20′ · full-body</button>'
   +'<div style="display:flex;border:2px solid #27272a;margin-top:16px">'
   +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+S.history.length+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Sessioni</div></div>'
   +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+(last?last.duration+"'":'—')+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Ultima</div></div>'
@@ -559,8 +562,7 @@ function rHome(){
   +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #F97316;color:#F97316;margin:0;padding:16px;font-size:14px" onclick="go(\'ai\')">AI</button>'
   +'</div>'
   +(S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.recoveryFlag&&S.aiDB.adaptation.recoveryAction?'<div style="border:2px solid #ef4444;background:#1a0000;padding:12px;margin-top:14px"><div class="lbl" style="color:#ef4444;font-size:11px;margin-bottom:6px">Recovery — allenamento adattato</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.adaptation.recoveryAction+'</div></div>':'')
-  +(S.aiDB&&S.aiDB.nutritionAdvice?'<div style="border:2px solid #22c55e;background:#0a1a0a;padding:12px;margin-top:14px"><div class="lbl" style="color:#22c55e;font-size:11px;margin-bottom:6px">▸ Nutrizione — consiglio domani</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.nutritionAdvice+'</div></div>':'')
-  +(rec?'<div style="border:2px solid #F97316;background:#1a0a00;padding:12px;margin-top:14px"><div class="lbl" style="color:#F97316;font-size:11px;margin-bottom:6px">Adattamento attivo</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+rec+'</div></div>':'')
+  +(S.aiDB&&S.aiDB.nutritionAdvice?'<div style="border:2px solid #F97316;background:#1a0a00;padding:12px;margin-top:14px"><div class="lbl" style="color:#F97316;font-size:11px;margin-bottom:6px">▸ Nutrizione — consiglio domani</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.nutritionAdvice+'</div></div>':'')
   +'<div style="display:flex;gap:6px;margin-top:16px">'
   +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialWorkout()">Sessione prova</button>'
   +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialNutrition()">Survey prova</button>'
@@ -697,7 +699,72 @@ function launchWorkout(){
  S.trialMode=false;
  go('workout');
 }
+// ─── EXTRA 20′: circuito A CORPO LIBERO a tempo, additivo ─────────────────────
+// Entra in storico/conteggio/calorie ma NON tocca rotazione split, progressione, adattamento.
+// I circuiti li seleziona Sumi (coachPlan.extra.circuits, equilibrati e a rotazione);
+// fallback locale dal pool corpo-libero finché Sumi non ha ancora girato.
+const BW_POOL=[
+ // cardio
+ {id:'bw_jj',cat:'cardio',name:'Jumping Jack',time:40,desc:'Salta aprendo gambe e braccia sopra la testa, poi richiudi. Ritmo costante e sostenuto, atterra morbido sugli avampiedi.',muscles:'Cardio, Full-body'},
+ {id:'bw_hk',cat:'cardio',name:'High Knees',time:40,desc:'Corsa sul posto portando le ginocchia all\'altezza dei fianchi. Busto eretto, addome attivo, braccia che accompagnano.',muscles:'Cardio, Gambe'},
+ {id:'bw_sj',cat:'cardio',name:'Squat Jump',time:40,desc:'Scendi in squat ed esplodi in alto in un salto. Atterra morbido riassorbendo con le ginocchia e riparti subito.',muscles:'Gambe, Cardio'},
+ {id:'bw_sk',cat:'cardio',name:'Skater',time:40,desc:'Salti laterali da un piede all\'altro come un pattinatore, portando la gamba dietro in diagonale. Atterra controllato.',muscles:'Gambe, Glutei, Cardio'},
+ {id:'bw_mc',cat:'cardio',name:'Mountain Climber',time:40,desc:'In plank a braccia tese, porta alternate le ginocchia al petto a ritmo sostenuto. Bacino stabile, non alzarlo.',muscles:'Core, Cardio'},
+ // lower
+ {id:'bw_sq',cat:'lower',name:'Squat a corpo libero',time:40,desc:'Piedi a larghezza spalle. Scendi spingendo i glutei indietro fino a cosce parallele, talloni a terra. Risali spingendo coi talloni.',muscles:'Quadricipiti, Glutei'},
+ {id:'bw_lu',cat:'lower',name:'Affondi Alternati',time:40,desc:'Passo avanti scendendo col ginocchio posteriore verso terra a 90°. Spingi col tallone per tornare e alterna gamba.',muscles:'Quadricipiti, Glutei'},
+ {id:'bw_rl',cat:'lower',name:'Affondi Indietro',time:40,desc:'Passo indietro scendendo in affondo, busto eretto. Più gentile per le ginocchia. Alterna le gambe a ogni rep.',muscles:'Glutei, Quadricipiti'},
+ {id:'bw_gb',cat:'lower',name:'Glute Bridge',time:40,desc:'Sdraiato, ginocchia piegate. Spingi i fianchi verso l\'alto contraendo i glutei in cima 1s, poi abbassa lento.',muscles:'Glutei, Femorali'},
+ {id:'bw_ws',cat:'lower',name:'Wall Sit',time:40,desc:'Schiena al muro, scivola fino a cosce parallele al suolo (90°). Tieni la posizione isometrica respirando.',muscles:'Quadricipiti (isometrico)'},
+ // upper
+ {id:'bw_pu',cat:'upper',name:'Push-up',time:40,desc:'Mani sotto le spalle, corpo in linea. Scendi col petto vicino a terra, gomiti a 45°, spingi su. Sulle ginocchia se serve.',muscles:'Petto, Tricipiti'},
+ {id:'bw_pk',cat:'upper',name:'Pike Push-up',time:40,desc:'A V rovesciata, anche alte. Piega i gomiti portando la testa verso terra, poi spingi. Carica le spalle.',muscles:'Spalle, Tricipiti'},
+ {id:'bw_td',cat:'upper',name:'Dip a terra',time:40,desc:'Seduto, mani dietro i fianchi, fianchi sollevati. Piega i gomiti scendendo, poi spingi su. Isola i tricipiti.',muscles:'Tricipiti, Spalle'},
+ {id:'bw_pt',cat:'upper',name:'Plank Up-Down',time:40,desc:'Dal plank sugli avambracci sali a plank sulle mani un braccio per volta, poi torna giù. Alterna il braccio che guida.',muscles:'Spalle, Core'},
+ // full-body
+ {id:'bw_bp',cat:'full',name:'Burpee',time:40,desc:'Squat, mani a terra, salta indietro in plank, push-up opzionale, riporta i piedi e salta in alto. Esplosivo ma controllato.',muscles:'Full-body, Cardio'},
+ {id:'bw_st',cat:'full',name:'Squat Thrust',time:40,desc:'Come il burpee ma senza salto finale: mani a terra, gambe indietro in plank, riporta i piedi e risali. Più gestibile.',muscles:'Full-body, Cardio'},
+ {id:'bw_bc',cat:'full',name:'Bear Crawl',time:40,desc:'A quattro appoggi con le ginocchia sollevate da terra. Avanza e indietreggia muovendo braccio e gamba opposti. Core attivo.',muscles:'Full-body, Core'},
+ {id:'bw_iw',cat:'full',name:'Inchworm',time:40,desc:'In piedi, scendi con le mani a terra e cammina in avanti fino al plank, poi torna indietro e risali. Mobilità + forza.',muscles:'Full-body, Core'},
+];
+function pickExtraCircuit(){
+ // Fallback locale: 1 cardio + 1 lower + 1 upper + 1 full + 1 cardio, esercizi distinti
+ var byCat={};BW_POOL.forEach(function(e){(byCat[e.cat]||(byCat[e.cat]=[])).push(e);});
+ var sel=[],used=[];
+ ['cardio','lower','upper','full','cardio'].forEach(function(cat){
+  var p=shuf((byCat[cat]||[]).filter(function(e){return used.indexOf(e.id)<0;}));
+  if(p[0]){sel.push(p[0]);used.push(p[0].id);}
+ });
+ return sel;
+}
+function genExtra(){
+ // Circuiti curati da Sumi se disponibili, altrimenti fallback locale corpo-libero
+ var plan=S.aiDB&&S.aiDB.coachPlan&&S.aiDB.coachPlan.extra;
+ var circuit;
+ if(plan&&plan.circuits&&plan.circuits.length){
+  var idx=(S.aiDB.extraIdx||0)%plan.circuits.length;
+  circuit=(plan.circuits[idx]||[]).filter(function(e){return e&&e.name;});
+  S.aiDB.extraIdx=(S.aiDB.extraIdx||0)+1;sv('ai',S.aiDB);
+ }
+ if(!circuit||!circuit.length)circuit=pickExtraCircuit();
+ var TIME=40,ROUNDS=3,all=[];
+ for(var r=0;r<ROUNDS;r++){
+  circuit.forEach(function(e){
+   all.push(Object.assign({},e,{isCore:true,isTime:true,isExtra:true,sets:1,time:e.time||TIME}));
+  });
+  if(r<ROUNDS-1)all.push({id:'xbrk'+r,cat:'extra',name:'RIPOSO',desc:'Recupera. Prossimo round tra poco.',muscles:'',isBreak:true,isCore:true,isTime:true,isExtra:true,time:30,sets:1});
+ }
+ return{split:{id:'extra',name:'EXTRA',emoji:'✦',color:'#f97316',desc:'Corpo libero · 3 round'},all:all};
+}
+function startExtra(){
+ var w=genExtra();
+ S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
+ S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;
+ S.trialMode=false;S.extraMode=true;S.preWQAns={};
+ go('workout');
+}
 function startWorkout(){
+ S.extraMode=false;
  var missing=getMissingNutritionDays();
  if(missing.length>0&&!S.nutReminder){
   S.nutReminderCount=missing.length;
@@ -800,6 +867,7 @@ function rWorkout(){
  if(!step)return rHome();
  var prog=S.wStepIdx/S.wSteps.length;
  var sp=S.wSplit;
+ var isExtraSess=!!(sp&&sp.id==='extra'); // EXTRA: rietichetta le schermate del circuito a tempo
 
  // ── LOGGING REPS: dopo "SET COMPLETATO" su esercizi a carico ────────────────
  if(S.wAwaitReps&&step.type==='work'&&step.ex&&!step.ex.isTime&&!step.ex.isCore){
@@ -821,8 +889,8 @@ function rWorkout(){
  if(step.type==='core_intro'){
   return '<div class="center" style="background:#09090b">'
    +'<div style="font-size:60px;margin-bottom:12px"></div>'
-   +'<div style="font-size:30px;font-weight:900;margin-bottom:8px;letter-spacing:1px">ADDOMINALI</div>'
-   +'<div style="color:#52525b;font-size:13px;margin-bottom:32px">Preparati per il circuito core</div>'
+   +'<div style="font-size:30px;font-weight:900;margin-bottom:8px;letter-spacing:1px">'+(isExtraSess?'EXTRA 20′':'ADDOMINALI')+'</div>'
+   +'<div style="color:#52525b;font-size:13px;margin-bottom:32px">'+(isExtraSess?'Preparati per il circuito full-body':'Preparati per il circuito core')+'</div>'
    +'<button class="btn" style="background:#f97316;width:auto;padding:16px 40px;font-size:16px" onclick="advStep()">PRONTO </button>'
    +'</div>';
  }
@@ -831,7 +899,7 @@ function rWorkout(){
    // 10s countdown verde prima del primo esercizio core
    return '<div class="center" style="background:#09090b">'
     +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#22c55e"></div></div></div>'
-    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:12px">ADDOMINALI — PRONTI IN</div>'
+    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:12px">'+(isExtraSess?'EXTRA':'ADDOMINALI')+' — PRONTI IN</div>'
     +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;color:#22c55e;line-height:1;margin-bottom:20px">'+S.wTimer+'</div>'
     +'<button class="btn" style="background:#22c55e;width:auto;padding:14px 36px" onclick="skipRest()">INIZIA </button>'
     +'</div>';
@@ -850,7 +918,7 @@ function rWorkout(){
    // 30 secondi di pausa nel circuito core — verde
    return '<div class="center" style="background:#09090b">'
     +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#22c55e"></div></div></div>'
-    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:8px">CORE CIRCUIT</div>'
+    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:8px">'+(isExtraSess?'EXTRA · ROUND':'CORE CIRCUIT')+'</div>'
     +'<div style="color:#52525b;font-size:13px;margin-bottom:6px">RIPOSO</div>'
     +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;color:#22c55e;line-height:1;margin-bottom:10px">'+S.wTimer+'</div>'
     +(step.nextName?'<div style="color:#52525b;font-size:11px;margin-bottom:4px">Prossimo blocco</div><div style="font-size:16px;font-weight:700;margin-bottom:20px">'+step.nextName+'</div>':'')
@@ -880,19 +948,20 @@ function rWorkout(){
   var coreSteps=S.wSteps.filter(function(s){return s.type==='work'&&s.ex&&s.ex.isCore&&!s.ex.isBreak;});
   var coreIdx=coreSteps.findIndex(function(s){return s.exIdx===step.exIdx;});
   var coreTotal=coreSteps.length;
-  return '<div style="display:flex;flex-direction:column;height:100vh;background:#09090b;align-items:center;justify-content:center;text-align:center;padding:20px;position:relative">'
+  return '<div style="display:flex;flex-direction:column;height:100vh;background:#09090b;align-items:center;justify-content:center;text-align:center;padding:18px;position:relative">'
    +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#f59e0b"></div></div></div>'
-   +'<div style="color:#f59e0b;font-size:10px;letter-spacing:2px;margin-bottom:6px">CORE CIRCUIT · '+(coreIdx+1)+'/'+coreTotal+'</div>'
-   +'<div style="font-size:26px;font-weight:900;line-height:1.2;margin-bottom:6px;max-width:300px">'+ex.name+'</div>'
-   +'<div style="color:#71717a;font-size:13px;margin-bottom:28px;max-width:280px;line-height:1.5">'+ex.muscles+'</div>'
-   +'<div id="wt-core-timer" style="font-size:110px;font-weight:900;font-family:monospace;color:#f59e0b;line-height:1;margin-bottom:6px">'+S.wTimer+'</div>'
-   +'<div style="color:#52525b;font-size:11px;margin-bottom:32px">secondi</div>'
-   +'<div style="background:#18181b;border-radius:14px;padding:12px 16px;max-width:300px;margin-bottom:28px">'
-   +'<p style="color:#a1a1aa;font-size:13px;line-height:1.5;margin:0">'+ex.desc+'</p>'
+   +'<div style="color:#f59e0b;font-size:10px;letter-spacing:2px;margin-bottom:6px">'+(isExtraSess?'EXTRA':'CORE CIRCUIT')+' · '+(coreIdx+1)+'/'+coreTotal+'</div>'
+   +'<div style="font-size:24px;font-weight:900;line-height:1.2;margin-bottom:4px;max-width:300px">'+ex.name+'</div>'
+   +'<div style="color:#71717a;font-size:12px;margin-bottom:14px;max-width:280px;line-height:1.4">'+ex.muscles+'</div>'
+   +(ex.video?'<div style="width:230px;max-width:74vw;margin-bottom:14px">'+mediaHtml(ex)+'</div>':'')
+   +'<div id="wt-core-timer" style="font-size:84px;font-weight:900;font-family:monospace;color:#f59e0b;line-height:1;margin-bottom:4px">'+S.wTimer+'</div>'
+   +'<div style="color:#52525b;font-size:11px;margin-bottom:18px">secondi</div>'
+   +'<div style="background:#18181b;border-radius:14px;padding:10px 16px;max-width:300px;margin-bottom:20px">'
+   +'<p style="color:#a1a1aa;font-size:12px;line-height:1.5;margin:0">'+ex.desc+'</p>'
    +'</div>'
    +'<div style="display:flex;gap:10px;justify-content:center">'
    +'<button id="core-pause-btn" class="btn-ghost" style="width:auto;padding:12px 28px" onclick="pauseCore()">'+(S.wPaused?'▶ Riprendi':'Pausa')+'</button>'
-   +'<button class="btn-ghost" style="width:auto;padding:12px 20px;color:#52525b;font-size:12px" onclick="skipCoreCircuit()">Salta core ›</button>'
+   +'<button class="btn-ghost" style="width:auto;padding:12px 20px;color:#52525b;font-size:12px" onclick="skipCoreCircuit()">'+(isExtraSess?'Salta circuito ›':'Salta core ›')+'</button>'
    +'</div>'
    +'</div>';
  }
@@ -1054,6 +1123,7 @@ function finishWorkout(){
  if(S.trialMode){S.trialMode=false;go('home');return;}
  var dur=Math.round((Date.now()-S.wStartTime)/60000)||1;
  S.pending={split:S.wSplit,exercises:S.wEx,sets:S.wSets,duration:dur,reps:S.wReps||{}};
+ if(S.extraMode)S.pending.extra=true;
  S.qStep=0;S.qAns={};go('post_quiz');
 }
 
@@ -1104,7 +1174,7 @@ function rExFeedback(){
    +'</div>';
  }
  var cards=normalEx.map(function(ex){return exCard(ex.id,ex.name,ex.id);}).join('');
- var coreCard=hasCore?exCard('core','CIRCUITO CORE','core'):'';
+ var coreCard=hasCore?exCard('core',(S.pending&&S.pending.extra)?'CIRCUITO EXTRA':'CIRCUITO CORE','core'):'';
  return '<div class="pg">'
   +'<div style="display:flex;gap:5px;margin-bottom:18px">'+bars+'</div>'
   +'<button class="back" style="margin-bottom:14px" onclick="S.qStep=PQ.length-1;render()">← Indietro</button>'
@@ -1140,17 +1210,19 @@ async function finishSession(){
  try{
   var session=Object.assign({},S.pending||{},{quiz:S.qAns,preCheck:S.preWQAns||{},date:new Date().toISOString()});
   S.preWQAns={};
+  var isExtra=!!session.extra; // EXTRA: additiva, non fa avanzare rotazione/carichi/adattamento
   S.aiDB.sessions=(S.aiDB.sessions||[]).concat([session]);
   S.aiDB.patterns=calcPatterns();
   var nh=(S.history||[]).concat([session]);
   S.history=nh;
-  S.splitIdx=(S.splitIdx||0)+1;
+  if(!isExtra)S.splitIdx=(S.splitIdx||0)+1;
   await sv('wh',nh);
-  await sv('si',String(S.splitIdx));
-  computeProgression(session); // regola meccanica: aggiorna carichi/progressione dalle reps
+  if(!isExtra)await sv('si',String(S.splitIdx));
+  if(!isExtra)computeProgression(session); // regola meccanica: aggiorna carichi/progressione dalle reps
   syncToDrive();
-  runAdaptation(session);
+  if(!isExtra)runAdaptation(session);
  }catch(e){console.error('finishSession:',e);}
+ S.extraMode=false;
  go('home');
 }
 
@@ -1279,14 +1351,15 @@ function calcDayCalTarget(date){
  var goal=p.obiettivo||'massa';
  var goalAdj=goal==='massa'?300:goal==='definizione'?-400:goal==='ricomposizione'?100:0;
  var base=tdee+goalAdj;
- var session=(S.history||[]).find(function(h){return h.date&&h.date.split('T')[0]===date;});
+ // Somma TUTTE le sessioni del giorno (allenamento + eventuale EXTRA), non solo la prima
+ var sessions=(S.history||[]).filter(function(h){return h.date&&h.date.split('T')[0]===date;});
  var burned=0;
- if(session){
-  var sid=(session.split&&session.split.id)||'';
-  var rate=sid==='legs'?8:sid==='full'?7.5:7;
-  burned=Math.round((session.duration||45)*rate);
- }
- return{bmr:bmr,tdee:tdee,goalAdj:goalAdj,base:base,burned:burned,target:base+burned,goal:goal,session:session};
+ sessions.forEach(function(s){
+  var sid=(s.split&&s.split.id)||'';
+  var rate=sid==='legs'?8:sid==='full'?7.5:sid==='extra'?7:7;
+  burned+=Math.round((s.duration||45)*rate);
+ });
+ return{bmr:bmr,tdee:tdee,goalAdj:goalAdj,base:base,burned:burned,target:base+burned,goal:goal,session:sessions[0]||null,sessions:sessions};
 }
 function rProfile(){
  var p=S.aiDB.profile||{};
@@ -1436,7 +1509,7 @@ function rNutSummary(){
     +'<div class="lbl" style="color:#818cf8;margin-bottom:10px">BILANCIO CALORICO</div>'
     +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">TDEE base</span><span style="color:#d4d4d8">'+dt.tdee+' kcal</span></div>'
     +(dt.goalAdj!==0?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">Obiettivo ('+dt.goal+')</span><span style="color:'+(dt.goalAdj>0?'#22c55e':'#ef4444')+'">'+(dt.goalAdj>0?'+':'')+dt.goalAdj+' kcal</span></div>':'')
-    +(dt.burned>0?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">Allenamento '+dt.session.split.name+' ('+dt.session.duration+'min)</span><span style="color:#f97316">+'+dt.burned+' kcal</span></div>':'')
+    +((dt.sessions||[]).map(function(s){var sid=(s.split&&s.split.id)||'';var rate=sid==='legs'?8:sid==='full'?7.5:sid==='extra'?7:7;var b=Math.round((s.duration||45)*rate);var nm=(s.split&&s.split.name)||'Workout';return '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">'+(sid==='extra'?'Extra':'Allenamento')+' '+nm+' ('+(s.duration||'?')+'min)</span><span style="color:#f97316">+'+b+' kcal</span></div>';}).join(''))
     +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;border-top:1px solid #27272a;padding-top:8px;margin:6px 0 10px"><span style="color:#fafafa">Target oggi</span><span style="color:#fafafa">'+dt.target+' kcal</span></div>'
     +(actual>0
      ?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#a1a1aa">Ingerito'+(fromPhoto?'':' (stima~)')+'</span><span style="color:#d4d4d8">'+actual+' kcal</span></div>'
@@ -1459,10 +1532,10 @@ function rNutSummary(){
 function hadWorkoutOn(date){
  return (S.history||[]).some(function(h){return h.date&&h.date.split('T')[0]===date;});
 }
-function calcNutScore(a){
+function calcNutScore(a,dateOverride){
  var s=0,m=0;
  function add(v,pts,max){if(v){s+=pts[v-1]||0;m+=max;}}
- var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var targetDate=dateOverride||(S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0]);
  var workout=hadWorkoutOn(targetDate);
  add(a.protein,[10,25,40,50,50],50);
  add(a.carbs,[10,25,45,50,40],50);
@@ -1779,10 +1852,11 @@ function buildHistChart(){
  var scorePath='',kcalPath='',prevS=null,prevK=null;
  days.forEach(function(d,i){
   var x=xOf(i);
-  if(d.nut&&!d.nut.skipped&&d.nut.score!=null){
-   var y=pT+cH-(d.nut.score/100)*cH;
+  if(d.nut&&!d.nut.skipped){
+   var dScore=calcNutScore(d.nut,d.date);
+   var y=pT+cH-(dScore/100)*cH;
    scorePath+=prevS===null?'M'+x+','+y:' L'+x+','+y;
-   prevS=d.nut.score;
+   prevS=dScore;
   }
   if(d.nut&&!d.nut.skipped&&d.nut.calories_kcal){
    var y2=pT+cH-(scaleKcal(d.nut.calories_kcal)/100)*cH;
@@ -1849,13 +1923,15 @@ function rHist(){
  var first=new Date(firstStr+'T12:00:00Z');
  while(cur>=first){
   var d=cur.toISOString().split('T')[0];
-  var workout=(S.history||[]).find(function(h){return h.date&&h.date.split('T')[0]===d;});
+  var daySessions=(S.history||[]).filter(function(h){return h.date&&h.date.split('T')[0]===d;});
+  // Primario = primo allenamento non-extra (per quiz/serie); l'EXTRA si aggiunge al sottotitolo
+  var workout=daySessions.find(function(h){return !(h.split&&h.split.id==='extra');})||daySessions[0];
   var nut=log[d];
-  days.push({date:d,workout:workout,nut:nut});
+  days.push({date:d,workout:workout,sessions:daySessions,nut:nut});
   cur=new Date(cur.getTime()-86400000);
  }
  function nutCard(nut,date){
-  var score=nut&&!nut.skipped&&nut.score!=null?nut.score:null;
+  var score=nut&&!nut.skipped?calcNutScore(nut,date):null; // ricalcola con la formula attuale → coerente col survey
   var sc=score===null?'#3f3f46':score>=75?'#22c55e':score>=50?'#f59e0b':'#ef4444';
   var kcal=nut&&!nut.skipped&&nut.calories_kcal?nut.calories_kcal:null;
   var calLabel='',calColor='#52525b';
@@ -1884,7 +1960,7 @@ function rHist(){
    +nc.scoreBadge
    +'<div style="flex:1;min-width:0">'
    +'<div style="font-weight:700;font-size:13px;color:#fafafa">'+dateStr+'</div>'
-   +'<div style="font-size:11px;color:#71717a;margin-top:1px">'+(isRest?'Riposo':(sp?sp.name:'Workout')+' · '+(h.duration||'?')+'min · '+(h.sets||'?')+' serie')+'</div>'
+   +'<div style="font-size:11px;color:#71717a;margin-top:1px">'+(isRest?'Riposo':(day.sessions||[h]).map(function(s){var nm=(s.split&&s.split.name)||'Workout';var ex=(s.split&&s.split.id==='extra');return nm+' · '+(s.duration||'?')+'min'+(ex?'':' · '+(s.sets||'?')+' serie');}).join('  +  '))+'</div>'
    +'</div>'
    +nc.kcalHtml
    +'</div>'
@@ -2042,16 +2118,11 @@ function rReports(){
  return '<div style="margin-bottom:10px">'+wCard+mCard+'</div>';
 }
 function rAI(){
- var rec=S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.shortRec;
- var p=S.aiDB&&S.aiDB.patterns;
  var msgs=S.aiChat.map(function(m){
   return '<div class="chat-msg" style="background:'+(m.role==='user'?'#431407':'#27272a')+';margin-'+(m.role==='user'?'left':'right')+':40px">'+m.content.replace(/\n/g,'<br>')+'</div>';
  }).join('');
  return '<div class="pg">'
   +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">←</button><span style="font-weight:800;font-size:16px">AI COACH</span></div>'
-  +'<div class="card" style="margin-bottom:10px"><div class="lbl" style="margin-bottom:5px">Profilo attivo</div><div style="color:#d4d4d8;font-size:13px">182cm · 74kg · 5-6gg/sett · Massa · Elastici 1×5+1×10+1×15+2×25kg (max 80kg)</div></div>'
-  +(rec?'<div style="background:#1c3a1c;border:1px solid #22c55e30;border-radius:14px;padding:12px;margin-bottom:10px"><div class="lbl" style="color:#22c55e;margin-bottom:5px">ADATTAMENTO AUTOMATICO</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+rec+'</div></div>':'<div style="color:#52525b;font-size:12px;text-align:center;margin-bottom:12px">Completa la prima sessione+quiz per attivare l\'adattamento automatico</div>')
-  +(p&&p.totalSessions?'<div class="card" style="margin-bottom:10px"><div class="lbl" style="margin-bottom:6px">Pattern</div><div style="display:flex;gap:12px;flex-wrap:wrap"><span style="color:#a1a1aa;font-size:12px">Sessioni: '+p.totalSessions+'</span><span style="color:#a1a1aa;font-size:12px">Energia: '+p.avgEnergy+'/4</span><span style="color:#a1a1aa;font-size:12px">Difficoltà: '+p.avgDifficulty+'/4</span></div></div>':'')
   +rReports()
   +'<div id="ai-msgs" style="margin-bottom:10px">'+msgs+'</div>'
   +(S.aiLoading?'<div style="text-align:center;color:#71717a;margin-bottom:10px;font-size:13px">Il coach ragiona...</div>':'')
