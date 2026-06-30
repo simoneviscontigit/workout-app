@@ -86,6 +86,7 @@ function getApiKey(){return localStorage.getItem('anthropicKey')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
+const APP_BUILD='2026-06-30 · g2'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const DB={
  push:[
   {id:'p1',cat:'push',name:'Archer Push-up',video:'Archer push-up.mp4',
@@ -567,8 +568,17 @@ function rHome(){
   +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialWorkout()">Sessione prova</button>'
   +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialNutrition()">Survey prova</button>'
   +'</div>'
+  +'<button class="btn" style="width:100%;background:transparent;border:2px solid #27272a;color:#71717a;margin:16px 0 0;padding:14px;font-size:13px;font-weight:700" onclick="forceRefresh()">↻ Aggiorna app (forza ricarica)</button>'
+  +'<div style="text-align:center;font-size:9px;color:#3f3f46;margin-top:6px">build '+APP_BUILD+'</div>'
   +'</div>'
   +'</div>';
+}
+function forceRefresh(){
+ // Forza il ricaricamento saltando la cache: naviga a un URL con parametro unico.
+ // I dati restano (localStorage è per dominio, non per URL).
+ try{ if(window.caches&&caches.keys){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});} }catch(e){}
+ var base=location.origin+location.pathname;
+ location.replace(base+'?r='+Date.now());
 }
 
 function getMissingNutritionDays(){
