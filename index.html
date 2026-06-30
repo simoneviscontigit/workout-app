@@ -1842,67 +1842,85 @@ function buildHistChart(){
  }
  var hasData=days.some(function(d){return d.nut&&!d.nut.skipped;});
  if(!hasData)return '';
- var W=340,H=110,pL=28,pR=8,pT=14,pB=18;
- var cW=W-pL-pR,cH=H-pT-pB;
+ var W=340,pL=30,pR=12;var cW=W-pL-pR;
  var n=days.length;
- function xOf(i){return pL+i/(n-1)*cW;}
- // Kcal: centrato su maintKcal, range ±1000
- function scaleKcal(k){return Math.max(0,Math.min(100,50+(k-maintKcal)/1000*50));}
- // Build paths
- var scorePath='',kcalPath='',prevS=null,prevK=null;
+ function xOf(i){return pL+(n>1?i/(n-1):0)*cW;}
+ function scoreColor(s){return s>=75?'#22c55e':s>=50?'#f59e0b':'#ef4444';}
+ var x0=days[0].date.slice(5),xN=days[n-1].date.slice(5),xMid=days[Math.floor(n/2)].date.slice(5);
+
+ // ===== GRAFICO A: Punteggio alimentazione (0-100), con zone colore =====
+ var aT=12,aB=15,aH=92,acH=aH-aT-aB;
+ function yA(s){return aT+acH-(s/100)*acH;}
+ function band(s1,s2,col){return '<rect x="'+pL+'" y="'+yA(s2)+'" width="'+cW+'" height="'+(yA(s1)-yA(s2))+'" fill="'+col+'" opacity="0.10"/>';}
+ var aPath='',aPrev=null,aDots='';
  days.forEach(function(d,i){
-  var x=xOf(i);
   if(d.nut&&!d.nut.skipped){
-   var dScore=calcNutScore(d.nut,d.date);
-   var y=pT+cH-(dScore/100)*cH;
-   scorePath+=prevS===null?'M'+x+','+y:' L'+x+','+y;
-   prevS=dScore;
-  }
-  if(d.nut&&!d.nut.skipped&&d.nut.calories_kcal){
-   var y2=pT+cH-(scaleKcal(d.nut.calories_kcal)/100)*cH;
-   kcalPath+=prevK===null?'M'+x+','+y2:' L'+x+','+y2;
-   prevK=d.nut.calories_kcal;
+   var sc=calcNutScore(d.nut,d.date),x=xOf(i),y=yA(sc);
+   aPath+=aPrev===null?'M'+x+','+y:' L'+x+','+y;aPrev=sc;
+   aDots+='<circle cx="'+x+'" cy="'+y+'" r="2.8" fill="'+scoreColor(sc)+'" stroke="#09090b" stroke-width="0.8"/>';
   }
  });
- // Maintenance line y
- var mY=pT+cH-(50/100)*cH; // 50% = center = mantenimento
- // Workout dots
+ var svgA='<svg viewBox="0 0 '+W+' '+aH+'" style="width:100%;display:block;overflow:visible">'
+  +band(0,50,'#ef4444')+band(50,75,'#f59e0b')+band(75,100,'#22c55e')
+  +'<line x1="'+pL+'" y1="'+yA(50)+'" x2="'+(pL+cW)+'" y2="'+yA(50)+'" stroke="#52525b" stroke-width="0.4" stroke-dasharray="2,2"/>'
+  +'<line x1="'+pL+'" y1="'+yA(75)+'" x2="'+(pL+cW)+'" y2="'+yA(75)+'" stroke="#52525b" stroke-width="0.4" stroke-dasharray="2,2"/>'
+  +(aPath?'<path d="'+aPath+'" stroke="#a1a1aa" stroke-width="1.5" fill="none"/>':'')
+  +aDots
+  +'<text x="'+(pL-3)+'" y="'+(yA(100)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">100</text>'
+  +'<text x="'+(pL-3)+'" y="'+(yA(75)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">75</text>'
+  +'<text x="'+(pL-3)+'" y="'+(yA(50)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">50</text>'
+  +'<text x="'+(pL-3)+'" y="'+(yA(0)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">0</text>'
+  +'<text x="'+pL+'" y="'+(aH-3)+'" fill="#3f3f46" font-size="7" text-anchor="start">'+x0+'</text>'
+  +'<text x="'+(pL+cW/2)+'" y="'+(aH-3)+'" fill="#3f3f46" font-size="7" text-anchor="middle">'+xMid+'</text>'
+  +'<text x="'+(pL+cW)+'" y="'+(aH-3)+'" fill="#3f3f46" font-size="7" text-anchor="end">'+xN+'</text>'
+  +'</svg>';
+
+ // ===== GRAFICO B: Calorie ingerite vs mantenimento =====
+ var bT=12,bB=22,bH=100,bcH=bH-bT-bB;
+ function scaleKcal(k){return Math.max(0,Math.min(100,50+(k-maintKcal)/1000*50));}
+ function yB(pct){return bT+bcH-(pct/100)*bcH;}
+ var mY=yB(50);
+ var kPath='',kPrev=null,kDots='';
+ days.forEach(function(d,i){
+  if(d.nut&&!d.nut.skipped&&d.nut.calories_kcal){
+   var pct=scaleKcal(d.nut.calories_kcal),x=xOf(i),y=yB(pct);
+   kPath+=kPrev===null?'M'+x+','+y:' L'+x+','+y;kPrev=pct;
+   kDots+='<circle cx="'+x+'" cy="'+y+'" r="2.4" fill="#818cf8"/>';
+  }
+ });
  var wDots=days.map(function(d,i){
   if(!d.workout)return'';
   var c=d.workout.split?d.workout.split.color:'#52525b';
-  return '<rect x="'+(xOf(i)-2.5)+'" y="'+(pT+cH+4)+'" width="5" height="5" fill="'+c+'"/>';
+  return '<rect x="'+(xOf(i)-2.5)+'" y="'+(bT+bcH+5)+'" width="5" height="5" fill="'+c+'"/>';
  }).join('');
- // X labels
- var x0=days[0].date.slice(5),xN=days[n-1].date.slice(5);
- var xMid=days[Math.floor(n/2)].date.slice(5);
- return '<div class="card" style="margin-bottom:12px;padding:10px 8px 8px">'
-  +'<div class="lbl" style="margin-bottom:6px;padding-left:4px">Andamento · dal 22 giu</div>'
-  +'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block;overflow:visible">'
-  // grid
-  +'<line x1="'+pL+'" y1="'+pT+'" x2="'+(pL+cW)+'" y2="'+pT+'" stroke="#27272a" stroke-width="0.5"/>'
-  +'<line x1="'+pL+'" y1="'+(pT+cH/2)+'" x2="'+(pL+cW)+'" y2="'+(pT+cH/2)+'" stroke="#27272a" stroke-width="0.5"/>'
-  +'<line x1="'+pL+'" y1="'+(pT+cH)+'" x2="'+(pL+cW)+'" y2="'+(pT+cH)+'" stroke="#27272a" stroke-width="0.5"/>'
-  // maintenance dashed
-  +'<line x1="'+pL+'" y1="'+mY+'" x2="'+(pL+cW)+'" y2="'+mY+'" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" opacity="0.6"/>'
-  +'<text x="'+(pL+cW+2)+'" y="'+(mY+3)+'" fill="#f59e0b" font-size="7" opacity="0.7">mant.</text>'
-  // lines
-  +(scorePath?'<path d="'+scorePath+'" stroke="#22c55e" stroke-width="2.5" fill="none" stroke-linejoin="miter"/>':'')
-  +(kcalPath?'<path d="'+kcalPath+'" stroke="#818cf8" stroke-width="2.5" fill="none" stroke-linejoin="miter" stroke-dasharray="5,3"/>':'')
-  // workout dots below
+ var svgB='<svg viewBox="0 0 '+W+' '+bH+'" style="width:100%;display:block;overflow:visible">'
+  +'<rect x="'+pL+'" y="'+yB(100)+'" width="'+cW+'" height="'+(mY-yB(100))+'" fill="#f59e0b" opacity="0.07"/>'
+  +'<rect x="'+pL+'" y="'+mY+'" width="'+cW+'" height="'+(yB(0)-mY)+'" fill="#818cf8" opacity="0.07"/>'
+  +'<line x1="'+pL+'" y1="'+mY+'" x2="'+(pL+cW)+'" y2="'+mY+'" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" opacity="0.7"/>'
+  +'<text x="'+(pL+cW+1)+'" y="'+(mY+3)+'" fill="#f59e0b" font-size="7" opacity="0.8">mant.</text>'
+  +(kPath?'<path d="'+kPath+'" stroke="#818cf8" stroke-width="2" fill="none"/>':'')
+  +kDots
+  +'<text x="'+(pL-3)+'" y="'+(yB(100)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">+1k</text>'
+  +'<text x="'+(pL-3)+'" y="'+(mY+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">0</text>'
+  +'<text x="'+(pL-3)+'" y="'+(yB(0)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">-1k</text>'
   +wDots
-  // Y labels
-  +'<text x="'+(pL-3)+'" y="'+(pT+4)+'" fill="#3f3f46" font-size="7" text-anchor="end">100</text>'
-  +'<text x="'+(pL-3)+'" y="'+(pT+cH/2+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">50</text>'
-  +'<text x="'+(pL-3)+'" y="'+(pT+cH+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">0</text>'
-  // X labels
-  +'<text x="'+pL+'" y="'+(H-3)+'" fill="#3f3f46" font-size="7" text-anchor="start">'+x0+'</text>'
-  +'<text x="'+(pL+cW/2)+'" y="'+(H-3)+'" fill="#3f3f46" font-size="7" text-anchor="middle">'+xMid+'</text>'
-  +'<text x="'+(pL+cW)+'" y="'+(H-3)+'" fill="#3f3f46" font-size="7" text-anchor="end">'+xN+'</text>'
-  +'</svg>'
-  +'<div style="display:flex;gap:14px;padding:4px 4px 0;flex-wrap:wrap">'
-  +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:#22c55e"><span style="width:14px;height:2px;background:#22c55e;border-radius:1px;display:inline-block"></span>Score nutrizione</span>'
-  +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:#818cf8"><span style="width:14px;height:2px;border-top:2px dashed #818cf8;display:inline-block"></span>Kcal ingerite</span>'
-  +'<span style="display:flex;align-items:center;gap:5px;font-size:10px;color:#f59e0b"><span style="width:14px;height:1px;border-top:1px dashed #f59e0b;display:inline-block"></span>Mantenimento ('+maintKcal+' kcal)</span>'
+  +'<text x="'+pL+'" y="'+(bH-3)+'" fill="#3f3f46" font-size="7" text-anchor="start">'+x0+'</text>'
+  +'<text x="'+(pL+cW/2)+'" y="'+(bH-3)+'" fill="#3f3f46" font-size="7" text-anchor="middle">'+xMid+'</text>'
+  +'<text x="'+(pL+cW)+'" y="'+(bH-3)+'" fill="#3f3f46" font-size="7" text-anchor="end">'+xN+'</text>'
+  +'</svg>';
+
+ return '<div class="card" style="margin-bottom:12px;padding:10px 8px 8px">'
+  +'<div class="lbl" style="margin-bottom:2px;padding-left:4px">Punteggio alimentazione · dal 22 giu</div>'
+  +svgA
+  +'<div style="display:flex;gap:12px;padding:2px 4px 0;flex-wrap:wrap;font-size:10px">'
+  +'<span style="color:#ef4444">● &lt;50 scarso</span><span style="color:#f59e0b">● 50-74 medio</span><span style="color:#22c55e">● ≥75 buono</span>'
+  +'</div>'
+  +'<div style="height:1px;background:#27272a;margin:10px 4px"></div>'
+  +'<div class="lbl" style="margin-bottom:2px;padding-left:4px">Calorie ingerite vs mantenimento</div>'
+  +svgB
+  +'<div style="display:flex;gap:14px;padding:2px 4px 0;flex-wrap:wrap;font-size:10px">'
+  +'<span style="display:flex;align-items:center;gap:5px;color:#818cf8"><span style="width:14px;height:2px;background:#818cf8;display:inline-block"></span>Kcal ingerite</span>'
+  +'<span style="display:flex;align-items:center;gap:5px;color:#f59e0b"><span style="width:14px;border-top:1px dashed #f59e0b;display:inline-block"></span>Mantenimento ('+maintKcal+' kcal)</span>'
   +'</div>'
   +'<div style="font-size:9px;color:#3f3f46;padding:3px 4px 0">Quadratini sotto = giorni di allenamento (colore per tipo)</div>'
   +'</div>';
