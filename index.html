@@ -456,7 +456,9 @@ async function loadData(){
   if(S.aiDB.currentChat&&S.aiDB.currentChat.date===new Date().toDateString())S.floatChat=S.aiDB.currentChat.msgs||[];
   // Auto-fetch del coachPlan da Drive: le istruzioni del coach notturno (Sumi) arrivano da sole
   fetch(DRIVE_URL+'?t='+Date.now(),{cache:'no-store',redirect:'follow'}).then(function(r){return r.json();}).then(function(dd){
-   if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.coachPlan){S.aiDB.coachPlan=dd.aiDB.coachPlan;sv('ai',S.aiDB);if(typeof render==='function')render();}
+   if(dd&&dd.ok&&dd.apiKey&&!getApiKey()){localStorage.setItem('anthropicKey',dd.apiKey);} // ripristina chiave API persa da wipe localStorage / reinstall
+   if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.coachPlan){S.aiDB.coachPlan=dd.aiDB.coachPlan;sv('ai',S.aiDB);}
+   if(dd&&dd.ok&&typeof render==='function')render();
   }).catch(function(){});
  }catch(e){}
 }
@@ -474,6 +476,7 @@ async function restoreFromDrive(){
   if(data.history)await sv('wh',data.history);
   if(data.aiDB)await sv('ai',data.aiDB);
   if(data.splits)await sv('splits',data.splits);
+  if(data.apiKey)localStorage.setItem('anthropicKey',data.apiKey);
   alert('Dati ripristinati da Drive!\n'+((data.history||[]).length)+' sessioni caricate.\nRicarico...');
   location.reload();
  }catch(e){
@@ -488,6 +491,7 @@ async function syncToDrive(){
  if(!(S.history&&S.history.length)){console.warn('sync saltato: storico locale vuoto');return;}
  try{
   var payload={history:S.history,nutrition:S.nutrition,aiDB:S.aiDB,skipped:S.skipped,savedAt:new Date().toISOString()};
+  var _k=getApiKey();if(_k)payload.apiKey=_k; // backup chiave API: sopravvive a wipe localStorage / reinstall PWA
   fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload)});
  }catch(e){}
 }
@@ -744,7 +748,7 @@ async function handleNutPhotos(event){
    var est=await estimateMealFromPhoto(b64,mt,'');
    S.nutPhotoUploads[idx]={status:'done',estimate:est};
   }catch(e){
-   S.nutPhotoUploads[idx]={status:'error'};
+   S.nutPhotoUploads[idx]={status:'error',error:e.message};
   }
   render();
  }
@@ -1181,7 +1185,7 @@ function rNutPhotoScreen(){
  var anyLoading=uploads.some(function(u){return u.status==='loading';});
  var uploadsHtml=uploads.map(function(u,i){
   if(u.status==='loading')return '<div style="background:#18181b;border-radius:10px;padding:10px 12px;margin-bottom:6px;color:#71717a;font-size:13px">Analisi foto '+(i+1)+'...</div>';
-  if(u.status==='error')return '<div style="background:#1a0000;border-radius:10px;padding:10px 12px;margin-bottom:6px;color:#f87171;font-size:12px">Foto '+(i+1)+': errore analisi</div>';
+  if(u.status==='error')return '<div style="background:#1a0000;border-radius:10px;padding:10px 12px;margin-bottom:6px;color:#f87171;font-size:12px">'+(u.source==='text'?'Testo':'Foto '+(i+1))+': errore analisi'+(u.error?'<div style="color:#fca5a5;font-size:10px;margin-top:4px;word-break:break-word">'+u.error+'</div>':'')+'</div>';
   var e=u.estimate;
   return '<div style="background:#18181b;border:1px solid #27272a;border-radius:10px;padding:10px 12px;margin-bottom:6px">'
    +'<div style="color:#d4d4d8;font-size:13px;font-weight:600;margin-bottom:3px">'+e.foodDescription+'</div>'
@@ -1334,7 +1338,7 @@ function rProfile(){
   +'<div class="lbl" style="color:#f59e0b;margin-bottom:8px">ANTHROPIC API KEY</div>'
   +'<input type="password" id="api-key-input" placeholder="sk-ant-api03-..." value="'+(localStorage.getItem('anthropicKey')||'')+'"'
   +' style="width:100%;box-sizing:border-box;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:13px;padding:10px;outline:none;font-family:monospace">'
-  +'<button class="btn" style="background:#78350f;margin-top:8px" onclick="(function(){var k=document.getElementById(\'api-key-input\').value.trim();if(k){localStorage.setItem(\'anthropicKey\',k);alert(\'Chiave salvata!\');}else{localStorage.removeItem(\'anthropicKey\');alert(\'Chiave rimossa.\');}})()">Salva chiave API</button>'
+  +'<button class="btn" style="background:#78350f;margin-top:8px" onclick="(function(){var k=document.getElementById(\'api-key-input\').value.trim();if(k){localStorage.setItem(\'anthropicKey\',k);if(typeof syncToDrive===\'function\')syncToDrive();alert(\'Chiave salvata e messa al sicuro su Drive!\');}else{localStorage.removeItem(\'anthropicKey\');alert(\'Chiave rimossa.\');}})()">Salva chiave API</button>'
   +'<div style="font-size:11px;color:#52525b;margin-top:6px">La chiave è salvata solo su questo dispositivo, mai nel cloud.</div>'
   +'</div>'
   +'<button id="restore-btn" class="btn" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;margin-top:8px" onclick="restoreFromDrive()">Ripristina da Drive</button>'
@@ -1517,6 +1521,7 @@ async function estimateMealFromText(description){
   body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,messages:[{role:'user',content:prompt}]})
  });
  var data=await resp.json();
+ if(!resp.ok)throw new Error('HTTP '+resp.status+(data&&data.error&&data.error.message?' — '+data.error.message:''));
  var block=data.content&&data.content.find(function(b){return b.type==='text';});
  if(!block)throw new Error('Nessuna risposta');
  return JSON.parse(block.text.replace(/```json|```/g,'').trim());
@@ -1533,7 +1538,7 @@ async function addManualTextMeal(){
   var est=await estimateMealFromText(desc);
   S.nutPhotoUploads[idx]={status:'done',estimate:est,source:'text'};
  }catch(e){
-  S.nutPhotoUploads[idx]={status:'error',source:'text'};
+  S.nutPhotoUploads[idx]={status:'error',source:'text',error:e.message};
  }
  render();
 }
@@ -1546,6 +1551,7 @@ async function estimateMealFromPhoto(base64,mediaType,noteText){
   body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:prompt}]}]})
  });
  var data=await resp.json();
+ if(!resp.ok)throw new Error('HTTP '+resp.status+(data&&data.error&&data.error.message?' — '+data.error.message:''));
  var block=data.content&&data.content.find(function(b){return b.type==='text';});
  if(!block)throw new Error('Nessuna risposta');
  return JSON.parse(block.text.replace(/```json|```/g,'').trim());
