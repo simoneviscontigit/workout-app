@@ -280,6 +280,8 @@ function nextBandStep(band){
  if(!band)return band;
  return band.replace(/\d+/g,function(m){return String(parseInt(m,10)+5);});
 }
+function snapKg(kg){var v=parseFloat((''+kg).replace(/kg/i,'').replace(',','.'));if(isNaN(v))return null;v=Math.round(v/5)*5;return Math.max(5,Math.min(80,v));}
+function snapBand(band){if(!band)return band;var m=(''+band).match(/\d+(?:[.,]\d+)?(?!.*\d)/);if(!m)return band;var s=snapKg(m[0]);return s==null?band:s+'kg';}
 function withCoachOverride(e){
  // Precedenza: coachPlan (Sumi) > progression (regola meccanica) > carico reale (chat/manuale) > DB
  var cp=(S.aiDB.coachPlan&&S.aiDB.coachPlan.perExercise&&S.aiDB.coachPlan.perExercise[e.id]);
@@ -303,6 +305,7 @@ function withCoachOverride(e){
    if(!ov.coachNote){ov.coachNote='tuo carico'+(ld.manual?'':' (da chat)')+' · '+(ld.date||'');ov.coachSrc='mech';}
   }
  }
+ if(ov.band)ov.band=snapBand(ov.band);
  if(!o&&!ov.band)return e;
  return Object.assign({},e,ov);
 }
@@ -514,7 +517,7 @@ function updateFloatAI(){
  var c=document.getElementById('ai-float-c');
  if(!c){c=document.createElement('div');c.id='ai-float-c';document.body.appendChild(c);}
  // Nascondi il fab dove l'AI è già accessibile: home (tasto griglia), allenamento (inline), pagina AI
- if(S.view==='ai'||S.view==='workout'||S.view==='home'){c.innerHTML='';return;}
+ if((S.view==='ai'||S.view==='workout'||S.view==='home')&&!S.aiOpen){c.innerHTML='';return;}
  c.innerHTML=rFloatingAI();
  // Scroll msgs to bottom
  setTimeout(function(){var el=document.getElementById('float-msgs');if(el)el.scrollTop=el.scrollHeight;},50);
@@ -2294,6 +2297,11 @@ function findExerciseByName(name){
  }
  return null;
 }
+function currentWorkoutExercise(){
+ if(S.view!=='workout'||!S.wSteps)return null;
+ for(var i=Math.min(S.wStepIdx,S.wSteps.length-1);i>=0;i--){var s=S.wSteps[i];if(s&&s.type==='work'&&s.ex)return s.ex;}
+ return null;
+}
 async function sendFloatAI(){
  var inp=document.getElementById('float-ai-in');if(!inp)return;
  var msg=inp.value.trim();if(!msg||S.floatLoading)return;
@@ -2350,12 +2358,14 @@ async function sendFloatAI(){
   }]);
   // In trial mode: don't persist anything
   if(S.trialMode){S.floatLoading=false;updateFloatAI();setTimeout(function(){var el=document.getElementById('float-msgs');if(el)el.scrollTop=el.scrollHeight;},100);return;}
-  // Detect and save reported load during exercise
-  if(exStep){
+  // Cattura carico robusta: anche fuori dalla serie attiva, e numero puro senza "kg"
+  var loadEx=exStep?exStep.ex:currentWorkoutExercise();
+  if(loadEx){
    var detectedKg=parseLoad(msg);
-   if(detectedKg){
+   if(detectedKg==null&&/^\s*\d+(?:[.,]\d+)?\s*$/.test(msg))detectedKg=parseFloat(msg.replace(',','.'));
+   if(detectedKg!=null&&detectedKg>0){
     if(!S.aiDB.loads)S.aiDB.loads={};
-    S.aiDB.loads[exStep.ex.id]={kg:detectedKg,name:exStep.ex.name,date:new Date().toISOString().split('T')[0]};
+    S.aiDB.loads[loadEx.id]={kg:detectedKg,name:loadEx.name,date:new Date().toISOString().split('T')[0]};
    }
   }
   // Persist floatChat so it survives panel close/reopen
