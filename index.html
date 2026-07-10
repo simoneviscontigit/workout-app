@@ -465,6 +465,12 @@ async function loadData(){
   fetch(DRIVE_URL+'?t='+Date.now(),{cache:'no-store',redirect:'follow'}).then(function(r){return r.json();}).then(function(dd){
    if(dd&&dd.ok&&dd.apiKey&&!getApiKey()){localStorage.setItem('anthropicKey',dd.apiKey);} // ripristina chiave API persa da wipe localStorage / reinstall
    if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.coachPlan){S.aiDB.coachPlan=dd.aiDB.coachPlan;sv('ai',S.aiDB);}
+   // Pull profilo da Drive con regola "ultimo aggiornamento vince" (NON blind come coachPlan):
+   // rimpiazza il profilo locale solo se quello su Drive ha un profileUpdatedAt piu' recente.
+   if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.profile&&dd.aiDB.profile.profileUpdatedAt){
+    var _lp=(S.aiDB.profile&&S.aiDB.profile.profileUpdatedAt)||'';
+    if(dd.aiDB.profile.profileUpdatedAt>_lp){S.aiDB.profile=dd.aiDB.profile;sv('ai',S.aiDB);}
+   }
    if(dd&&dd.ok&&typeof render==='function')render();
   }).catch(function(){});
  }catch(e){}
@@ -1418,7 +1424,8 @@ function rProfile(){
    +'if(pe&&pe.value)S.aiDB.profile.peso=parseFloat(pe.value);'
    +'if(ae&&ae.value)S.aiDB.profile.altezza=parseFloat(ae.value);'
    +'if(te&&te.value)S.aiDB.profile.eta=parseFloat(te.value);'
-   +'sv(\'ai\',S.aiDB);go(\'home\');'
+   +'S.aiDB.profile.profileUpdatedAt=new Date().toISOString();' // timbro ultimo-vince: la dashboard/altro device sanno chi ha scritto per ultimo
+   +'sv(\'ai\',S.aiDB);if(typeof syncToDrive===\'function\')syncToDrive();go(\'home\');' // push subito su Drive (anti-wipe: se storico vuoto il sync si salta da solo)
    +'})()">Salva Profilo</button>'
   +'<div class="card" style="margin-top:12px;background:#0f0f0f;border-color:#27272a">'
   +'<div class="lbl" style="color:#f59e0b;margin-bottom:8px">ANTHROPIC API KEY</div>'
