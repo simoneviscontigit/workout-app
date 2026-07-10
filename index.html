@@ -86,7 +86,7 @@ function getApiKey(){return localStorage.getItem('anthropicKey')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-06-30 · g2'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-07-11 · g3'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const DB={
  push:[
   {id:'p1',cat:'push',name:'Archer Push-up',video:'Archer push-up.mp4',
@@ -508,6 +508,21 @@ async function syncToDrive(){
   fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload)});
  }catch(e){}
 }
+// Force-run (Fase 3): scrive un flag aiDB.forceRun={ts} e sincronizza. Il Mac (poller
+// launchd ogni ~10 min) lo vede e lancia il coach subito, senza aspettare la notte.
+// Il flag e' solo un timestamp: il Mac tiene un marker locale, non serve pulirlo qui.
+function requestForceRun(){
+ var b=document.getElementById('force-run-btn');
+ try{
+  if(TEST_MODE){if(b){b.textContent='sandbox: richiesta non inviata';}return;}
+  if(!(S.history&&S.history.length)){if(b){b.textContent='serve almeno una sessione';}return;}
+  S.aiDB=S.aiDB||{};
+  S.aiDB.forceRun={ts:new Date().toISOString()};
+  sv('ai',S.aiDB);
+  syncToDrive();
+  if(b){b.textContent='✓ inviata — il coach gira entro ~10 min';b.disabled=true;b.style.opacity='.6';}
+ }catch(e){if(b){b.textContent='errore: '+e.message;}}
+}
 
 // ─── NAV + RENDER ─────────────────────────────────────────────────────────────
 function go(v,extra){clearInterval(TI);S.view=v;if(extra)Object.assign(S,extra);render();}
@@ -577,7 +592,8 @@ function rHome(){
   +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialWorkout()">Sessione prova</button>'
   +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialNutrition()">Survey prova</button>'
   +'</div>'
-  +'<button class="btn" style="width:100%;background:transparent;border:2px solid #27272a;color:#71717a;margin:16px 0 0;padding:14px;font-size:13px;font-weight:700" onclick="forceRefresh()">↻ Aggiorna app (forza ricarica)</button>'
+  +'<button class="btn" id="force-run-btn" style="width:100%;background:transparent;border:2px solid #F97316;color:#F97316;margin:16px 0 0;padding:14px;font-size:13px;font-weight:700" onclick="requestForceRun()">⟳ Aggiorna piano ora (chiedi al coach)</button>'
+  +'<button class="btn" style="width:100%;background:transparent;border:2px solid #27272a;color:#71717a;margin:8px 0 0;padding:14px;font-size:13px;font-weight:700" onclick="forceRefresh()">↻ Aggiorna app (forza ricarica)</button>'
   +'<div style="text-align:center;font-size:9px;color:#3f3f46;margin-top:6px">build '+APP_BUILD+'</div>'
   +'</div>'
   +'</div>';
