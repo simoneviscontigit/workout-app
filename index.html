@@ -2072,6 +2072,7 @@ function buildCtx(){
 // ─── RIEPILOGHI AUTO ──────────────────────────────────────────────────────────
 function isoDate(d){return d.toISOString().split('T')[0];}
 async function generateWeeklySummary(){
+ return; // DISMESSO: recap in-app (Haiku) sostituito dal recap canonico coach (Sonnet, vault). Corpo lasciato per reversibilità.
  if(!getApiKey())return;
  var now=new Date();
  // Finestra 14 giorni per non perdere sessioni in settimane con gap
@@ -2106,6 +2107,7 @@ async function generateWeeklySummary(){
  }catch(e){}
 }
 async function generateMonthlySummary(){
+ return; // DISMESSO: recap in-app (Haiku) sostituito dal recap canonico coach (Sonnet, vault). Corpo lasciato per reversibilità.
  if(!getApiKey())return;
  var now=new Date();
  var month=now.getMonth()+1;
@@ -2139,6 +2141,7 @@ async function generateMonthlySummary(){
  }catch(e){}
 }
 async function checkAndGenerateSummaries(){
+ return; // DISMESSO: trigger recap in-app (weekly/monthly via Haiku) disattivato — vedi generateWeeklySummary/generateMonthlySummary. Corpo lasciato per reversibilità.
  if(!APIKEY||!S.history||S.history.length===0)return;
  var now=new Date();
  // ─ weekly: se l'ultimo report ha >6 giorni o non esiste
