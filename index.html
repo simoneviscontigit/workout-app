@@ -81,12 +81,13 @@ textarea,input[type=text]{background:#18181b;border:1px solid #27272a;border-rad
 <div id="app"><div class="center"><span style="font-size:40px"></span></div></div>
 <script>
 // ─── CONFIG ─────────────────────────────────────────────────────────────────
-// Chiave API Anthropic — salvata in localStorage, mai nel codice
-function getApiKey(){return localStorage.getItem('anthropicKey')||'';}
+// FASE 4: proxy-token del backend serve.py (NON più la sk-ant, ora server-side). Nome getApiKey tenuto legacy per non toccare gli 8 gate.
+function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-07-11 · g3'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-07-11 · g4'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
   {id:'p1',cat:'push',name:'Archer Push-up',video:'Archer push-up.mp4',
@@ -463,7 +464,7 @@ async function loadData(){
   if(S.aiDB.currentChat&&S.aiDB.currentChat.date===new Date().toDateString())S.floatChat=S.aiDB.currentChat.msgs||[];
   // Auto-fetch del coachPlan da Drive: le istruzioni del coach notturno (Sumi) arrivano da sole
   fetch(DRIVE_URL+'?t='+Date.now(),{cache:'no-store',redirect:'follow'}).then(function(r){return r.json();}).then(function(dd){
-   if(dd&&dd.ok&&dd.apiKey&&!getApiKey()){localStorage.setItem('anthropicKey',dd.apiKey);} // ripristina chiave API persa da wipe localStorage / reinstall
+   if(dd&&dd.ok&&dd.proxyToken&&!getApiKey()){localStorage.setItem('workoutProxyToken',dd.proxyToken);} // ripristina proxy-token perso da wipe localStorage / reinstall
    if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.coachPlan){S.aiDB.coachPlan=dd.aiDB.coachPlan;sv('ai',S.aiDB);}
    // Pull profilo da Drive con regola "ultimo aggiornamento vince" (NON blind come coachPlan):
    // rimpiazza il profilo locale solo se quello su Drive ha un profileUpdatedAt piu' recente.
@@ -489,7 +490,7 @@ async function restoreFromDrive(){
   if(data.history)await sv('wh',data.history);
   if(data.aiDB)await sv('ai',data.aiDB);
   if(data.splits)await sv('splits',data.splits);
-  if(data.apiKey)localStorage.setItem('anthropicKey',data.apiKey);
+  if(data.proxyToken)localStorage.setItem('workoutProxyToken',data.proxyToken);
   alert('Dati ripristinati da Drive!\n'+((data.history||[]).length)+' sessioni caricate.\nRicarico...');
   location.reload();
  }catch(e){
@@ -504,7 +505,7 @@ async function syncToDrive(){
  if(!(S.history&&S.history.length)){console.warn('sync saltato: storico locale vuoto');return;}
  try{
   var payload={history:S.history,nutrition:S.nutrition,aiDB:S.aiDB,skipped:S.skipped,savedAt:new Date().toISOString()};
-  var _k=getApiKey();if(_k)payload.apiKey=_k; // backup chiave API: sopravvive a wipe localStorage / reinstall PWA
+  var _k=getApiKey();if(_k)payload.proxyToken=_k; // backup proxy-token: sopravvive a wipe localStorage / reinstall PWA
   fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload)});
  }catch(e){}
 }
@@ -1444,11 +1445,11 @@ function rProfile(){
    +'sv(\'ai\',S.aiDB);if(typeof syncToDrive===\'function\')syncToDrive();go(\'home\');' // push subito su Drive (anti-wipe: se storico vuoto il sync si salta da solo)
    +'})()">Salva Profilo</button>'
   +'<div class="card" style="margin-top:12px;background:#0f0f0f;border-color:#27272a">'
-  +'<div class="lbl" style="color:#f59e0b;margin-bottom:8px">ANTHROPIC API KEY</div>'
-  +'<input type="password" id="api-key-input" placeholder="sk-ant-api03-..." value="'+(localStorage.getItem('anthropicKey')||'')+'"'
+  +'<div class="lbl" style="color:#f59e0b;margin-bottom:8px">WORKOUT AI · PROXY TOKEN</div>'
+  +'<input type="password" id="api-key-input" placeholder="proxy-token..." value="'+(localStorage.getItem('workoutProxyToken')||'')+'"'
   +' style="width:100%;box-sizing:border-box;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:13px;padding:10px;outline:none;font-family:monospace">'
-  +'<button class="btn" style="background:#78350f;margin-top:8px" onclick="(function(){var k=document.getElementById(\'api-key-input\').value.trim();if(k){localStorage.setItem(\'anthropicKey\',k);if(typeof syncToDrive===\'function\')syncToDrive();alert(\'Chiave salvata e messa al sicuro su Drive!\');}else{localStorage.removeItem(\'anthropicKey\');alert(\'Chiave rimossa.\');}})()">Salva chiave API</button>'
-  +'<div style="font-size:11px;color:#52525b;margin-top:6px">La chiave è salvata solo su questo dispositivo, mai nel cloud.</div>'
+  +'<button class="btn" style="background:#78350f;margin-top:8px" onclick="(function(){var k=document.getElementById(\'api-key-input\').value.trim();if(k){localStorage.setItem(\'workoutProxyToken\',k);if(typeof syncToDrive===\'function\')syncToDrive();alert(\'Token salvato e messo al sicuro su Drive!\');}else{localStorage.removeItem(\'workoutProxyToken\');alert(\'Token rimosso.\');}})()">Salva proxy-token</button>'
+  +'<div style="font-size:11px;color:#52525b;margin-top:6px">Token del proxy (non la sk-ant), su questo dispositivo + backup su Drive.</div>'
   +'</div>'
   +'<button id="restore-btn" class="btn" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;margin-top:8px" onclick="restoreFromDrive()">Ripristina da Drive</button>'
   +'</div>';
@@ -1624,9 +1625,9 @@ function macrosToScoreLevel(macros){
 async function estimateMealFromText(description){
  var prompt='Stima i macronutrienti di questo pasto descritto a testo: "'+description+'"'
   +'\nRispondi SOLO con JSON valido senza markdown:\n{"protein_g":N,"carbs_g":N,"fats_g":N,"calories":N,"foodDescription":"breve descrizione","confidence":"alta|media|bassa"}';
- var resp=await fetch('https://api.anthropic.com/v1/messages',{
+ var resp=await fetch(AI_PROXY_URL,{
   method:'POST',
-  headers:{'x-api-key':getApiKey(),'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+  headers:{'content-type':'application/json','x-proxy-token':getApiKey()},
   body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,messages:[{role:'user',content:prompt}]})
  });
  var data=await resp.json();
@@ -1654,9 +1655,9 @@ async function addManualTextMeal(){
 async function estimateMealFromPhoto(base64,mediaType,noteText){
  var prompt='Stima i macronutrienti di questo pasto.'+(noteText?' Dettagli aggiuntivi: '+noteText:'')
   +'\nRispondi SOLO con JSON valido senza markdown:\n{"protein_g":N,"carbs_g":N,"fats_g":N,"calories":N,"foodDescription":"breve descrizione","confidence":"alta|media|bassa"}';
- var resp=await fetch('https://api.anthropic.com/v1/messages',{
+ var resp=await fetch(AI_PROXY_URL,{
   method:'POST',
-  headers:{'x-api-key':getApiKey(),'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+  headers:{'content-type':'application/json','x-proxy-token':getApiKey()},
   body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:prompt}]}]})
  });
  var data=await resp.json();
@@ -2188,13 +2189,11 @@ function rAI(){
 }
 async function callAI(messages,system,maxTok){
  if(!getApiKey())return null;
- var r=await fetch('https://api.anthropic.com/v1/messages',{
+ var r=await fetch(AI_PROXY_URL,{
   method:'POST',
   headers:{
    'Content-Type':'application/json',
-   'x-api-key':getApiKey(),
-   'anthropic-version':'2023-06-01',
-   'anthropic-dangerous-direct-browser-access':'true'
+   'x-proxy-token':getApiKey()
   },
   body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:maxTok||400,system:system||'',messages:messages})
  });
