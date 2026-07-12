@@ -86,7 +86,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-07-12 · g6'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-07-12 · g7'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -590,8 +590,8 @@ function rHome(){
   +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #27272a;color:#fff;margin:0;padding:16px;font-size:14px" onclick="go(\'history\')">Storico</button>'
   +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #F97316;color:#F97316;margin:0;padding:16px;font-size:14px" onclick="go(\'ai\')">AI</button>'
   +'</div>'
-  +(S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.recoveryFlag&&S.aiDB.adaptation.recoveryAction?'<div style="border:2px solid #ef4444;background:#1a0000;padding:12px;margin-top:14px"><div class="lbl" style="color:#ef4444;font-size:11px;margin-bottom:6px">Recovery — allenamento adattato</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.adaptation.recoveryAction+'</div></div>':'')
-  +(S.aiDB&&S.aiDB.nutritionAdvice?'<div style="border:2px solid #F97316;background:#1a0a00;padding:12px;margin-top:14px"><div class="lbl" style="color:#F97316;font-size:11px;margin-bottom:6px">▸ Nutrizione — consiglio domani</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.nutritionAdvice+'</div></div>':'')
+  // (rimossi 12/07 i vecchi consigli in-app Recovery + Nutrizione domani — superati dai
+  //  consigli/card del report Sumi Legacy qui sotto)
   // Consigli di Sumi + "cosa dicono i dati" dalla vetrina Sumi Legacy (report ragionato nel feed)
   +((S.aiDB.metrics&&S.aiDB.metrics.report)?WKUI.consigli(S.aiDB.metrics.report):'')
   +((S.aiDB.metrics&&S.aiDB.metrics.report)?WKUI.cards(S.aiDB.metrics.report):'')
