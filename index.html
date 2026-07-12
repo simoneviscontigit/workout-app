@@ -86,7 +86,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-07-12 · g5'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-07-12 · g6'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -592,6 +592,9 @@ function rHome(){
   +'</div>'
   +(S.aiDB&&S.aiDB.adaptation&&S.aiDB.adaptation.recoveryFlag&&S.aiDB.adaptation.recoveryAction?'<div style="border:2px solid #ef4444;background:#1a0000;padding:12px;margin-top:14px"><div class="lbl" style="color:#ef4444;font-size:11px;margin-bottom:6px">Recovery — allenamento adattato</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.adaptation.recoveryAction+'</div></div>':'')
   +(S.aiDB&&S.aiDB.nutritionAdvice?'<div style="border:2px solid #F97316;background:#1a0a00;padding:12px;margin-top:14px"><div class="lbl" style="color:#F97316;font-size:11px;margin-bottom:6px">▸ Nutrizione — consiglio domani</div><div style="color:#d4d4d8;font-size:13px;line-height:1.5">'+S.aiDB.nutritionAdvice+'</div></div>':'')
+  // Consigli di Sumi + "cosa dicono i dati" dalla vetrina Sumi Legacy (report ragionato nel feed)
+  +((S.aiDB.metrics&&S.aiDB.metrics.report)?WKUI.consigli(S.aiDB.metrics.report):'')
+  +((S.aiDB.metrics&&S.aiDB.metrics.report)?WKUI.cards(S.aiDB.metrics.report):'')
   +'<div style="display:flex;gap:6px;margin-top:16px">'
   +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialWorkout()">Sessione prova</button>'
   +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialNutrition()">Survey prova</button>'
@@ -1981,6 +1984,211 @@ function mdLite(s){
   .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
   .replace(/\n/g,'<br>');
 }
+
+/* ═══ WKUI — i 4 grafici + consigli/card di Sumi Legacy portati nell'app ═══════
+   Vetrina SOLA LETTURA: un cervello (Sumi) alimenta app+dashboard dallo stesso feed.
+   I builder SVG sono portati 1:1 da mod-workout.js (dashboard) adattati a leggere da
+   S.aiDB.metrics.* + report da S.aiDB.metrics.report. Namespaced per non toccare nulla
+   dell'app. graf(key) = linee/considerazioni ragionate da Sumi (report.grafici).       */
+var WKUI=(function(){
+ var curReport=null;
+ var OBIETTIVO_LABELS={massa:'massa',definizione:'definizione',ricomposizione:'ricomposizione',mantenimento:'mantenimento'};
+ var REPORT_COLOR={good:'#22c55e',warn:'#f59e0b',bad:'#ef4444',accent:'#F97316'};
+ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+ function reportColor(c){return REPORT_COLOR[c]||REPORT_COLOR.accent;}
+ function fmtObiettivo(o){return o?(OBIETTIVO_LABELS[o]||o):'—';}
+ function fmtDateShort(iso){return iso?String(iso).slice(0,10):'—';}
+ function graf(key){var r=curReport;return (r&&r.grafici&&r.grafici[key])||null;}
+ function getThresholds(wk){var t=wk&&wk.scoresMeta&&wk.scoresMeta.thresholds;return {green:(t&&t.green!=null)?t.green:75,amber:(t&&t.amber!=null)?t.amber:50};}
+ function verdictTag(val,thr){if(val==null)return 'grey';if(val>=thr.green)return 'good';if(val>=thr.amber)return 'warn';return 'bad';}
+ function verdictColorHex(tag){return tag==='good'?'#22c55e':(tag==='warn'?'#fab219':(tag==='bad'?'#d03b3b':'#C9A594'));}
+ function trailingMA(days,valByDay,windowSize){var out={};for(var i=0;i<days.length;i++){var sum=0,cnt=0;for(var j=Math.max(0,i-windowSize+1);j<=i;j++){var v=valByDay[days[j]];if(v!=null){sum+=v;cnt++;}}out[days[i]]=cnt?(sum/cnt):null;}return out;}
+ function smoothPathFromPoints(pts){if(!pts.length)return '';if(pts.length===1)return 'M'+pts[0].x+','+pts[0].y;var d='M'+pts[0].x+','+pts[0].y;for(var i=1;i<pts.length;i++){var p0=pts[i-1],p1=pts[i];var mx=(p0.x+p1.x)/2,my=(p0.y+p1.y)/2;d+=' Q'+p0.x+','+p0.y+' '+mx+','+my;}var last=pts[pts.length-1];d+=' L'+last.x+','+last.y;return d;}
+
+ /* GRAFICO A — punteggio benessere */
+ function buildBenessere(wk){
+  var scores=wk.scores||[];var scoreByDay={};
+  scores.forEach(function(s){scoreByDay[s.date]=s.benessere!=null?s.benessere:null;});
+  var days=Object.keys(scoreByDay).sort();var thr=getThresholds(wk);var kpi=wk.kpi||{};
+  var html="<div class='wk-histcard'>";html+="<div class='wk-histcard-lbl'>Punteggio benessere</div>";
+  var bVal=kpi.benessereMedia14!=null?kpi.benessereMedia14:null;var vTag=verdictTag(bVal,thr);
+  var arrowChar=kpi.benessereFreccia==='up'?'▲':(kpi.benessereFreccia==='down'?'▼':(kpi.benessereFreccia==='flat'?'→':''));
+  var trendWord=kpi.benessereFreccia==='up'?'in salita':(kpi.benessereFreccia==='down'?'in calo':(kpi.benessereFreccia==='flat'?'stabile':''));
+  var headlineTxt=bVal!=null?('Benessere '+bVal+(arrowChar?' '+arrowChar:'')+(trendWord?' — '+trendWord+' vs settimana scorsa':'')):'Andamento benessere';
+  html+="<div class='wk-chart-headline' style='color:"+verdictColorHex(vTag)+"'>"+esc(headlineTxt)+"</div>";
+  var hasData=days.some(function(d){return scoreByDay[d]!=null;});
+  if(!days.length||!hasData){html+="<div class='wk-vuoto'>nessun dato</div>";}
+  else{
+   var n=days.length;var W=720,pL=52,pR=26,cW=W-pL-pR;
+   function xOf(i){return pL+(n>1?i/(n-1):0)*cW;}
+   var x0=days[0].slice(5),xN=days[n-1].slice(5),xMid=days[Math.floor(n/2)].slice(5);
+   var aT=14,aB=24,aH=150,acH=aH-aT-aB;
+   var _sv=[];days.forEach(function(d){if(scoreByDay[d]!=null)_sv.push(scoreByDay[d]);});
+   var yLo=40,yHi=90;
+   if(_sv.length){var _mn=Math.min.apply(null,_sv),_mx=Math.max.apply(null,_sv);yLo=Math.max(0,Math.floor((_mn-8)/5)*5);yHi=Math.min(100,Math.ceil((_mx+8)/5)*5);if(yHi-yLo<20){yHi=Math.min(100,yLo+20);}}
+   function yA(s){return aT+acH-((s-yLo)/(yHi-yLo))*acH;}
+   function dotColor(s){return s>=thr.green?'#22c55e':(s>=thr.amber?'#fab219':'#d03b3b');}
+   var rawPts=[];days.forEach(function(d,i){var sc=scoreByDay[d];if(sc==null)return;rawPts.push({x:xOf(i),y:yA(sc)});});
+   var rawPath=rawPts.length>1?'M'+rawPts.map(function(p){return p.x+','+p.y;}).join(' L'):'';
+   var aDots='';days.forEach(function(d,i){var sc=scoreByDay[d];if(sc==null)return;aDots+="<circle cx='"+xOf(i)+"' cy='"+yA(sc)+"' r='2' fill='"+dotColor(sc)+"' stroke='rgba(9,9,11,.85)' stroke-width='0.8'><title>"+esc(d+' · '+sc)+"</title></circle>";});
+   var maByDay=trailingMA(days,scoreByDay,7);var maPts=[];days.forEach(function(d,i){var ma=maByDay[d];if(ma==null)return;maPts.push({x:xOf(i),y:yA(ma),d:d,ma:ma});});
+   var maPath=smoothPathFromPoints(maPts.map(function(p){return {x:p.x,y:p.y};}));
+   var maTitle=maPts.length?"<title>media 7gg — ultimo: "+esc(maPts[maPts.length-1].d+' · '+Math.round(maPts[maPts.length-1].ma))+"</title>":'';
+   var gLines='';[50,75].forEach(function(gv){if(gv<=yLo||gv>=yHi)return;var gy=yA(gv);gLines+="<line x1='"+pL+"' y1='"+gy+"' x2='"+(pL+cW)+"' y2='"+gy+"' stroke='rgba(255,255,255,.08)' stroke-width='0.6' stroke-dasharray='2,4'/>"+"<text x='"+(pL-6)+"' y='"+(gy+2)+"' fill='#B79684' font-size='6' text-anchor='end'>"+gv+"</text>";});
+   html+="<svg viewBox='0 0 "+W+" "+aH+"' style='width:100%;display:block;overflow:visible'>"+gLines+(rawPath?"<path d='"+rawPath+"' stroke='rgba(255,255,255,.10)' stroke-width='0.7' fill='none'/>":'')+aDots+(maPath?"<path d='"+maPath+"' stroke='#FFD9A0' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'>"+maTitle+"</path>":'')+"<text x='"+pL+"' y='"+(aH-4)+"' fill='#B79684' font-size='6' text-anchor='start'>"+esc(x0)+"</text>"+"<text x='"+(pL+cW/2)+"' y='"+(aH-4)+"' fill='#B79684' font-size='6' text-anchor='middle'>"+esc(xMid)+"</text>"+"<text x='"+(pL+cW)+"' y='"+(aH-4)+"' fill='#B79684' font-size='6' text-anchor='end'>"+esc(xN)+"</text>"+"</svg>";
+   html+="<div class='wk-histcard-leg'><span style='color:#FFD9A0'>▬ media 7gg</span><span style='color:#22c55e'>● &ge;75</span><span style='color:#fab219'>● 50-74</span><span style='color:#d03b3b'>● &lt;50</span></div>";
+  }
+  html+="</div>";return html;
+ }
+
+ /* GRAFICO B — kcal ingerite vs mantenimento + trend settimanale + verdetto */
+ function buildKcal(wk){
+  var kcalSeries=wk.kcalSeries||[];var daysObj=wk.days||{};var kcalWeekly=wk.kcalWeekly||[];
+  var kcalByDay={},maintByDay={},trainedByDay={};
+  kcalSeries.forEach(function(r){kcalByDay[r.date]=r.kcal!=null?r.kcal:null;maintByDay[r.date]=r.maintenance!=null?r.maintenance:null;});
+  Object.keys(daysObj).forEach(function(d){if(daysObj[d]&&daysObj[d].session)trainedByDay[d]=true;});
+  var days=Object.keys(kcalByDay).sort();
+  var html="<div class='wk-histcard'>";html+="<div class='wk-histcard-lbl'>Calorie ingerite vs mantenimento</div>";
+  var gCal=graf('calorie');
+  if(gCal&&gCal.considerazione){html+="<div class='wk-chart-headline' style='color:#FFFFFF'>"+esc(gCal.considerazione)+"</div>";}
+  else{var lastWeek=kcalWeekly.length?kcalWeekly[kcalWeekly.length-1]:null;
+   if(lastWeek){var vColor=lastWeek.allineato===true?'#22c55e':(lastWeek.allineato===false?'#fab219':'#C9A594');var obLab=fmtObiettivo(wk.profile&&wk.profile.obiettivo);var devTxt=lastWeek.dev!=null?((lastWeek.dev>=0?'+':'')+lastWeek.dev):'—';var verdictLab=lastWeek.verdict||'—';var phrase='Questa settimana: media '+(lastWeek.avgIntake!=null?lastWeek.avgIntake:'—')+' vs mantenimento '+(lastWeek.avgMaintenance!=null?lastWeek.avgMaintenance:'—')+' kcal = '+verdictLab+' ('+devTxt+'/gg)'+(obLab!=='—'?' — obiettivo '+obLab+(lastWeek.allineato===true?': in linea':(lastWeek.allineato===false?': fuori linea':'')):'');html+="<div class='wk-chart-headline' style='color:"+vColor+"'>"+esc(phrase)+"</div>";}}
+  if(!days.length){html+="<div class='wk-vuoto'>nessun dato</div>";}
+  else{
+   var n=days.length;var W=720,pL=66,pR=104,cW=W-pL-pR;
+   function xOf(i){return pL+(n>1?i/(n-1):0)*cW;}
+   var x0=days[0].slice(5),xN=days[n-1].slice(5),xMid=days[Math.floor(n/2)].slice(5);
+   var bT=18,bB=46,bH=178,bcH=bH-bT-bB;
+   var lastWeekEarly=kcalWeekly.length?kcalWeekly[kcalWeekly.length-1]:null;
+   var refMaint=(lastWeekEarly&&lastWeekEarly.avgMaintenance!=null)?lastWeekEarly.avgMaintenance:null;
+   if(refMaint==null){var mVals=days.map(function(d){return maintByDay[d];}).filter(function(v){return v!=null;});if(mVals.length)refMaint=mVals.reduce(function(a,b){return a+b;},0)/mVals.length;}
+   var kVals=days.map(function(d){return kcalByDay[d];}).filter(function(v){return v!=null;});
+   var domainVals=kVals.slice();if(refMaint!=null)domainVals.push(refMaint);
+   var refMassa=(gCal&&gCal.obiettivoMassa!=null)?gCal.obiettivoMassa:null;if(refMassa!=null)domainVals.push(refMassa);
+   var refDef=(gCal&&gCal.definizione!=null)?gCal.definizione:null;if(refDef!=null)domainVals.push(refDef);
+   var yMin=0,yMax=2900;
+   if(domainVals.length){var vmin=Math.min.apply(null,domainVals),vmax=Math.max.apply(null,domainVals);var pad=Math.max(100,(vmax-vmin)*0.10);yMin=Math.max(0,Math.floor((vmin-pad)/50)*50);yMax=Math.ceil((vmax+pad)/50)*50;}
+   var ySpan=Math.max(1,yMax-yMin);function yOf(kcal){return bT+bcH-((kcal-yMin)/ySpan)*bcH;}
+   var refY=refMaint!=null?yOf(refMaint):null;var refMassaY=refMassa!=null?yOf(refMassa):null;var refDefY=refDef!=null?yOf(refDef):null;
+   var stems='';if(refY!=null){days.forEach(function(d,i){var v=kcalByDay[d];if(v==null)return;var x=xOf(i),y=yOf(v);var col=v>refMaint?'rgba(255,217,160,.30)':'rgba(201,165,148,.30)';stems+="<line x1='"+x+"' y1='"+refY+"' x2='"+x+"' y2='"+y+"' stroke='"+col+"' stroke-width='1'/>";});}
+   var kPts=[];days.forEach(function(d,i){var v=kcalByDay[d];if(v==null)return;kPts.push({x:xOf(i),y:yOf(v)});});
+   var kPath=kPts.length>1?'M'+kPts.map(function(p){return p.x+','+p.y;}).join(' L'):'';
+   var kDots='';days.forEach(function(d,i){var v=kcalByDay[d];if(v==null)return;kDots+="<circle cx='"+xOf(i)+"' cy='"+yOf(v)+"' r='1.9' fill='#FFFFFF'><title>"+esc(d+' · '+v+' kcal')+"</title></circle>";});
+   var weekSegs='';kcalWeekly.forEach(function(w){if(w.avgIntake==null)return;var i0=-1,i1=-1;days.forEach(function(d,i){if(d>=w.weekStart&&d<=w.weekEnd){if(i0===-1)i0=i;i1=i;}});if(i0===-1)return;var y=yOf(w.avgIntake),x1=xOf(i0),x2=xOf(i1);weekSegs+="<line x1='"+x1+"' y1='"+y+"' x2='"+x2+"' y2='"+y+"' stroke='#FFD9A0' stroke-width='1.7' stroke-dasharray='6,4' opacity='0.95'><title>"+esc(w.weekStart+' → '+w.weekEnd+' · media '+w.avgIntake+' kcal')+"</title></line>";});
+   var trainTicks=days.map(function(d,i){if(!trainedByDay[d])return '';var x=xOf(i);return "<line x1='"+x+"' y1='"+(bT+bcH+5)+"' x2='"+x+"' y2='"+(bT+bcH+11)+"' stroke='#FFD9A0' stroke-width='1.1' opacity='0.55'><title>"+esc(d+' · giorno allenato')+"</title></line>";}).join('');
+   html+="<svg viewBox='0 0 "+W+" "+bH+"' style='width:100%;display:block;overflow:visible'>"+stems+(refY!=null?"<line x1='"+pL+"' y1='"+refY+"' x2='"+(pL+cW)+"' y2='"+refY+"' stroke='#C9A594' stroke-width='1' opacity='0.75'/>"+"<text x='"+(pL+cW+3)+"' y='"+(refY+2)+"' fill='#C9A594' font-size='6' opacity='0.9'>mantenimento</text>":'')+(refMassaY!=null?"<line x1='"+pL+"' y1='"+refMassaY+"' x2='"+(pL+cW)+"' y2='"+refMassaY+"' stroke='#8FD9B6' stroke-width='1' stroke-dasharray='2,2' opacity='0.85'/>"+"<text x='"+(pL+cW+3)+"' y='"+(refMassaY+2)+"' fill='#8FD9B6' font-size='6' opacity='0.9'>obiettivo massa</text>":'')+(refDefY!=null?"<line x1='"+pL+"' y1='"+refDefY+"' x2='"+(pL+cW)+"' y2='"+refDefY+"' stroke='#E8956B' stroke-width='1' stroke-dasharray='2,2' opacity='0.85'/>"+"<text x='"+(pL+cW+3)+"' y='"+(refDefY+2)+"' fill='#E8956B' font-size='6' opacity='0.9'>definizione</text>":'')+(kPath?"<path d='"+kPath+"' stroke='#FFFFFF' stroke-width='1.4' fill='none' opacity='0.9'/>":'')+kDots+weekSegs+trainTicks+"<text x='"+(pL-6)+"' y='"+(yOf(yMax)+2)+"' fill='#B79684' font-size='6' text-anchor='end'>"+esc(Math.round(yMax))+"</text>"+"<text x='"+(pL-6)+"' y='"+(yOf(yMin)+2)+"' fill='#B79684' font-size='6' text-anchor='end'>"+esc(Math.round(yMin))+"</text>"+"<text x='"+pL+"' y='"+(bH-5)+"' fill='#B79684' font-size='6' text-anchor='start'>"+esc(x0)+"</text>"+"<text x='"+(pL+cW/2)+"' y='"+(bH-5)+"' fill='#B79684' font-size='6' text-anchor='middle'>"+esc(xMid)+"</text>"+"<text x='"+(pL+cW)+"' y='"+(bH-5)+"' fill='#B79684' font-size='6' text-anchor='end'>"+esc(xN)+"</text>"+"</svg>";
+   html+="<div class='wk-histcard-leg'>"+"<span style='display:flex;align-items:center;gap:5px;color:#FFFFFF'><span style='width:14px;height:2px;background:#FFFFFF;display:inline-block;opacity:.9'></span>Kcal ingerite (giorno)</span>"+"<span style='display:flex;align-items:center;gap:5px;color:#FFD9A0'><span style='width:14px;border-top:2.5px dashed #FFD9A0;display:inline-block'></span>Media settimanale</span>"+"<span style='display:flex;align-items:center;gap:5px;color:#C9A594'><span style='width:14px;border-top:1.5px solid #C9A594;display:inline-block'></span>Mantenimento</span>"+(refMassaY!=null?"<span style='display:flex;align-items:center;gap:5px;color:#8FD9B6'><span style='width:14px;border-top:1.5px dashed #8FD9B6;display:inline-block'></span>Obiettivo massa</span>":'')+(refDefY!=null?"<span style='display:flex;align-items:center;gap:5px;color:#E8956B'><span style='width:14px;border-top:1.5px dashed #E8956B;display:inline-block'></span>Definizione</span>":'')+"</div>";
+   if(gCal&&gCal.todo){html+="<div class='wk-graf-todo'><b>Da qui in poi:</b> "+esc(gCal.todo)+"</div>";}
+   else{html+="<div class='wk-histcard-note'>Tacca sotto = giorno allenato · mantenimento = stima da formula, kcal reali solo dai giorni con foto pasti</div>";}
+  }
+  html+="</div>";return html;
+ }
+
+ /* GRAFICO B-bis — proteine/giorno vs 3 fasce ragionate da Sumi */
+ function buildProteine(wk){
+  var daysObj=wk.days||{};var protByDay={};
+  Object.keys(daysObj).forEach(function(d){var nut=daysObj[d]&&daysObj[d].nutrition;protByDay[d]=(nut&&nut.protein!=null)?nut.protein:null;});
+  var days=Object.keys(protByDay).sort();var gPro=graf('proteine');
+  var html="<div class='wk-histcard'>";html+="<div class='wk-histcard-lbl'>Proteine ingerite vs fasce obiettivo</div>";
+  if(gPro&&gPro.considerazione){html+="<div class='wk-chart-headline' style='color:#FFFFFF'>"+esc(gPro.considerazione)+"</div>";}
+  var hasData=days.some(function(d){return protByDay[d]!=null;});
+  if(!hasData){html+="<div class='wk-vuoto'>nessun dato proteine</div></div>";return html;}
+  var n=days.length;var W=720,pL=66,pR=104,cW=W-pL-pR;
+  function xOf(i){return pL+(n>1?i/(n-1):0)*cW;}
+  var x0=days[0].slice(5),xN=days[n-1].slice(5),xMid=days[Math.floor(n/2)].slice(5);
+  var bT=18,bB=46,bH=178,bcH=bH-bT-bB;
+  var refDef=(gPro&&gPro.definizione!=null)?gPro.definizione:null;
+  var refRicomp=(gPro&&gPro.targetRicomp!=null)?gPro.targetRicomp:null;
+  var refMassa=(gPro&&gPro.obiettivoMassa!=null)?gPro.obiettivoMassa:null;
+  var pVals=days.map(function(d){return protByDay[d];}).filter(function(v){return v!=null;});
+  var domainVals=pVals.slice();[refDef,refRicomp,refMassa].forEach(function(v){if(v!=null)domainVals.push(v);});
+  var yMin=0,yMax=200;
+  if(domainVals.length){var vmin=Math.min.apply(null,domainVals),vmax=Math.max.apply(null,domainVals);var pad=Math.max(10,(vmax-vmin)*0.10);yMin=Math.max(0,Math.floor((vmin-pad)/10)*10);yMax=Math.ceil((vmax+pad)/10)*10;}
+  var ySpan=Math.max(1,yMax-yMin);function yOf(g){return bT+bcH-((g-yMin)/ySpan)*bcH;}
+  var pPts=[];days.forEach(function(d,i){var v=protByDay[d];if(v==null)return;pPts.push({x:xOf(i),y:yOf(v)});});
+  var pPath=pPts.length>1?'M'+pPts.map(function(p){return p.x+','+p.y;}).join(' L'):'';
+  var pDots='';days.forEach(function(d,i){var v=protByDay[d];if(v==null)return;pDots+="<circle cx='"+xOf(i)+"' cy='"+yOf(v)+"' r='1.9' fill='#FFFFFF'><title>"+esc(d+' · '+v+' g')+"</title></circle>";});
+  function refLine(val,color,label){if(val==null)return '';var y=yOf(val);return "<line x1='"+pL+"' y1='"+y+"' x2='"+(pL+cW)+"' y2='"+y+"' stroke='"+color+"' stroke-width='1' stroke-dasharray='2,2' opacity='0.85'/>"+"<text x='"+(pL+cW+3)+"' y='"+(y+2)+"' fill='"+color+"' font-size='6' opacity='0.9'>"+esc(label)+"</text>";}
+  html+="<svg viewBox='0 0 "+W+" "+bH+"' style='width:100%;display:block;overflow:visible'>"+refLine(refMassa,'#8FD9B6','massa')+refLine(refDef,'#E8956B','definizione')+refLine(refRicomp,'#FFD9A0','ricomposizione')+(pPath?"<path d='"+pPath+"' stroke='#FFFFFF' stroke-width='1.4' fill='none' opacity='0.9'/>":'')+pDots+"<text x='"+(pL-6)+"' y='"+(yOf(yMax)+2)+"' fill='#B79684' font-size='6' text-anchor='end'>"+esc(Math.round(yMax))+"g</text>"+"<text x='"+(pL-6)+"' y='"+(yOf(yMin)+2)+"' fill='#B79684' font-size='6' text-anchor='end'>"+esc(Math.round(yMin))+"g</text>"+"<text x='"+pL+"' y='"+(bH-5)+"' fill='#B79684' font-size='6' text-anchor='start'>"+esc(x0)+"</text>"+"<text x='"+(pL+cW/2)+"' y='"+(bH-5)+"' fill='#B79684' font-size='6' text-anchor='middle'>"+esc(xMid)+"</text>"+"<text x='"+(pL+cW)+"' y='"+(bH-5)+"' fill='#B79684' font-size='6' text-anchor='end'>"+esc(xN)+"</text>"+"</svg>";
+  html+="<div class='wk-histcard-leg'>"+"<span style='display:flex;align-items:center;gap:5px;color:#FFFFFF'><span style='width:14px;height:2px;background:#FFFFFF;display:inline-block;opacity:.9'></span>Proteine (giorno)</span>"+(refDef!=null?"<span style='display:flex;align-items:center;gap:5px;color:#E8956B'><span style='width:14px;border-top:1.5px dashed #E8956B;display:inline-block'></span>Definizione</span>":'')+(refRicomp!=null?"<span style='display:flex;align-items:center;gap:5px;color:#FFD9A0'><span style='width:14px;border-top:1.5px dashed #FFD9A0;display:inline-block'></span>Ricomposizione</span>":'')+(refMassa!=null?"<span style='display:flex;align-items:center;gap:5px;color:#8FD9B6'><span style='width:14px;border-top:1.5px dashed #8FD9B6;display:inline-block'></span>Massa</span>":'')+"</div>";
+  if(gPro&&gPro.todo){html+="<div class='wk-graf-todo'><b>Da qui in poi:</b> "+esc(gPro.todo)+"</div>";}
+  html+="</div>";return html;
+ }
+
+ /* GRAFICO C — frequenza allenamenti/settimana */
+ function buildFrequency(wk){
+  var trend=wk.trend||[];var html="<div class='wk-histcard'>";html+="<div class='wk-histcard-lbl'>Frequenza allenamenti</div>";
+  if(!trend.length){html+="<div class='wk-vuoto'>nessun dato</div></div>";return html;}
+  var target=4,okThr=target-1;var n=trend.length;var W=720,pL=44,pR=24,cW=W-pL-pR;
+  var maxS=target+2;trend.forEach(function(t){if(t.sessions!=null&&t.sessions>maxS)maxS=t.sessions;});
+  var bH=150,bT=16,bB=26,bcH=bH-bT-bB;function yOf(s){return bT+bcH-(s/maxS)*bcH;}
+  var slot=cW/n,barW=Math.min(30,slot*0.5);var bars='';
+  trend.forEach(function(t,i){var s=t.sessions!=null?t.sessions:0;var cx=pL+slot*i+slot/2;var y=yOf(s);var col=s>=target?'#22c55e':(s>=okThr?'#fab219':'#d03b3b');var lab=fmtDateShort(t.weekStart).slice(5);bars+="<rect x='"+(cx-barW/2)+"' y='"+y+"' width='"+barW+"' height='"+(bT+bcH-y)+"' rx='2.5' fill='"+col+"' opacity='0.85'><title>"+esc(t.weekStart+' → '+t.weekEnd+' · '+s+' sessioni')+"</title></rect>";bars+="<text x='"+cx+"' y='"+(bH-5)+"' fill='#B79684' font-size='6' text-anchor='middle'>"+esc(lab)+"</text>";});
+  var targetY=yOf(target);
+  html+="<svg viewBox='0 0 "+W+" "+bH+"' style='width:100%;display:block;overflow:visible'>"+"<line x1='"+pL+"' y1='"+targetY+"' x2='"+(pL+cW)+"' y2='"+targetY+"' stroke='rgba(255,255,255,.25)' stroke-width='0.6' stroke-dasharray='2,3'/>"+"<text x='"+(pL+cW+2)+"' y='"+(targetY+2.5)+"' fill='#B79684' font-size='6'>obiettivo "+target+"</text>"+bars+"</svg>";
+  var kpi=wk.kpi||{};var freqTxt=kpi.freqSettimana!=null?kpi.freqSettimana.toFixed(1)+' sessioni/settimana (media)':'—';
+  html+="<div class='wk-hint'>"+esc(freqTxt)+(kpi.settimaneOk!=null?' · '+esc(kpi.settimaneOk)+'/'+n+' settimane in target':'')+"</div>";
+  html+="<div class='wk-histcard-note'>Il riposo non è un fallimento: una settimana con almeno "+okThr+" sessioni resta in target.</div>";
+  html+="</div>";return html;
+ }
+
+ function ensureCss(){
+  if(document.getElementById('wk-charts-css'))return;
+  var css=
+   ".wk-charts-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}"+
+   ".wk-histcard{background:#18181b;border:1px solid #27272a;border-radius:12px;padding:12px 10px 10px}"+
+   ".wk-histcard-lbl{color:#a1a1aa;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:3px;padding-left:4px}"+
+   ".wk-histcard-leg{display:flex;gap:12px;padding:3px 4px 0;flex-wrap:wrap;font-size:10px;color:#a1a1aa}"+
+   ".wk-histcard-note{font-size:9px;color:#52525b;padding:4px 4px 0}"+
+   ".wk-chart-headline{font-size:13.5px;font-weight:700;padding:0 4px 10px;line-height:1.4}"+
+   ".wk-hint{color:#a1a1aa;font-size:12px;padding:4px 2px 0}"+
+   ".wk-vuoto{color:#52525b;font-size:13px;padding:8px 2px}"+
+   ".wk-graf-todo{font-size:12px;color:#d4d4d8;line-height:1.5;padding:6px 4px 0;border-top:1px solid #27272a;margin-top:8px}"+
+   ".wk-graf-todo b{color:#FFD9A0;font-weight:700}";
+  var st=document.createElement('style');st.id='wk-charts-css';st.textContent=css;document.head.appendChild(st);
+ }
+
+ return {
+  /* STORICO: i 4 grafici. metrics = S.aiDB.metrics (deve avere le serie). */
+  storico:function(metrics){
+   if(!metrics||!metrics.kcalSeries)return '';
+   ensureCss();curReport=metrics.report||null;
+   var wk=metrics;
+   var out="<div class='wk-charts-grid'>"+buildBenessere(wk)+buildKcal(wk)+buildProteine(wk)+buildFrequency(wk)+"</div>";
+   curReport=null;return out;
+  },
+  hasReport:function(report){return !!(report&&((report.consigli&&report.consigli.length)||(report.card&&report.card.length)));},
+  /* HOME §1 — consigli di Sumi (lista numerata, stile nativo home) */
+  consigli:function(report){
+   var list=(report&&report.consigli)||[];if(!list.length)return '';
+   var items=list.map(function(c,i){
+    return "<div style='position:relative;background:#18181b;border:1px solid #27272a;border-radius:12px;padding:11px 13px 11px 42px;margin-bottom:8px'>"
+     +"<div style='position:absolute;left:11px;top:11px;width:22px;height:22px;background:#F97316;color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800'>"+(i+1)+"</div>"
+     +"<div style='font-size:14px;font-weight:700;color:#fafafa;line-height:1.35'>"+esc(c.titolo||'')+"</div>"
+     +(c.spiegazione?"<div style='font-size:12.5px;color:#a1a1aa;line-height:1.5;margin-top:4px'>"+esc(c.spiegazione)+"</div>":'')
+     +"</div>";
+   }).join('');
+   return "<div style='margin-top:18px'>"
+    +"<div class='lbl' style='font-size:11px;color:#F97316;margin-bottom:10px'>▸ Consigli di Sumi</div>"
+    +items+"</div>";
+  },
+  /* HOME §2 — cosa dicono i dati (card verdetto, colore = verdetto) */
+  cards:function(report){
+   var cards=(report&&report.card)||[];if(!cards.length)return '';
+   var cells=cards.map(function(c){var col=reportColor(c.colore);
+    return "<div style='background:#18181b;border:1px solid "+col+"55;border-radius:12px;padding:11px 12px;display:flex;flex-direction:column;gap:4px'>"
+     +"<div style='font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:"+col+"'>"+esc(c.tag||'')+"</div>"
+     +"<div style='font-size:18px;font-weight:800;color:#fafafa;line-height:1.15;font-family:Space Grotesk'>"+esc(c.numero||'')+"</div>"
+     +(c.frase?"<div style='font-size:12px;color:#a1a1aa;line-height:1.45'>"+esc(c.frase)+"</div>":'')
+     +"</div>";
+   }).join('');
+   return "<div style='margin-top:18px'>"
+    +"<div class='lbl' style='font-size:11px;color:#a1a1aa;margin-bottom:10px'>Cosa dicono i dati</div>"
+    +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px'>"+cells+"</div></div>";
+  }
+ };
+})();
+
 function rHist(){
  var log=S.aiDB.nutritionLog||{};
  var MET=(S.aiDB.metrics&&S.aiDB.metrics.days)||{};
@@ -2073,7 +2281,8 @@ function rHist(){
   +'<div class="card" style="text-align:center;margin:0"><div style="font-size:18px;font-weight:900">'+avg+'m</div><div class="lbl" style="font-size:9px;margin-top:2px">Media</div></div>'
   +'<div class="card" style="text-align:center;margin:0"><div style="font-size:18px;font-weight:900">'+thisWeek+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Questa sett.</div></div>'
   +'</div>'
-  +buildHistChart()
+  // 4 grafici di Sumi Legacy (dal feed aiDB.metrics); fallback ai 2 vecchi se il feed manca
+  +((S.aiDB.metrics&&S.aiDB.metrics.kcalSeries)?WKUI.storico(S.aiDB.metrics):buildHistChart())
   +(!days.length?'<div style="text-align:center;color:#52525b;margin-top:60px"><p>Nessun allenamento ancora</p></div>':cards)
   +'</div>';
 }
