@@ -466,6 +466,9 @@ async function loadData(){
   fetch(DRIVE_URL+'?t='+Date.now(),{cache:'no-store',redirect:'follow'}).then(function(r){return r.json();}).then(function(dd){
    if(dd&&dd.ok&&dd.proxyToken&&!getApiKey()){localStorage.setItem('workoutProxyToken',dd.proxyToken);} // ripristina proxy-token perso da wipe localStorage / reinstall
    if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.coachPlan){S.aiDB.coachPlan=dd.aiDB.coachPlan;sv('ai',S.aiDB);}
+   // Metriche canoniche (recap+storico derivato) pubblicate dal notturno Sumi in aiDB.metrics.
+   // SOLA LETTURA: l'app le mostra ma non le calcola; se assenti, storico/recap usano il fallback locale.
+   if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.metrics){S.aiDB.metrics=dd.aiDB.metrics;sv('ai',S.aiDB);}
    // Pull profilo da Drive con regola "ultimo aggiornamento vince" (NON blind come coachPlan):
    // rimpiazza il profilo locale solo se quello su Drive ha un profileUpdatedAt piu' recente.
    if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.profile&&dd.aiDB.profile.profileUpdatedAt){
@@ -1962,8 +1965,26 @@ function buildHistChart(){
   +'<div style="font-size:9px;color:#3f3f46;padding:3px 4px 0">Quadratini sotto = giorni di allenamento (colore per tipo)</div>'
   +'</div>';
 }
+// Nomi split PER ESTESO (l'app salva codici abbreviati come "PUSH"/"push2"). Portato 1:1
+// da mod-workout.js (dashboard Sumi Legacy) → app e dashboard mostrano la stessa etichetta.
+var SPLIT_LABELS={PUSH:"Push (spinta)",PULL:"Pull (tirata)","PULL+":"Pull+ (tirata estesa)",LEGS:"Gambe",GAMBE:"Gambe",FULL:"Full body",EXTRA:"Extra (corpo libero)",RIPOSO:"Riposo"};
+function splitLabel(sp){
+ if(sp==null||sp==='')return '—';
+ var key=String(sp).toUpperCase();
+ if(SPLIT_LABELS[key])return SPLIT_LABELS[key];
+ return String(sp).charAt(0).toUpperCase()+String(sp).slice(1).toLowerCase();
+}
+// markdown → HTML leggero per i recap discorsivi del coach (bold + heading + a capo).
+function mdLite(s){
+ return String(s||'')
+  .replace(/^#{1,6}\s*(.+)$/gm,'<strong>$1</strong>')
+  .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+  .replace(/\n/g,'<br>');
+}
 function rHist(){
  var log=S.aiDB.nutritionLog||{};
+ var MET=(S.aiDB.metrics&&S.aiDB.metrics.days)||{};
+ var BUCHI=(S.aiDB.metrics&&S.aiDB.metrics.buchi)||[];
  var avg=S.history.length?Math.round(S.history.reduce(function(s,h){return s+(h.duration||0);},0)/S.history.length):0;
  var thisWeek=S.history.filter(function(h){return new Date(h.date)>new Date(Date.now()-7*864e5);}).length;
  // Costruisci lista giorni: dal primo allenamento a oggi
@@ -2010,12 +2031,30 @@ function rHist(){
   var sp=h&&h.split;var q=h&&h.quiz;
   var nc=nutCard(nut,date);
   var dateStr=new Date(date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
-  return '<div style="background:'+(isRest?'#111':'#18181b')+';border:1px solid '+(isRest?'#1f1f23':'#27272a')+';border-radius:14px;padding:12px;margin-bottom:8px">'
-   +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:'+(q?8:0)+'px">'
+  // Overlay dalle metriche canoniche (Sumi): punteggi derivati server-side + flag buco.
+  // Se metrics assente per il giorno, resta il comportamento locale (fallback).
+  var m=MET[date];
+  var isBuco=BUCHI.indexOf(date)>=0;
+  var metHtml='';
+  if(m){
+   var msc=m.scores||{},mtr=m.training||{};
+   var chip=function(lbl,val){return (val==null)?'':'<span style="color:#a1a1aa;font-size:11px">'+lbl+' <b style="color:#e4e4e7">'+val+'</b></span>';};
+   var line1=[chip('Totale',msc.totale),chip('Benessere',msc.benessere),chip('Allenamento',msc.allenamento)].filter(Boolean).join('<span style="color:#3f3f46">·</span>');
+   var line2=[chip('Esecuzione',mtr.esecuzione),chip('Stimolo',mtr.stimolo),chip('Durata',mtr.durata)].filter(Boolean).join('<span style="color:#3f3f46">·</span>');
+   if(line1||line2){
+    metHtml='<div style="border-top:1px solid #27272a;padding-top:7px;margin-top:7px;display:flex;flex-direction:column;gap:4px">'
+     +(line1?'<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">'+line1+'</div>':'')
+     +(line2?'<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">'+line2+'</div>':'')
+     +'</div>';
+   }
+  }
+  var bucoBadge=isBuco?'<span style="background:#450a0a;border:1px solid #ef4444;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle">buco</span>':'';
+  return '<div style="background:'+(isRest?'#111':'#18181b')+';border:1px solid '+(isBuco?'#7f1d1d':(isRest?'#1f1f23':'#27272a'))+';border-radius:14px;padding:12px;margin-bottom:8px">'
+   +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:'+((q||metHtml)?8:0)+'px">'
    +nc.scoreBadge
    +'<div style="flex:1;min-width:0">'
-   +'<div style="font-weight:700;font-size:13px;color:#fafafa">'+dateStr+'</div>'
-   +'<div style="font-size:11px;color:#71717a;margin-top:1px">'+(isRest?'Riposo':(day.sessions||[h]).map(function(s){var nm=(s.split&&s.split.name)||'Workout';var ex=(s.split&&s.split.id==='extra');return nm+' · '+(s.duration||'?')+'min'+(ex?'':' · '+(s.sets||'?')+' serie');}).join('  +  '))+'</div>'
+   +'<div style="font-weight:700;font-size:13px;color:#fafafa">'+dateStr+bucoBadge+'</div>'
+   +'<div style="font-size:11px;color:#71717a;margin-top:1px">'+(isRest?'Riposo':(day.sessions||[h]).map(function(s){var nm=(s.split&&s.split.name)?splitLabel(s.split.name):'Workout';var ex=(s.split&&s.split.id==='extra');return nm+' · '+(s.duration||'?')+'min'+(ex?'':' · '+(s.sets||'?')+' serie');}).join('  +  '))+'</div>'
    +'</div>'
    +nc.kcalHtml
    +'</div>'
@@ -2024,6 +2063,7 @@ function rHist(){
     +'<span style="color:#71717a;font-size:11px">Difficolta '+(q.difficulty||'?')+'/4</span>'
     +(q.muscleWork?'<span style="color:#71717a;font-size:11px">Pompa '+(q.muscleWork||'?')+'/4</span>':'')
     +'</div>':'')
+   +metHtml
    +'</div>';
  }).join('');
  return '<div class="pg">'
@@ -2154,24 +2194,29 @@ async function checkAndGenerateSummaries(){
  if(needMonthly)setTimeout(generateMonthlySummary,3000); // piccolo delay per non sovrapporre chiamate
 }
 function rReports(){
- var weekly=(S.aiDB.weeklyReports||[]);
- var monthly=(S.aiDB.monthlyReports||[]);
+ // Fonte primaria = recap CANONICI del coach (Sonnet, vault) pubblicati in aiDB.metrics.recaps
+ // → l'app mostra lo STESSO recap della dashboard Sumi Legacy. Fallback ai vecchi report in-app.
+ var mr=(S.aiDB.metrics&&S.aiDB.metrics.recaps)||null;
+ var weekly=(mr&&mr.weekly&&mr.weekly.length)?mr.weekly:(S.aiDB.weeklyReports||[]);
+ var monthly=(mr&&mr.monthly&&mr.monthly.length)?mr.monthly:(S.aiDB.monthlyReports||[]);
  if(!weekly.length&&!monthly.length)return '';
  var lastW=weekly.slice(-1)[0];
  var lastM=monthly.slice(-1)[0];
+ var wMeta=lastW?((lastW.weekStart||'')+(lastW.weekEnd?'→'+lastW.weekEnd:'')+(lastW.sessions!=null?' · '+lastW.sessions+' sess':'')):'';
+ var mMeta=lastM?(lastM.month?(lastM.month+'/'+lastM.year):(lastM.monthStart||''))+(lastM.sessions!=null?' · '+lastM.sessions+' sessioni':''):'';
  var wCard=lastW?'<div style="background:#1a0a00;border:1px solid #f9731630;border-radius:14px;padding:12px;margin-bottom:8px">'
   +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
   +'<span class="lbl" style="color:#60a5fa">Riepilogo settimanale</span>'
-  +'<span style="color:#3f3f46;font-size:10px">'+lastW.weekStart+'</span></div>'
-  +'<div style="color:#d4d4d8;font-size:12px;line-height:1.6">'+lastW.summary.replace(/\n/g,'<br>')+'</div>'
-  +(weekly.length>1?'<div style="color:#3f3f46;font-size:10px;margin-top:6px">'+weekly.length+' report settimanali in archivio</div>':'')
+  +'<span style="color:#3f3f46;font-size:10px">'+wMeta+'</span></div>'
+  +'<div style="color:#d4d4d8;font-size:12px;line-height:1.6">'+mdLite(lastW.summary)+'</div>'
+  +(weekly.length>1?'<div style="color:#3f3f46;font-size:10px;margin-top:6px">'+weekly.length+' riepiloghi settimanali in archivio</div>':'')
   +'</div>':'';
  var mCard=lastM?'<div style="background:#0c1a1a;border:1px solid #14b8a630;border-radius:14px;padding:12px;margin-bottom:8px">'
   +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
   +'<span class="lbl" style="color:#2dd4bf">Riepilogo mensile</span>'
-  +'<span style="color:#3f3f46;font-size:10px">'+lastM.month+'/'+lastM.year+' · '+lastM.sessions+' sessioni</span></div>'
-  +'<div style="color:#d4d4d8;font-size:12px;line-height:1.6">'+lastM.summary.replace(/\n/g,'<br>')+'</div>'
-  +(monthly.length>1?'<div style="color:#3f3f46;font-size:10px;margin-top:6px">'+monthly.length+' report mensili in archivio</div>':'')
+  +'<span style="color:#3f3f46;font-size:10px">'+mMeta+'</span></div>'
+  +'<div style="color:#d4d4d8;font-size:12px;line-height:1.6">'+mdLite(lastM.summary)+'</div>'
+  +(monthly.length>1?'<div style="color:#3f3f46;font-size:10px;margin-top:6px">'+monthly.length+' riepiloghi mensili in archivio</div>':'')
   +'</div>':'';
  return '<div style="margin-bottom:10px">'+wCard+mCard+'</div>';
 }
