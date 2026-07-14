@@ -418,6 +418,63 @@ function calcPatterns(){
  };
 }
 
+// ─── SYNC-DOWN (contratto: wiki/Personale/allenamento/sync-contract.md) ──────
+// mergeDown: applica il blob server sopra lo stato locale (last-wins/unione/blind).
+// newer(): confronto per timestamp REALE (Date.parse), non lessicografico — i produttori
+// usano formati ISO diversi (app '…Z' UTC, server '…+00:00'/'+02:00') che il confronto
+// stringa ordinerebbe male. Assente/invalido = piu' vecchio (il presente vince sull'assente).
+function _ts(x){var t=x?Date.parse(x):NaN;return isNaN(t)?-Infinity:t;}
+function newer(a,b){return _ts(a)>_ts(b);}
+function mergeByKey(dst,src,tsField){ // mappa chiave→record: per chiave vince tsField piu' recente
+ if(!src||typeof src!=='object')return dst||{};
+ dst=dst||{};
+ for(var k in src){if(!Object.prototype.hasOwnProperty.call(src,k))continue;
+  var s=src[k],d=dst[k];
+  if(!d||newer(s&&s[tsField],d&&d[tsField]))dst[k]=s;
+ }
+ return dst;
+}
+function mergeArrayMap(dst,src,idField){ // mappa data→array: unione dedup per idField
+ if(!src||typeof src!=='object')return dst||{};
+ dst=dst||{};
+ for(var day in src){if(!Object.prototype.hasOwnProperty.call(src,day))continue;
+  var have=(dst[day]||[]).slice(),add=src[day]||[],seen={};
+  have.forEach(function(v){if(v&&v[idField]!=null)seen[v[idField]]=1;});
+  add.forEach(function(v){if(v&&v[idField]!=null&&!seen[v[idField]]){have.push(v);seen[v[idField]]=1;}});
+  dst[day]=have;
+ }
+ return dst;
+}
+function unionBy(a,b,keyFn){ // unione di due array, dedup per keyFn (funzione o nome campo)
+ var kf=typeof keyFn==='function'?keyFn:function(x){return x?x[keyFn]:x;};
+ var out=[],seen={};
+ (a||[]).concat(b||[]).forEach(function(v){var k=kf(v);if(k==null){out.push(v);return;}if(!seen[k]){seen[k]=1;out.push(v);}});
+ return out;
+}
+// Applica il blob remoto secondo la tabella maestra del contratto. Chiamata SOLO se
+// dd.aiDB.serverUpdatedAt e' piu' fresco del marker locale _lastServerSync.
+function mergeDown(dd){
+ var r=dd&&dd.aiDB;if(!r)return;
+ // BLIND-DOWN (Sumi-owned): il server vince sempre, l'app non li calcola
+ if(r.coachPlan)S.aiDB.coachPlan=r.coachPlan;
+ if(r.metrics)S.aiDB.metrics=r.metrics;
+ // LAST-WINS oggetto piatto (profilo)
+ if(r.profile&&r.profile.profileUpdatedAt&&newer(r.profile.profileUpdatedAt,S.aiDB.profile&&S.aiDB.profile.profileUpdatedAt))S.aiDB.profile=r.profile;
+ // LAST-WINS per-data (survey nutrizione)
+ S.aiDB.nutritionLog=mergeByKey(S.aiDB.nutritionLog,r.nutritionLog,'savedAt');
+ // UNION per-voce (pasti: mappa data→array)
+ S.aiDB.mealLog=mergeArrayMap(S.aiDB.mealLog,r.mealLog,'loggedAt');
+ // UNION log (storico sessioni + chat/feedback)
+ S.history=unionBy(S.history,dd.history,'date');
+ S.aiDB.chatLog=unionBy(S.aiDB.chatLog,r.chatLog,function(x){return (x&&x.date)+'|'+(x&&x.userMsg);});
+ // LAST-WINS per-esercizio (carichi dichiarati)
+ S.aiDB.loads=mergeByKey(S.aiDB.loads,r.loads,'updatedAt');
+ // LAST-WINS scalari timbrati (esercizi saltati, indice rotazione split)
+ if(Array.isArray(r.skipped)&&newer(r.skippedUpdatedAt,S.aiDB.skippedUpdatedAt)){S.skipped=r.skipped;S.aiDB.skipped=r.skipped;S.aiDB.skippedUpdatedAt=r.skippedUpdatedAt;}
+ if(typeof r.splitIdx==='number'&&newer(r.splitIdxUpdatedAt,S.aiDB.splitIdxUpdatedAt)){S.splitIdx=r.splitIdx;S.aiDB.splitIdx=r.splitIdx;S.aiDB.splitIdxUpdatedAt=r.splitIdxUpdatedAt;}
+ S.aiDB._lastServerSync=r.serverUpdatedAt;
+}
+
 // ─── STORAGE ─────────────────────────────────────────────────────────────────
 async function loadData(){
  try{
@@ -465,15 +522,22 @@ async function loadData(){
   // Auto-fetch del coachPlan da Drive: le istruzioni del coach notturno (Sumi) arrivano da sole
   fetch(DRIVE_URL+'?t='+Date.now(),{cache:'no-store',redirect:'follow'}).then(function(r){return r.json();}).then(function(dd){
    if(dd&&dd.ok&&dd.proxyToken&&!getApiKey()){localStorage.setItem('workoutProxyToken',dd.proxyToken);} // ripristina proxy-token perso da wipe localStorage / reinstall
-   if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.coachPlan){S.aiDB.coachPlan=dd.aiDB.coachPlan;sv('ai',S.aiDB);}
-   // Metriche canoniche (recap+storico derivato) pubblicate dal notturno Sumi in aiDB.metrics.
-   // SOLA LETTURA: l'app le mostra ma non le calcola; se assenti, storico/recap usano il fallback locale.
-   if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.metrics){S.aiDB.metrics=dd.aiDB.metrics;sv('ai',S.aiDB);}
-   // Pull profilo da Drive con regola "ultimo aggiornamento vince" (NON blind come coachPlan):
-   // rimpiazza il profilo locale solo se quello su Drive ha un profileUpdatedAt piu' recente.
-   if(dd&&dd.ok&&dd.aiDB&&dd.aiDB.profile&&dd.aiDB.profile.profileUpdatedAt){
-    var _lp=(S.aiDB.profile&&S.aiDB.profile.profileUpdatedAt)||'';
-    if(dd.aiDB.profile.profileUpdatedAt>_lp){S.aiDB.profile=dd.aiDB.profile;sv('ai',S.aiDB);}
+   var r=dd&&dd.ok&&dd.aiDB;
+   if(r&&r.serverUpdatedAt&&newer(r.serverUpdatedAt,S.aiDB._lastServerSync)){
+    // Il server ha scritto dopo l'ultimo sync locale → merge completo (tabella maestra del contratto).
+    // Pull PRIMA di ogni push (invariante): loadData gira all'avvio, prima che l'utente possa syncare.
+    mergeDown(dd);
+    sv('ai',S.aiDB);
+    if(S.history&&S.history.length)sv('wh',S.history);
+    if(Array.isArray(S.skipped))sv('sk',S.skipped);
+    if(typeof S.splitIdx==='number')sv('si',String(S.splitIdx));
+   }else if(r){
+    // Fallback backward-safe: blob pre-contratto (senza serverUpdatedAt) → vecchio comportamento
+    // (blind coachPlan/metrics + profilo last-wins). Nessun merge se non c'e' il marker server.
+    if(r.coachPlan){S.aiDB.coachPlan=r.coachPlan;}
+    if(r.metrics){S.aiDB.metrics=r.metrics;} // SOLA LETTURA: l'app le mostra, non le calcola
+    if(r.profile&&r.profile.profileUpdatedAt&&newer(r.profile.profileUpdatedAt,S.aiDB.profile&&S.aiDB.profile.profileUpdatedAt))S.aiDB.profile=r.profile;
+    sv('ai',S.aiDB);
    }
    if(dd&&dd.ok&&typeof render==='function')render();
   }).catch(function(){});
@@ -507,6 +571,10 @@ async function syncToDrive(){
  // (evita che un telefono appena reinstallato/azzerato cancelli il backup).
  if(!(S.history&&S.history.length)){console.warn('sync saltato: storico locale vuoto');return;}
  try{
+  // Round-trip: skipped/splitIdx vivono anche in aiDB (solo aiDB sopravvive al POST del telefono,
+  // che sovrascrive tutto il blob). I timbri *UpdatedAt li mette chi edita (skip/finishSession).
+  if(Array.isArray(S.skipped))S.aiDB.skipped=S.skipped;
+  if(typeof S.splitIdx==='number')S.aiDB.splitIdx=S.splitIdx;
   var payload={history:S.history,nutrition:S.nutrition,aiDB:S.aiDB,skipped:S.skipped,savedAt:new Date().toISOString()};
   var _k=getApiKey();if(_k)payload.proxyToken=_k; // backup proxy-token: sopravvive a wipe localStorage / reinstall PWA
   fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload)});
@@ -1129,7 +1197,7 @@ function setLoad(id){
  if(!S.aiDB.loads)S.aiDB.loads={};
  if(v===''){if(S.aiDB.loads[id])delete S.aiDB.loads[id];}
  else{
-  S.aiDB.loads[id]={kg:v.replace(/kg/i,'').replace(/\s/g,''),name:ex.name,date:new Date().toISOString().split('T')[0],manual:true};
+  S.aiDB.loads[id]={kg:v.replace(/kg/i,'').replace(/\s/g,''),name:ex.name,date:new Date().toISOString().split('T')[0],updatedAt:new Date().toISOString(),manual:true};
  }
  sv('ai',S.aiDB);render();
 }
@@ -1146,6 +1214,7 @@ function wBack(){
 function skipExercise(){
  clearInterval(TI);var step=S.wSteps[S.wStepIdx];if(step.type!=='work')return;
  var ex=step.ex;var ns=S.skipped.concat([ex.id]);S.skipped=ns;sv('sk',ns);
+ S.aiDB.skipped=ns;S.aiDB.skippedUpdatedAt=new Date().toISOString();sv('ai',S.aiDB); // timbro edit reale (last-wins cross-device)
  var pool=(DB[ex.cat]||[]).filter(function(e){return !ns.includes(e.id)&&!S.wEx.find(function(x){return x.id===e.id;});});
  var rep=shuf(pool)[0];
  if(rep){
@@ -1258,6 +1327,7 @@ async function finishSession(){
   var nh=(S.history||[]).concat([session]);
   S.history=nh;
   if(!isExtra)S.splitIdx=(S.splitIdx||0)+1;
+  if(!isExtra){S.aiDB.splitIdx=S.splitIdx;S.aiDB.splitIdxUpdatedAt=new Date().toISOString();sv('ai',S.aiDB);} // timbro edit reale (last-wins) + push in su
   await sv('wh',nh);
   if(!isExtra)await sv('si',String(S.splitIdx));
   if(!isExtra)computeProgression(session); // regola meccanica: aggiorna carichi/progressione dalle reps
@@ -1677,6 +1747,7 @@ async function saveMealToLog(date,estimate){
  if(!S.aiDB.mealLog[date])S.aiDB.mealLog[date]=[];
  S.aiDB.mealLog[date].push(Object.assign({},estimate,{loggedAt:new Date().toISOString()}));
  await sv('ai',S.aiDB);
+ syncToDrive(); // il pasto e' dato-verita' UNION: pushalo subito (prima solo locale)
 }
 function openMealPhoto(){
  var today=new Date().toISOString().split('T')[0];
@@ -2644,7 +2715,7 @@ async function sendFloatAI(){
    if(detectedKg==null&&/^\s*\d+(?:[.,]\d+)?\s*$/.test(msg))detectedKg=parseFloat(msg.replace(',','.'));
    if(detectedKg!=null&&detectedKg>0){
     if(!S.aiDB.loads)S.aiDB.loads={};
-    S.aiDB.loads[loadEx.id]={kg:detectedKg,name:loadEx.name,date:new Date().toISOString().split('T')[0]};
+    S.aiDB.loads[loadEx.id]={kg:detectedKg,name:loadEx.name,date:new Date().toISOString().split('T')[0],updatedAt:new Date().toISOString()};
    }
   }
   // Persist floatChat so it survives panel close/reopen
