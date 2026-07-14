@@ -75,6 +75,15 @@ textarea,input[type=text]{background:#18181b;border:1px solid #27272a;border-rad
 .marq-wrap{overflow:hidden;white-space:nowrap;background:#F97316;color:#000}
 .marq{display:inline-block;padding:7px 0;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;animation:marq 18s linear infinite}
 @keyframes marq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* ── Modalità Recupero (post-intervento): vira l'accento arancio su CIANO ── */
+body.recovery .marq-wrap{background:#06b6d4!important;color:#00232b!important}
+body.recovery .ai-fab{background:#06b6d4!important}
+body.recovery .ai-send-btn{background:#06b6d4!important}
+body.recovery .ai-slide{border-top-color:#06b6d466!important}
+body.recovery .opt.sel{background:#083344!important;border-color:#06b6d4!important;box-shadow:0 0 0 1px #06b6d4,0 8px 26px -12px #06b6d485!important}
+body.recovery button[style*="background:#F97316"],body.recovery div[style*="background:#F97316"]{background:#06b6d4!important;border-color:#06b6d4!important;color:#00232b!important}
+body.recovery button[style*="color:#F97316"],body.recovery button[style*="color:#f97316"]{color:#06b6d4!important}
+body.recovery button[style*="#f97316"],body.recovery button[style*="#F97316"]{border-color:#06b6d4!important}
 </style>
 </head>
 <body>
@@ -86,7 +95,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-07-12 · g8'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-07-14 · recovery'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -207,6 +216,74 @@ const PLAN=[
  {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:1,legs:1,shoulders:1},desc:'Corpo completo · Mix intelligente'},
 ];
 
+// ─── MODALITÀ RECUPERO (post-intervento) ─────────────────────────────────────
+// Ripresa progressiva post-trapianto capelli (op 13/07/2026). Fasi per giorno-N:
+// g<10 attesa (no training) · g10-14 fase1 · g15-19 fase2 · g20-29 fase3 · g30+ off.
+// Modula l'intensità dentro applyAdaptation (mult reps/time + setsAdj) e filtra gli
+// esercizi troppo esertivi (RECOVERY_MIN = fase minima ammessa per esercizio). Tema ciano.
+const RECOVERY_OP_DATE='2026-07-13';
+const RECOVERY_PHASES=[
+ {ph:1,fromDay:10,toDay:14,mult:0.6, setsAdj:-2,maxMin:1,label:'Riattivazione',note:'Isolamento leggero · ~2 serie · zero apnea/spinta, niente overhead o chinarsi'},
+ {ph:2,fromDay:15,toDay:19,mult:0.75,setsAdj:-1,maxMin:2,label:'Leggero',      note:'Rientra qualche compound controllato · carichi ancora dimezzati'},
+ {ph:3,fromDay:20,toDay:29,mult:0.9, setsAdj:0, maxMin:3,label:'Costruzione',  note:'Selezione esercizi verso normale · risali al carico pieno'},
+];
+// Fase minima ammessa per esercizio (1=sicuro da g10, 2=da g15, 3=da g20). Default 1.
+const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3, r1:3,r2:2,r3:1,r4:1,r5:2, s1:3,s2:1,s3:2, l1:3,l2:2,l3:2,l4:2};
+function recoveryDayN(){return Math.floor((Date.now()-new Date(RECOVERY_OP_DATE+'T00:00:00'))/86400000);}
+function recoveryActive(){var rm=S.aiDB&&S.aiDB.recoveryMode;return !!(rm&&rm.active);}
+// Fase corrente {ph,mult,setsAdj,maxMin,label,note,dayN,waiting} o null se non attiva / ciclo finito.
+function recoveryPhase(){
+ if(!recoveryActive())return null;
+ var d=recoveryDayN();
+ if(d>=30)return null;                 // ciclo concluso → nessuna modulazione
+ for(var i=0;i<RECOVERY_PHASES.length;i++){var p=RECOVERY_PHASES[i];if(d>=p.fromDay&&d<=p.toDay)return Object.assign({dayN:d,waiting:false},p);}
+ if(d<10)return Object.assign({dayN:d,waiting:true},RECOVERY_PHASES[0]); // pre-g10: attesa; se si allena, fase più leggera
+ return null;
+}
+function recoveryAllows(ex){var p=recoveryPhase();if(!p)return true;return (RECOVERY_MIN[ex.id]||1)<=p.maxMin;}
+// Init una-tantum + auto-uscita a g30 (ciano off, progressione normale). Chiamata da loadData.
+function recoveryInit(){
+ if(!S.aiDB)return;
+ if(typeof S.aiDB.recoveryMode==='undefined'){
+  S.aiDB.recoveryMode={active:true,startDate:RECOVERY_OP_DATE,updatedAt:new Date().toISOString()};
+  sv('ai',S.aiDB);
+ }
+ if(S.aiDB.recoveryMode.active&&recoveryDayN()>=30){
+  S.aiDB.recoveryMode.active=false;
+  S.aiDB.recoveryMode.updatedAt=new Date().toISOString();
+  sv('ai',S.aiDB);
+  if(typeof syncToDrive==='function')setTimeout(syncToDrive,3500);
+ }
+}
+// Banner ciano in home
+function recoveryBanner(){
+ var rm=S.aiDB&&S.aiDB.recoveryMode;
+ if(!rm||!rm.active)return '';
+ var d=recoveryDayN(),p=recoveryPhase(),head,body;
+ if(!p||p.waiting){
+  head='MODALITÀ RECUPERO · g'+d;
+  body='Recupero post-intervento. Ripresa allenamento consigliata da <b>g10 (23/07)</b>. Fino a lì riposo: niente sforzo.';
+ }else{
+  head='MODALITÀ RECUPERO · g'+d+' · Fase '+p.ph+'/3 — '+p.label;
+  body=p.note+'. <b>Monitora sudore e battito</b>, fermati se serve.';
+ }
+ return '<div style="border:2px solid #06b6d4;background:#04222a;padding:12px 14px;margin-bottom:14px">'
+  +'<div class="lbl" style="color:#22d3ee;font-size:11px;margin-bottom:6px">'+head+'</div>'
+  +'<div style="color:#a5f3fc;font-size:12px;line-height:1.45">'+body+'</div></div>';
+}
+// Card + toggle manuale in profilo
+function recoveryProfileCard(){
+ var rm=(S.aiDB&&S.aiDB.recoveryMode)||{active:false};
+ var d=recoveryDayN(),p=recoveryPhase();
+ var status=rm.active?(p?(p.waiting?'attesa · g'+d+' (ripresa g10)':'Fase '+p.ph+'/3 '+p.label+' · g'+d):'attiva · g'+d+' (ciclo concluso)'):'disattivata';
+ var toggle="(function(){var rm=S.aiDB.recoveryMode||{};rm.active=!rm.active;rm.startDate=rm.startDate||RECOVERY_OP_DATE;rm.updatedAt=new Date().toISOString();S.aiDB.recoveryMode=rm;sv('ai',S.aiDB);if(typeof syncToDrive==='function')syncToDrive();render();})()";
+ return '<div class="card" style="background:#04222a;border-color:#06b6d4">'
+  +'<div class="lbl" style="color:#22d3ee;margin-bottom:8px">MODALITÀ RECUPERO</div>'
+  +'<div style="color:#a5f3fc;font-size:12px;margin-bottom:10px;line-height:1.45">Ripresa progressiva post-intervento (op 13/07). Stato: <b>'+status+'</b>.</div>'
+  +'<button class="btn" style="margin:0;background:'+(rm.active?'transparent':'#06b6d4')+';border:2px solid #06b6d4;color:'+(rm.active?'#06b6d4':'#00232b')+'" onclick="'+toggle+'">'+(rm.active?'Disattiva modalità recupero':'Attiva modalità recupero')+'</button>'
+  +'</div>';
+}
+
 // ─── STATE ───────────────────────────────────────────────────────────────────
 const S={
  view:'home',history:[],skipped:[],nutrition:null,splitIdx:0,nutQueue:[],nutQueueIdx:0,nutTarget:null,
@@ -252,6 +329,9 @@ function applyAdaptation(ex){
  var a=S.aiDB.adaptation||{};
  var mult=a.repsMultiplier||1;
  var setsAdj=a.setsAdjustment||0;
+ // Modalità Recupero: modula l'intensità in base alla fase (moltiplicatore reps/time + serie)
+ var _rp=(typeof recoveryPhase==='function')?recoveryPhase():null;
+ if(_rp){mult*=_rp.mult;setsAdj+=_rp.setsAdj;}
  // Adatta in base ai muscoli indolenziti dichiarati nel check pre-workout
  var preAns=S.preWQAns||{};
  var doms=preAns.domsActual||1;
@@ -352,8 +432,8 @@ function genWorkout(splitIdx,skipped){
    if(e&&!skipped.includes(id)&&!avoid.includes(id)&&!used.includes(id))forced.push(e);
   });
   var notForced=function(e){return !forced.find(function(p){return p.id===e.id;});};
-  var preferred=DB[cat].filter(function(e){return suggest.includes(e.id)&&!skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&notForced(e);});
-  var pool=DB[cat].filter(function(e){return !skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&!preferred.find(function(p){return p.id===e.id;})&&notForced(e);});
+  var preferred=DB[cat].filter(function(e){return suggest.includes(e.id)&&!skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&notForced(e);});
+  var pool=DB[cat].filter(function(e){return !skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&!preferred.find(function(p){return p.id===e.id;})&&notForced(e);});
   var sel=forced.concat(preferred.concat(shuf(pool)).slice(0,Math.max(0,count-forced.length)));
   sel.forEach(function(e){exercises.push(applyAdaptation(withCoachOverride(e)));used.push(e.id);});
  });
@@ -472,6 +552,8 @@ function mergeDown(dd){
  // LAST-WINS scalari timbrati (esercizi saltati, indice rotazione split)
  if(Array.isArray(r.skipped)&&newer(r.skippedUpdatedAt,S.aiDB.skippedUpdatedAt)){S.skipped=r.skipped;S.aiDB.skipped=r.skipped;S.aiDB.skippedUpdatedAt=r.skippedUpdatedAt;}
  if(typeof r.splitIdx==='number'&&newer(r.splitIdxUpdatedAt,S.aiDB.splitIdxUpdatedAt)){S.splitIdx=r.splitIdx;S.aiDB.splitIdx=r.splitIdx;S.aiDB.splitIdxUpdatedAt=r.splitIdxUpdatedAt;}
+ // LAST-WINS timbrato (modalità recupero): vince il device che ha timbrato updatedAt per ultimo
+ if(r.recoveryMode&&newer(r.recoveryMode.updatedAt,S.aiDB.recoveryMode&&S.aiDB.recoveryMode.updatedAt))S.aiDB.recoveryMode=r.recoveryMode;
  S.aiDB._lastServerSync=r.serverUpdatedAt;
 }
 
@@ -485,6 +567,7 @@ async function loadData(){
   v=localStorage.getItem('nd');if(v)S.nutrition=JSON.parse(v);
   v=localStorage.getItem('ai');if(v){var _ai=JSON.parse(v);S.aiDB=Object.assign({sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},_ai);if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};if(!S.aiDB.nutritionAdvice)S.aiDB.nutritionAdvice='';if(!S.aiDB.mealLog)S.aiDB.mealLog={};}
   if(!S.aiDB.profile)S.aiDB.profile={peso:74,altezza:182,eta:30,obiettivo:'massa'};
+  if(typeof recoveryInit==='function')recoveryInit(); // modalità recupero: init una-tantum + auto-uscita g30
   // Migrazione: ripristina da array nutrition legacy (preferisci dati reali su skipped)
   if(S.aiDB.nutrition&&S.aiDB.nutrition.length){
    S.aiDB.nutrition.forEach(function(n){
@@ -600,6 +683,7 @@ function requestForceRun(){
 function go(v,extra){clearInterval(TI);S.view=v;if(extra)Object.assign(S,extra);render();}
 function render(){
  var app=document.getElementById('app');
+ try{document.body.classList.toggle('recovery',!!(S.aiDB&&S.aiDB.recoveryMode&&S.aiDB.recoveryMode.active));}catch(e){} // tema ciano se modalità recupero attiva
  if(S.preWorkoutCheck){app.innerHTML=rPreWorkoutCheck();updateFloatAI();return;}
  var map={home:rHome,workout:rWorkout,post_quiz:rPQ,nutrition:rNut,history:rHist,ai:rAI,meal_photo:rMealPhoto,profile:rProfile};
  app.innerHTML=(map[S.view]||rHome)();
@@ -641,6 +725,7 @@ function rHome(){
   +'<div class="lbl" style="color:#a1a1aa;font-size:13px;margin-bottom:0">Oggi ▸ Allenamento</div>'
   +'<div class="font-display" style="font-size:76px;font-weight:700;letter-spacing:-3px;line-height:.85;text-transform:uppercase;margin:2px 0 6px">'+t.name+'</div>'
   +'<div style="color:#a1a1aa;font-size:13px;margin-bottom:18px">'+t.desc+'</div>'
+  +recoveryBanner()
   +(S.nutReminder
    ?'<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px"><div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:8px">'+S.nutReminderCount+' giorni senza nutrizione</div><div style="display:flex;gap:8px"><button class="btn" style="background:#27272a;color:#fff;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;startWorkout()">Fai dopo</button><button class="btn" style="background:#f59e0b;color:#000;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;openNutrition()">Compila</button></div></div>'
    :'')
@@ -1499,6 +1584,7 @@ function rProfile(){
   +'<div style="font-size:11px;color:#71717a;font-weight:700;letter-spacing:1px;margin-bottom:8px">OBIETTIVO</div>'
   +'<div style="display:flex;gap:6px;margin-bottom:4px">'+objBtns+'</div>'
   +'</div>'
+  +recoveryProfileCard()
   +(function(){
    var tmp=Object.assign({},p,{peso:p.peso||74,altezza:p.altezza||182,eta:p.eta||30});
    var bmr=Math.round(10*tmp.peso+6.25*tmp.altezza-5*tmp.eta+5);
