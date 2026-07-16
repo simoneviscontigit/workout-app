@@ -11,4 +11,6 @@ Webapp personale di allenamento (corpo libero + elastici). Single-file `index.ht
 La API key Anthropic NON va mai nel codice: si inserisce dalle impostazioni (⚙️ Profilo) e vive in `localStorage` (`anthropicKey`).
 
 ## Deploy
-Hosting statico su Netlify (`workout-standalone-app.netlify.app`). Continuous deployment dal branch `main`. Stesso URL = `localStorage` del telefono preservato.
+Hosting statico su **GitHub Pages** (`simoneviscontigit.github.io/workout-app/`), servito dal branch `main` (deploy = `git push origin main`, autenticato via PAT classic repo-scope nel Keychain macOS). Stesso URL = `localStorage` del telefono preservato.
+
+Deploy alternativo/ridondante su Vercel (`workout-app-eight-iota.vercel.app`, progetto CLI-linked `.vercel/`) — non primario, il telefono carica Pages. Il vecchio Netlify (`workout-standalone-app.netlify.app`) è **dismesso** (404).
