@@ -1034,16 +1034,11 @@ async function confirmNutPhotos(){
   });
   await sv('ai',S.aiDB);
  }
- // Auto-popola qAns con macro aggregate
- function toScore(val,thresholds){
-  for(var i=0;i<thresholds.length;i++)if(val<=thresholds[i])return i;
-  return thresholds.length;
- }
- var pScore=toScore(tot.protein_g,[80,120,160,200]);
- var cScore=toScore(tot.carbs_g,[100,200,300,400]);
- var fScore=toScore(tot.fats_g,[30,50,70,90]);
- var calScore=toScore(tot.calories,[1200,1800,2400,3000]);
- S.qAns=Object.assign(S.qAns||{},{protein:pScore,carbs:cScore,fats:fScore,calories:calScore});
+ // Auto-popola qAns con macro aggregate. Riusa macrosToScoreLevel (1-based, stessa scala
+ // di saveNutrition/rNutSummary) invece di un toScore locale 0-based che disallineava
+ // il rating di questa schermata da quello usato ovunque altrove.
+ var levels=macrosToScoreLevel(tot);
+ S.qAns=Object.assign(S.qAns||{},{protein:levels.protein,carbs:levels.carbs,fats:levels.fats,calories:levels.calories});
  S.nutPhotoUploads=[];
  // Salta le domande macro (0-3) e vai a water (4)
  S.qStep=4;
@@ -1770,19 +1765,57 @@ function macrosToScoreLevel(macros){
  function bucket(val,th){for(var i=0;i<th.length;i++)if(val<th[i])return i+1;return th.length+1;}
  return{protein:bucket(macros.protein_g,[60,100,130,160]),carbs:bucket(macros.carbs_g,[80,150,250,350]),fats:bucket(macros.fats_g,[30,50,80,110]),calories:Math.min(4,bucket(macros.calories,[2400,2500,2900]))};
 }
+// Regole anti-sottostima condivise foto+testo (25/07, portate da Sumi Legacy mod-workout.js
+// il 02/08 — il prompt nudo produceva totali dimezzati: il modello ragiona su porzioni da
+// tabella e non vede i grassi di cottura -> giornate a 1100-1400 kcal, peso fermo).
+var MEAL_RULES=
+ "Sei un nutrizionista che stima un pasto REALE gia' mangiato, non una porzione da manuale.\n"+
+ "La sottostima e' l'errore tipico su questo compito: queste regole servono a evitarla.\n"+
+ "1. Conta i grassi INVISIBILI: olio di cottura, frittura, burro, salse, dressing, mantecature, condimenti. "+
+ "Un saltato in padella o un fritto porta 15-30 g di olio che nella foto non si vedono. Un piatto asiatico "+
+ "da ristorante (pad thai, fried rice, curry, kao soi) sta quasi sempre su 700-1000 kcal, non 500.\n"+
+ "2. Stima la porzione COME SERVITA: piatto pieno, ristorante/takeaway = porzioni abbondanti. "+
+ "Non ridurre alla porzione standard consigliata.\n"+
+ "3. Se il pasto contiene piu' piatti o un dolce, sommali tutti.\n"+
+ "4. Coerenza obbligatoria: calories = 4*protein_g + 4*carbs_g + 9*fats_g (tolleranza 5%).\n"+
+ "5. Punta alla stima CENTRALE realistica, non all'estremo: le regole 1-2 correggono gia' la "+
+ "sottostima e non vanno sommate a un ulteriore margine. Un pasto normale di un uomo di 74 kg sta su "+
+ "600-900 kcal; sopra le 1200 kcal solo se e' davvero abbondante o sono piu' piatti insieme.\n"+
+ "6. In foodDescription chiudi con i grammi che hai assunto per ogni componente, tra parentesi "+
+ '(es. "Pad Thai con pollo (~300g noodles, 120g pollo, 25g olio, 30g arachidi)") — servono a Simone per correggerti.\n';
+var MEAL_JSON=
+ "Rispondi SOLO con JSON valido senza markdown:\n"+
+ '{"protein_g":N,"carbs_g":N,"fats_g":N,"calories":N,"foodDescription":"descrizione + grammi assunti","confidence":"alta|media|bassa"}';
+// Guardia di coerenza: se le calorie dichiarate divergono >5% dai macro (4/4/9), vince il
+// calcolo dai macro — il modello sbaglia il totale piu' spesso dei singoli macro.
+function reconcileMealKcal(est){
+ if(!est)return est;
+ var fromMacros=4*(+est.protein_g||0)+4*(+est.carbs_g||0)+9*(+est.fats_g||0);
+ var declared=+est.calories||0;
+ if(fromMacros>0&&(!declared||Math.abs(declared-fromMacros)/fromMacros>0.05)){
+  est.calories=Math.round(fromMacros);
+ }
+ return est;
+}
 async function estimateMealFromText(description){
- var prompt='Stima i macronutrienti di questo pasto descritto a testo: "'+description+'"'
-  +'\nRispondi SOLO con JSON valido senza markdown:\n{"protein_g":N,"carbs_g":N,"fats_g":N,"calories":N,"foodDescription":"breve descrizione","confidence":"alta|media|bassa"}';
+ var prompt=MEAL_RULES
+  +'\nPasto descritto a testo da Simone: "'+description+'"\n'
+  +"Se la descrizione non dice la quantita', assumi una porzione NORMALE da uomo adulto (ne' minima "
+  +"ne' abbondante): senza foto non hai motivo di presumere una porzione fuori misura.\n\n"
+  +MEAL_JSON;
+ // Sonnet, non Haiku (25/07): stimare un pasto da testo richiede conoscenza del cibo — Haiku
+ // sottostimava sistematicamente. max_tokens 2000: sotto ~1200 il JSON tronca su sonnet-5
+ // (il thinking e' incluso nel budget, l'output reale e' 760-920 tok).
  var resp=await fetch(AI_PROXY_URL,{
   method:'POST',
   headers:{'content-type':'application/json','x-proxy-token':getApiKey()},
-  body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,messages:[{role:'user',content:prompt}]})
+  body:JSON.stringify({model:'claude-sonnet-5',max_tokens:2000,messages:[{role:'user',content:prompt}]})
  });
  var data=await resp.json();
  if(!resp.ok)throw new Error('HTTP '+resp.status+(data&&data.error&&data.error.message?' — '+data.error.message:''));
  var block=data.content&&data.content.find(function(b){return b.type==='text';});
  if(!block)throw new Error('Nessuna risposta');
- return JSON.parse(block.text.replace(/```json|```/g,'').trim());
+ return reconcileMealKcal(JSON.parse(block.text.replace(/```json|```/g,'').trim()));
 }
 async function addManualTextMeal(){
  var el=document.getElementById('nut-manual-text');
@@ -1820,23 +1853,40 @@ async function fileToJpegBase64(file){
  return cv.toDataURL('image/jpeg',0.85).split(',')[1];
 }
 async function estimateMealFromPhoto(base64,mediaType,noteText){
- var prompt='Stima i macronutrienti di questo pasto.'+(noteText?' Dettagli aggiuntivi: '+noteText:'')
-  +'\nRispondi SOLO con JSON valido senza markdown:\n{"protein_g":N,"carbs_g":N,"fats_g":N,"calories":N,"foodDescription":"breve descrizione","confidence":"alta|media|bassa"}';
+ var prompt=MEAL_RULES+(noteText?'\nDettagli aggiuntivi da Simone: '+noteText+'\n':'')+'\n'+MEAL_JSON;
+ // sonnet-5, max_tokens 2000: stesso budget/motivo di estimateMealFromText (thinking incluso,
+ // sotto ~1200 il JSON tronca).
  var resp=await fetch(AI_PROXY_URL,{
   method:'POST',
   headers:{'content-type':'application/json','x-proxy-token':getApiKey()},
-  body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:prompt}]}]})
+  body:JSON.stringify({model:'claude-sonnet-5',max_tokens:2000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:prompt}]}]})
  });
  var data=await resp.json();
  if(!resp.ok)throw new Error('HTTP '+resp.status+(data&&data.error&&data.error.message?' — '+data.error.message:''));
  var block=data.content&&data.content.find(function(b){return b.type==='text';});
  if(!block)throw new Error('Nessuna risposta');
- return JSON.parse(block.text.replace(/```json|```/g,'').trim());
+ return reconcileMealKcal(JSON.parse(block.text.replace(/```json|```/g,'').trim()));
 }
 async function saveMealToLog(date,estimate){
  if(!S.aiDB.mealLog)S.aiDB.mealLog={};
  if(!S.aiDB.mealLog[date])S.aiDB.mealLog[date]=[];
  S.aiDB.mealLog[date].push(Object.assign({},estimate,{loggedAt:new Date().toISOString()}));
+ // Se il giorno ha gia' la survey compilata, un pasto aggiunto dopo deve entrare SUBITO nel
+ // totale — stessa logica foto->qty di saveNutrition/rNutSummary (calcDailyMacrosFromPhotos +
+ // 400kcal se giorno allenato), riusata qui e non duplicata.
+ if(S.aiDB.nutritionLog&&S.aiDB.nutritionLog[date]&&!S.aiDB.nutritionLog[date].skipped){
+  var photoMacros=calcDailyMacrosFromPhotos(date);
+  if(photoMacros){
+   var kcal=Math.round(photoMacros.calories)||0;
+   if(hadWorkoutOn(date))kcal=Math.round(kcal+400);
+   Object.assign(S.aiDB.nutritionLog[date],{
+    protein_g:Math.round(photoMacros.protein_g)||0,
+    carbs_g:Math.round(photoMacros.carbs_g)||0,
+    fats_g:Math.round(photoMacros.fats_g)||0,
+    calories_kcal:kcal
+   });
+  }
+ }
  await sv('ai',S.aiDB);
  syncToDrive(); // il pasto e' dato-verita' UNION: pushalo subito (prima solo locale)
 }
@@ -2028,14 +2078,13 @@ async function runNutritionReasoning(){
 // ─── HISTORY ─────────────────────────────────────────────────────────────────
 function buildHistChart(){
  var log=S.aiDB.nutritionLog||{};
- var p=S.aiDB.profile||{};
- var bmr=Math.round(10*(p.peso||74)+6.25*(p.altezza||182)-5*(p.eta||30)+5);
- var tdee=Math.round(bmr*1.375);
- var goalAdj=p.obiettivo==='definizione'?-400:p.obiettivo==='mantenimento'?0:300;
- var maintKcal=tdee+goalAdj; // linea centrale = target riposo
  var days=[];
  var START='2026-06-22'; // il grafico parte da lunedì 22 giugno
  var todayS=new Date().toISOString().split('T')[0];
+ // linea centrale = target riposo. Riusa calcDayCalTarget (bmr/tdee/goalAdj) invece di
+ // ricalcolarli qui: il ternario locale era monco (mancava 'ricomposizione'->+100, prendeva
+ // +300 come 'massa') e divergeva dalla vera regola dell'obiettivo.
+ var maintKcal=calcDayCalTarget(todayS).base;
  for(var t=Date.parse(START+'T00:00:00Z');;t+=86400000){
   var d=new Date(t).toISOString().split('T')[0];
   if(d>todayS)break;
