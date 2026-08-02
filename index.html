@@ -1341,11 +1341,11 @@ function finishWorkout(){
 
 // ─── POST QUIZ ────────────────────────────────────────────────────────────────
 var PQ=[
+ // mood e domsExpected rimossi 2026-08-02 (pipeline Sumi-centrica): mai letti a valle.
+ // domsActual del preCheck del giorno dopo copre il DOMS reale.
  {key:'energy',q:'Come ti senti fisicamente?',opts:['Esausto','Stanco ma ok','Energico','Carico!']},
  {key:'difficulty',q:"Com'era la difficoltà?",opts:['Troppo facile','Giusta','Difficile','Massacrante']},
- {key:'mood',q:'Soddisfazione?',opts:['Bassa','Media','Alta','Massima']},
  {key:'muscleWork',q:'Hai sentito i muscoli lavorare?',opts:['Per niente','Un po\'','Sì','Molto']},
- {key:'domsExpected',q:'Pensi di sentire indolenzimento domani?',opts:['No','Forse','Sì','Sicuramente']},
 ];
 function rPQ(){
  if(S.qStep===PQ.length)return rExFeedback();
@@ -1423,7 +1423,7 @@ async function finishSession(){
   var session=Object.assign({},S.pending||{},{quiz:S.qAns,preCheck:S.preWQAns||{},date:new Date().toISOString()});
   S.preWQAns={};
   var isExtra=!!session.extra; // EXTRA: additiva, non fa avanzare rotazione/carichi/adattamento
-  S.aiDB.sessions=(S.aiDB.sessions||[]).concat([session]);
+  // aiDB.sessions deprecato 2026-08-02: duplicava history (l'unica fonte letta a valle).
   S.aiDB.patterns=calcPatterns();
   var nh=(S.history||[]).concat([session]);
   S.history=nh;
@@ -1433,7 +1433,8 @@ async function finishSession(){
   if(!isExtra)await sv('si',String(S.splitIdx));
   if(!isExtra)computeProgression(session); // regola meccanica: aggiorna carichi/progressione dalle reps
   syncToDrive();
-  if(!isExtra)runAdaptation(session);
+  // runAdaptation rimosso 2026-08-02: il piano lo modula solo Sumi notturna (coachPlan).
+  // La safety sul preCheck resta in applyAdaptation (regola meccanica, deterministica).
  }catch(e){console.error('finishSession:',e);}
  S.extraMode=false;
  go('home');
@@ -1451,10 +1452,10 @@ var NQ=[
   opts:[{l:'Deficit (<2400kcal)',e:'',v:1},{l:'Mantenimento (~2500)',e:'',v:2},{l:'Surplus lieve (2700-2900)',e:'',v:3},{l:'Surplus alto (>3000)',e:'',v:4}]},
  {key:'water',q:'Idratazione?',sub:'Almeno 2.5L per metabolismo e recupero muscolare',
   opts:[{l:'Scarsa (<1.5L)',e:'',v:1},{l:'Insufficiente (1.5-2L)',e:'',v:2},{l:'Buona (2-2.5L)',e:'',v:3},{l:'Ottima (>2.5L)',e:'',v:4}]},
- {key:'sleep',q:'Sonno scorsa notte?',sub:'Il muscolo cresce durante il sonno profondo',
-  opts:[{l:'Scarso (<5h o agitato)',e:'',v:1},{l:'Sufficiente (5-6h)',e:'',v:2},{l:'Buono (7-8h)',e:'',v:3},{l:'Ottimo (>8h o profondo)',e:'',v:4}]},
- {key:'stress',q:'Stress e recupero oggi?',sub:'Il cortisolo alto frena la sintesi proteica',
-  opts:[{l:'Alto stress',e:'',v:1},{l:'Moderato',e:'',v:2},{l:'Tranquillo',e:'',v:3},{l:'Recupero ottimale',e:'',v:4}]},
+ // sonno e stress rimossi dalla survey 2026-08-02 (pipeline Sumi-centrica): il sonno lo
+ // misura Oura (override gia' attivo in workout_metrics, fallback = score senza componente
+ // sonno se anello assente), lo stress arriva da Oura daily_stress. Lo storico con
+ // sleep/stress compilati resta valido: calcNutScore salta i campi assenti.
  {key:'note',q:'Note extra (opzionale)',sub:'Pasto saltato, stomaco in disordine, integratori...'},
 ];
 var NQ_MACRO_KEYS=['protein','carbs','fats','calories'];
@@ -1516,14 +1517,6 @@ function rNut(){
   S.qStep++;render();return '';
  }
  var s=S.qStep;var q=Object.assign({},NQ[s]);
- // Sonno: label dinamica con le due giornate
- if(q.key==='sleep'){
-  var sleepD=new Date(targetDate+'T12:00:00');
-  var nextD=new Date(sleepD.getTime()+86400000);
-  var dn=function(d){return d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});};
-  q.q='Sonno notte '+sleepD.toLocaleDateString('it-IT',{weekday:'long'})+' → '+nextD.toLocaleDateString('it-IT',{weekday:'long'})+'?';
-  q.sub='La notte che ha concluso il '+dn(sleepD)+' (quella appena dormita se stai compilando '+dn(nextD)+')';
- }
  var bars=NQ.map(function(_,i){return '<div style="height:3px;flex:1;border-radius:99px;background:'+(i<s?'#22c55e':i===s?'#22c55e':'#27272a')+'"></div>';}).join('');
  var body='';
  if(s===NQ.length-1){
@@ -1670,7 +1663,7 @@ function rNutSummary(){
   if(!S.nutQty.calories_kcal)S.nutQty.calories_kcal=scoreToQty('calories_kcal',a.calories)||0;
  }
  if(!S.nutQty.water_l)S.nutQty.water_l=scoreToQty('water_l',a.water)||0;
- if(!S.nutQty.sleep_h)S.nutQty.sleep_h=scoreToQty('sleep_h',a.sleep)||0;
+ if(a.sleep&&!S.nutQty.sleep_h)S.nutQty.sleep_h=scoreToQty('sleep_h',a.sleep)||0; // solo storico: la domanda sonno non esiste piu'
  // Giorno di allenamento: aggiusta calorie verso l'alto (+300-500kcal stima consumo)
  if(hadWorkoutOn(targetDate)&&S.nutQty.calories_kcal){
   S.nutQty.calories_kcal=Math.round(S.nutQty.calories_kcal+400);
@@ -1713,8 +1706,8 @@ function rNutSummary(){
   +mbar('Grassi',a.fats||0,5,'#22c55e',L5,'fats_g','g')
   +mbar('Calorie',a.calories||0,4,'#ef4444',L4c,'calories_kcal','kcal')
   +mbar('Idratazione',a.water||0,4,'#f97316',L4,'water_l','L')
-  +mbar('Sonno',a.sleep||0,4,'#8b5cf6',L4,'sleep_h','h')
-  +mbar('Stress/Recovery',a.stress||0,4,'#22c55e',L4s)
+  +(a.sleep?mbar('Sonno',a.sleep,4,'#8b5cf6',L4,'sleep_h','h'):'')
+  +(a.stress?mbar('Stress/Recovery',a.stress,4,'#22c55e',L4s):'')
   +'</div>'
   +(function(){
    var dt=calcDayCalTarget(targetDate);
@@ -1778,8 +1771,9 @@ function getNutAdvice(a){
   tips.push('Surplus alto in un giorno di riposo — parte delle calorie extra potrebbe andare in grasso. Riserva i pasti abbondanti ai giorni di allenamento.');
  }
  if(!a.water||a.water<=2)tips.push('Idratazione scarsa: inizia domani con 500ml appena sveglio. Obiettivo 3L totali.');
- if(!a.sleep||a.sleep<=2)tips.push('Riposo insufficiente: GH peak nelle prime 2h di sonno. Prova a dormire 30min prima stasera.');
- if(!a.stress||a.stress<=2)tips.push('Stress alto: 10 min di respirazione o camminata abbassano cortisolo e migliorano il recupero.');
+ // sonno/stress: solo se il valore c'e' (storico) — assente = domanda rimossa, non "scarso"
+ if(a.sleep&&a.sleep<=2)tips.push('Riposo insufficiente: GH peak nelle prime 2h di sonno. Prova a dormire 30min prima stasera.');
+ if(a.stress&&a.stress<=2)tips.push('Stress alto: 10 min di respirazione o camminata abbassano cortisolo e migliorano il recupero.');
  if(tips.length===0)tips.push(workout?'Giornata di allenamento perfetta! Nutrizione e recupero allineati — crescita garantita.':'Giornata quasi perfetta! Mantieni questo standard — hai tutto ciò che serve per crescere.');
  return tips.join('<br><br>');
 }
@@ -2076,6 +2070,9 @@ async function saveNutrition(){
 }
 
 async function runNutritionReasoning(){
+ return; // DISMESSO 2026-08-02 (pipeline Sumi-centrica): nutritionAdvice non aveva lettori e
+ // recoveryFlag/adaptation non si scrivono piu' dall'app — pattern negativi multi-giorno li
+ // vede Sumi notturna nel contesto atleta (nutrizione+Oura). Corpo lasciato per reversibilità.
  if(!getApiKey())return;
  try{
   var log=S.aiDB.nutritionLog||{};
@@ -2538,11 +2535,10 @@ function rHist(){
 // ─── AI COACH (pagina completa) ───────────────────────────────────────────────
 function buildCtx(){
  var p=S.aiDB.patterns||{};
- var a=S.aiDB.adaptation||{};
  var recent=S.history.slice(-10).map(function(h){return{
   d:h.date&&h.date.split('T')[0],s:h.split&&h.split.id,dur:h.duration,
   e:h.quiz&&h.quiz.energy,diff:h.quiz&&h.quiz.difficulty,ns:h.nutrition&&h.nutrition.score,
-  pump:h.quiz&&h.quiz.muscleWork,domsExp:h.quiz&&h.quiz.domsExpected,
+  pump:h.quiz&&h.quiz.muscleWork,
   domsAct:h.preCheck&&h.preCheck.domsActual,recov:h.preCheck&&h.preCheck.recoveryFeel
  };});
  var chatSummary=(S.aiDB.chatLog||[]).slice(-8).map(function(c){
@@ -2555,10 +2551,10 @@ function buildCtx(){
  return 'ATLETA: 182cm 74kg maschio. Massa muscolare. 5-6gg/sett 30-45min. Curl 35kg(10x4), Press spalle 35kg(10x4). Elastici: 1x5kg+1x10kg+1x15kg+2x25kg (combinabili, max 80kg).\n'
   +'NOTA ELASTICI: le resistenze sono elastici aggregabili, NON bilancieri a carico fisso. Ragiona in termini di RPE percepito e progressione (reps, tempo sotto tensione, variante più difficile, kg elastico aggiunto) — non di "carico sensato" da palestra tradizionale.\n'
   +'SISTEMA REP: ogni esercizio ha TARGET (reps tecniche ottimali, in arancio) e MAX (sforzo massimo, in rosso). Se atleta fa reps vicino al MAX su set multipli → considera progressione carico/difficoltà.\n'
-  +'LEGENDA RECENTI: pump=muscleWork(1-4: per niente→molto), domsExp=DOMS attesi(1-4: no→sicuramente), domsAct=DOMS effettivi sessione prec(1-4: no→forte), recov=recupero pre-sessione(1-4: spossato→carico). Usa pump+domsAct per calibrare volume.\n'
+  +'LEGENDA RECENTI: pump=muscleWork(1-4: per niente→molto), domsAct=DOMS effettivi sessione prec(1-4: no→forte), recov=recupero pre-sessione(1-4: spossato→carico). Usa pump+domsAct per calibrare volume.\n'
   +'PATTERN: sessioni='+p.totalSessions+', energia_media='+p.avgEnergy+'/4, difficolta_media='+p.avgDifficulty+'/4.\n'
   +'RECENTI: '+JSON.stringify(recent)+'\n'
-  +'ADATTAMENTO: intensita='+a.intensity+', focus='+a.nextFocus+'\n'
+  +(S.aiDB.coachPlan&&S.aiDB.coachPlan.global&&S.aiDB.coachPlan.global.insight?'INSIGHT DEL COACH NOTTURNO ('+(S.aiDB.coachPlan.global.insight.date||'')+'): '+S.aiDB.coachPlan.global.insight.text+'\n':'')
   +(function(){var log=S.aiDB.nutritionLog||{};var days=Object.keys(log).sort().slice(-3);if(!days.length)return'NUTRIZIONE: non disponibile\n';return'NUTRIZIONE ULTIMI GIORNI: '+days.map(function(d){var n=log[d];return d+' prot='+n.protein+'/5 carb='+n.carbs+'/5 sleep='+n.sleep+'/4 score='+n.score;}).join(' | ')+'\n';}())
   +(lastWeekly?'RIEPILOGO SETTIMANA SCORSA ('+lastWeekly.weekStart+'→'+lastWeekly.weekEnd+'): '+lastWeekly.summary+'\n':'')
   +(lastMonthly?'RIEPILOGHI MENSILI PRECEDENTI: '+lastMonthly+'\n':'')
@@ -2727,6 +2723,9 @@ async function sendAI(){
  setTimeout(function(){var el=document.getElementById('ai-msgs');if(el)el.scrollTop=el.scrollHeight;},100);
 }
 async function runAdaptation(session){
+ return; // DISMESSO 2026-08-02 (pipeline Sumi-centrica): l'app non ragiona piu' — il piano lo
+ // modula solo il coach notturno (Sumi) via coachPlan. Corpo lasciato per reversibilità.
+ // Storia: l'oggetto adaptation scritto qui resto' stale 25/06→02/08 (-1 serie, -10% reps).
  if(!getApiKey())return;
  try{
   var ctx=buildCtx();
