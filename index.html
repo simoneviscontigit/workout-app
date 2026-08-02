@@ -341,18 +341,9 @@ function applyAdaptation(ex){
  // Modalità Recupero: modula l'intensità in base alla fase (moltiplicatore reps/time + serie)
  var _rp=(typeof recoveryPhase==='function')?recoveryPhase():null;
  if(_rp){mult*=_rp.mult;setsAdj+=_rp.setsAdj;}
- // Adatta in base ai muscoli indolenziti dichiarati nel check pre-workout
- var preAns=S.preWQAns||{};
- var doms=preAns.domsActual||1;
- var sore=preAns.soreMuscles||[];
- if(doms>=3&&sore.length>0&&ex.muscles){
-  var exMusclesLow=(ex.muscles||'').toLowerCase();
-  var hasSore=sore.some(function(m){return exMusclesLow.indexOf(m.toLowerCase())>=0;});
-  if(hasSore){
-   setsAdj=setsAdj-1; // sempre -1 set per muscoli indolenziti
-   if(doms>=4)mult=Math.min(mult,0.8); // DOMS forte: anche -20% reps
-  }
- }
+ // DOMS/muscoli indolenziti: NESSUNA regola automatica (deciso 2026-08-02) — DOMS = il
+ // muscolo ha lavorato, non un problema. Il dato (preCheck) va a Sumi nel contesto_atleta:
+ // e' lei a valutare se e' cautela (forte/persistente) o normale adattamento.
  if(mult===1&&setsAdj===0)return ex;
  var newEx=Object.assign({},ex);
  if(ex.isTime){
@@ -1434,7 +1425,6 @@ async function finishSession(){
   if(!isExtra)computeProgression(session); // regola meccanica: aggiorna carichi/progressione dalle reps
   syncToDrive();
   // runAdaptation rimosso 2026-08-02: il piano lo modula solo Sumi notturna (coachPlan).
-  // La safety sul preCheck resta in applyAdaptation (regola meccanica, deterministica).
  }catch(e){console.error('finishSession:',e);}
  S.extraMode=false;
  go('home');
