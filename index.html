@@ -95,7 +95,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-03 · solo-inserimento: nutrizione 20gg, pesata, nascita'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-03b · retroCompiled dall\'app'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -1474,10 +1474,20 @@ var NQ=[
   opts:[{l:'Deficit (<2400kcal)',e:'',v:1},{l:'Mantenimento (~2500)',e:'',v:2},{l:'Surplus lieve (2700-2900)',e:'',v:3},{l:'Surplus alto (>3000)',e:'',v:4}]},
  {key:'water',q:'Idratazione?',sub:'Almeno 2.5L per metabolismo e recupero muscolare',
   opts:[{l:'Scarsa (<1.5L)',e:'',v:1},{l:'Insufficiente (1.5-2L)',e:'',v:2},{l:'Buona (2-2.5L)',e:'',v:3},{l:'Ottima (>2.5L)',e:'',v:4}]},
- // sonno e stress rimossi dalla survey 2026-08-02 (pipeline Sumi-centrica): il sonno lo
- // misura Oura (override gia' attivo in workout_metrics, fallback = score senza componente
- // sonno se anello assente), lo stress arriva da Oura daily_stress. Lo storico con
- // sleep/stress compilati resta valido: calcNutScore salta i campi assenti.
+ // sonno e stress rimossi dalla survey 2026-08-02 (pipeline Sumi-centrica). NON hanno lo
+ // stesso stato — verificato 03/08/2026, la riga precedente li dava entrambi coperti:
+ //  - SONNO: coperto davvero. workout_metrics.apply_oura_sleep_override riscrive il rating
+ //    dall'anello e RICALCOLA lo score con la stessa formula, per ogni giorno con Oura
+ //    completo. Il sonno da survey resta il fallback sui giorni senza anello.
+ //  - STRESS: NON coperto, e per ora si accetta cosi' (Simone 03/08). Non esiste nessun
+ //    apply_oura_stress_override, e il dato a monte e' vuoto: derived.json riporta
+ //    stress_high_min 0.0 e day_summary null su tutti i giorni. La domanda NON torna
+ //    nell'app: si usera' Oura quando dara' qualcosa. Fino ad allora i giorni nuovi non
+ //    hanno stress e basta.
+ // Conseguenza dichiarata: calcNutScore salta i campi assenti, quindi lo score si
+ // normalizza su una base piu' piccola (280 invece di 320). Non e' sbagliato, ma i
+ // punteggi prima e dopo il 02/08 non stanno sulla stessa base. Lo storico con
+ // sleep/stress compilati resta valido.
  {key:'note',q:'Note extra (opzionale)',sub:'Pasto saltato, stomaco in disordine, integratori...'},
 ];
 var NQ_MACRO_KEYS=['protein','carbs','fats','calories'];
@@ -2154,7 +2164,18 @@ async function saveNutrition(){
  // Quantità già pre-popolate in S.nutQty da rNutSummary (read-only, nessun input DOM)
  var qty=S.nutQty||{};
  S.nutQty={};
- var data=Object.assign({},S.qAns,{savedAt:new Date().toISOString(),score:calcNutScore(S.qAns)},qty);
+ // retroCompiled = "compilata a posteriori, dato meno affidabile" -> colonna `retro_compilato`
+ // del foglio (owner `app`). Il flusso NORMALE compila IERI: quello non e' retro. Retro =
+ // piu' vecchio di ieri. Si calcola QUI e non in openNutritionDay perche' qui passano tutti
+ // i percorsi (flusso normale, coda dei mancanti, ri-compilazione di un giorno preciso), e
+ // perche' il seed di openNutritionDay puo' portarsi dietro un retroCompiled vecchio: questo
+ // valore, esplicito e in coda all'Object.assign, vince sempre su quello ereditato.
+ // Fino al 03/08/2026 lo stampava SOLO sumi-workout-inbox.py (i bottoni di Sumi Legacy): al
+ // passo 6, spento l'inbox, la colonna sarebbe rimasta 0 per sempre — un campo che mente.
+ // Chiave-giorno in UTC come tutto il resto del blob (vedi §chiavi UTC vs locali, aperta).
+ var _ieri=new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var data=Object.assign({},S.qAns,{savedAt:new Date().toISOString(),score:calcNutScore(S.qAns),
+                                   retroCompiled:targetDate<_ieri},qty);
  S.nutrition=data;
  // Salva nel log per data (struttura principale)
  if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};
