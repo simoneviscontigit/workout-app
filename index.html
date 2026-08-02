@@ -95,7 +95,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-02 · kcal+intensita+oura'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-03 · solo-inserimento: nutrizione 20gg, pesata, nascita'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -556,6 +556,9 @@ function mergeDown(dd){
  if(r.profile&&r.profile.profileUpdatedAt&&newer(r.profile.profileUpdatedAt,S.aiDB.profile&&S.aiDB.profile.profileUpdatedAt))S.aiDB.profile=r.profile;
  // LAST-WINS per-data (survey nutrizione)
  S.aiDB.nutritionLog=mergeByKey(S.aiDB.nutritionLog,r.nutritionLog,'savedAt');
+ // LAST-WINS per-data (pesate): stessa forma che scrivono l'app e sumi-workout-inbox
+ // ({kg, loggedAt, source}). Senza questa riga una pesata fatta altrove non scendeva mai.
+ S.aiDB.weightLog=mergeByKey(S.aiDB.weightLog,r.weightLog,'loggedAt');
  // UNION per-voce (pasti: mappa data→array)
  S.aiDB.mealLog=mergeArrayMap(S.aiDB.mealLog,r.mealLog,'loggedAt');
  // UNION log (storico sessioni + chat/feedback)
@@ -756,8 +759,10 @@ function rHome(){
   +'<div class="lbl" style="font-size:11px;color:#a1a1aa;margin:18px 0 8px">Ciclo 6 giorni</div>'
   +'<div style="display:flex;gap:6px">'+cycle+'</div>'
   +'<div style="display:flex;gap:6px;margin-top:16px">'
-  +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #27272a;color:#fff;margin:0;padding:16px;font-size:14px" onclick="openNutrition()">Nutrizione</button>'
-  +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #27272a;color:#fff;margin:0;padding:16px;font-size:14px" onclick="go(\'history\')">Storico</button>'
+  // "Storico" e' sparito il 03/08/2026: storico e grafici si leggono in Sumi Legacy.
+  // "Nutrizione" ora apre la lista dei 20 giorni (una sola superficie: da li' si compila
+  // il singolo giorno o si parte con la coda dei mancanti), non piu' la coda diretta.
+  +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #27272a;color:#fff;margin:0;padding:16px;font-size:14px" onclick="go(\'history\')">Nutrizione</button>'
   +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #F97316;color:#F97316;margin:0;padding:16px;font-size:14px" onclick="go(\'ai\')">AI</button>'
   +'</div>'
   // (rimossi 12/07 i vecchi consigli in-app Recovery + Nutrizione domani — superati dai
@@ -783,23 +788,50 @@ function forceRefresh(){
  location.replace(base+'?r='+Date.now());
 }
 
-function getMissingNutritionDays(){
- var log=S.aiDB.nutritionLog||{};
- var missing=[];
- // Parti dalla data del primo allenamento, max 30 giorni fa
+// FINESTRA NUTRIZIONE — 20 giorni, la stessa che lo storico rende compilabile.
+// Prima era 1: `maxBack` (7gg) era calcolata e mai usata, e `startDate` ricadeva
+// sempre su ieri perche' `firstDate > yesterday` e' falso per definizione (il primo
+// allenamento non e' nel futuro). L'intenzione era una finestra, l'implementazione
+// era collassata a un giorno solo.
+var NUT_WINDOW_DAYS=20;
+function nutWindowDays(){
+ var out=[];
+ var yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var maxBack=new Date(Date.now()-NUT_WINDOW_DAYS*86400000).toISOString().split('T')[0];
+ // Non si va piu' indietro del primo allenamento: prima non c'era niente da compilare.
  var firstSession=(S.history||[])[0];
  var firstDate=firstSession&&firstSession.date?firstSession.date.split('T')[0]:null;
- var today=new Date().toISOString().split('T')[0];
- var yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
- var maxBack=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
- // Parti al massimo da ieri (non 30 giorni fa): se c'è storia recente usa quella
- var startDate=(firstDate&&firstDate>yesterday)?firstDate:yesterday;
- var yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
- for(var d=new Date(startDate);d.toISOString().split('T')[0]<=yesterday;d.setDate(d.getDate()+1)){
-  var ds=d.toISOString().split('T')[0];
-  if(!log[ds])missing.push(ds);
+ var startDate=(firstDate&&firstDate>maxBack)?firstDate:maxBack;
+ for(var d=new Date(startDate+'T12:00:00Z');d.toISOString().split('T')[0]<=yesterday;d.setDate(d.getDate()+1)){
+  out.push(d.toISOString().split('T')[0]);
  }
- return missing;
+ return out;
+}
+// Un giorno e' compilato QUI se il log locale ha una voce (anche `skipped`).
+function nutCompiledLocally(ds){
+ var log=S.aiDB.nutritionLog||{};
+ return !!log[ds];
+}
+// Verita' di Sumi per "questo giorno ha una survey vera". Serve perche' il log locale da
+// solo non sa dei giorni compilati altrove (dashboard, altro device) e li riproporrebbe
+// in eterno.
+// NON si usa `metrics.buchi`: quella lista esclude per progetto i giorni con kcal STIMATA
+// (kcalSource="stima"), che sono a tutti gli effetti ancora da compilare — leggerla li
+// farebbe sparire dalla lista in silenzio (il 03/08 sarebbe vuota: 28-30/07 e 02/08 sono
+// tutti stimati). `days[ds].nutrition.score` invece esiste solo se la survey c'e' davvero:
+// la stima non la inventa mai.
+function nutFilledOnServer(ds){
+ var days=(S.aiDB.metrics||{}).days;
+ if(!days)return null;                                // feed assente: il server non sa dire
+ var rec=days[ds];
+ return !!(rec&&rec.nutrition&&rec.nutrition.score!=null);
+}
+function getMissingNutritionDays(){
+ return nutWindowDays().filter(function(ds){
+  if(nutCompiledLocally(ds))return false;             // appena compilato qui, non ancora travasato
+  var srv=nutFilledOnServer(ds);
+  return srv===null?true:!srv;                        // senza feed: tutto cio' che manca in locale
+ });
 }
 var SORE_MUSCLES=['Petto','Tricipiti','Spalle','Dorsali','Bicipiti','Quadricipiti','Glutei','Femorali','Core'];
 var SPLIT_MUSCLES={'push':['Petto','Tricipiti','Spalle'],'push2':['Petto','Tricipiti','Spalle'],'pull':['Dorsali','Bicipiti'],'pull2':['Dorsali','Bicipiti','Spalle'],'legs':['Quadricipiti','Glutei','Femorali'],'full':['Petto','Tricipiti','Dorsali','Bicipiti','Quadricipiti']};
@@ -1539,9 +1571,30 @@ function rNut(){
   +body+'</div>';
 }
 // ─── PROFILO & TDEE ──────────────────────────────────────────────────────────
+// L'ETA' SI DERIVA DALLA NASCITA, non si digita. Nel profilo c'erano tutti e due
+// (`nascita: 1990-11-14` e `eta: 35`) e nessuno ricalcolava il secondo: dal 14/11/2026
+// Mifflin — quindi BMR, mantenimento, target e verdetto — sarebbe girato su 35 per
+// sempre. Un fatto (la data di nascita) e un derivato che si rifa' a ogni lettura.
+// `profile.eta` resta scritta come specchio per i lettori vecchi, ma non la digita
+// piu' nessuno: se c'e' `nascita`, vince lei.
+function etaDaNascita(nascita){
+ if(!nascita)return null;
+ var n=new Date(nascita+'T12:00:00Z');
+ if(isNaN(n.getTime()))return null;
+ var oggi=new Date();
+ var e=oggi.getUTCFullYear()-n.getUTCFullYear();
+ var m=oggi.getUTCMonth()-n.getUTCMonth();
+ if(m<0||(m===0&&oggi.getUTCDate()<n.getUTCDate()))e--;
+ return (e>=0&&e<120)?e:null;
+}
+function profileEta(p){
+ p=p||S.aiDB.profile||{};
+ var e=etaDaNascita(p.nascita);
+ return e!=null?e:(p.eta||30);
+}
 function calcDayCalTarget(date){
  var p=S.aiDB.profile||{};
- var peso=p.peso||74, alt=p.altezza||182, eta=p.eta||30;
+ var peso=p.peso||74, alt=p.altezza||182, eta=profileEta(p);
  var bmr=Math.round(10*peso+6.25*alt-5*eta+5); // Mifflin-St Jeor uomo
  var tdee=Math.round(bmr*1.375); // moderatamente attivo
  var goal=p.obiettivo||'massa';
@@ -1580,19 +1633,32 @@ function rProfile(){
    +'<span style="color:#52525b;font-size:13px;font-weight:600;min-width:32px">'+unit+'</span>'
    +'</div></div>';
  }
+ var etaOra=profileEta(p);
+ var ultimaPesata=lastWeighIn();
  return '<div class="pg">'
   +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">← Home</button><span style="font-weight:800;font-size:16px">PROFILO</span></div>'
+  +weighInCard(ultimaPesata)
   +'<div class="card">'
-  +numInput('peso','PESO',p.peso,'kg',40,150)
+  +numInput('peso','PESO DICHIARATO',p.peso,'kg',40,150)
+  +'<div style="font-size:10px;color:#52525b;margin:-8px 0 14px;line-height:1.45">Fallback: vale solo finché non c\'è nessuna pesata vera. La pesata qui sopra vince sempre.</div>'
   +numInput('altezza','ALTEZZA',p.altezza,'cm',140,220)
-  +numInput('eta','ETÀ',p.eta,'anni',15,80)
+  // ETA': campo derivato, non digitabile. Si scrive la data di nascita e basta.
+  +'<div style="margin-bottom:14px">'
+  +'<div style="font-size:11px;color:#71717a;font-weight:700;letter-spacing:1px;margin-bottom:6px">DATA DI NASCITA</div>'
+  +'<div style="display:flex;align-items:center;gap:8px">'
+  +'<input type="date" id="pf-nascita" value="'+(p.nascita||'')+'"'
+  +' style="flex:1;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:16px;font-weight:700;padding:12px;outline:none;text-align:center">'
+  +'<span style="color:#52525b;font-size:13px;font-weight:600;min-width:52px">'+(etaOra!=null?etaOra+' anni':'—')+'</span>'
+  +'</div>'
+  +'<div style="font-size:10px;color:#52525b;margin-top:6px">L\'età si calcola da qui a ogni apertura: non invecchia più a mano.</div>'
+  +'</div>'
   +'<div style="font-size:11px;color:#71717a;font-weight:700;letter-spacing:1px;margin-bottom:8px">OBIETTIVO</div>'
   +'<div style="display:flex;gap:6px;margin-bottom:4px">'+objBtns+'</div>'
   +'</div>'
   +recoveryProfileCard()
   +(function(){
-   var tmp=Object.assign({},p,{peso:p.peso||74,altezza:p.altezza||182,eta:p.eta||30});
-   var bmr=Math.round(10*tmp.peso+6.25*tmp.altezza-5*tmp.eta+5);
+   var tmp=Object.assign({},p,{peso:(ultimaPesata?ultimaPesata.kg:(p.peso||74)),altezza:p.altezza||182});
+   var bmr=Math.round(10*tmp.peso+6.25*tmp.altezza-5*etaOra+5);
    var tdee=Math.round(bmr*1.375);
    var adj=tmp.obiettivo==='massa'?300:tmp.obiettivo==='definizione'?-400:tmp.obiettivo==='ricomposizione'?100:0;
    return '<div class="card" style="background:#0f1a0f;border-color:#22c55e30">'
@@ -1603,14 +1669,7 @@ function rProfile(){
     +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;border-top:1px solid #27272a;padding-top:8px;margin-top:4px"><span style="color:#fafafa">Target riposo</span><span style="color:#fafafa">'+(tdee+adj)+' kcal</span></div>'
     +'</div>';
   })()
-  +'<button class="btn" style="background:#818cf8" onclick="(function(){'
-   +'var pe=document.getElementById(\'pf-peso\'),ae=document.getElementById(\'pf-altezza\'),te=document.getElementById(\'pf-eta\');'
-   +'if(pe&&pe.value)S.aiDB.profile.peso=parseFloat(pe.value);'
-   +'if(ae&&ae.value)S.aiDB.profile.altezza=parseFloat(ae.value);'
-   +'if(te&&te.value)S.aiDB.profile.eta=parseFloat(te.value);'
-   +'S.aiDB.profile.profileUpdatedAt=new Date().toISOString();' // timbro ultimo-vince: la dashboard/altro device sanno chi ha scritto per ultimo
-   +'sv(\'ai\',S.aiDB);if(typeof syncToDrive===\'function\')syncToDrive();go(\'home\');' // push subito su Drive (anti-wipe: se storico vuoto il sync si salta da solo)
-   +'})()">Salva Profilo</button>'
+  +'<button class="btn" style="background:#818cf8" onclick="saveProfile()">Salva Profilo</button>'
   +'<div class="card" style="margin-top:12px;background:#0f0f0f;border-color:#27272a">'
   +'<div class="lbl" style="color:#f59e0b;margin-bottom:8px">WORKOUT AI · PROXY TOKEN</div>'
   +'<input type="password" id="api-key-input" placeholder="proxy-token..." value="'+(localStorage.getItem('workoutProxyToken')||'')+'"'
@@ -1620,6 +1679,63 @@ function rProfile(){
   +'</div>'
   +'<button id="restore-btn" class="btn" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;margin-top:8px" onclick="restoreFromDrive()">Ripristina da Drive</button>'
   +'</div>';
+}
+function saveProfile(){
+ var pe=document.getElementById('pf-peso'),ae=document.getElementById('pf-altezza'),ne=document.getElementById('pf-nascita');
+ if(!S.aiDB.profile)S.aiDB.profile={};
+ if(pe&&pe.value)S.aiDB.profile.peso=parseFloat(pe.value);
+ if(ae&&ae.value)S.aiDB.profile.altezza=parseFloat(ae.value);
+ if(ne&&ne.value)S.aiDB.profile.nascita=ne.value;
+ // `eta` non si digita piu': si rispecchia da `nascita` a ogni salvataggio, cosi' i
+ // lettori che ancora leggono profile.eta (PROFILO del foglio, Mifflin di Sumi) non
+ // vedono mai un numero fermo a un compleanno fa. La verita' resta `nascita`.
+ var e=etaDaNascita(S.aiDB.profile.nascita);
+ if(e!=null)S.aiDB.profile.eta=e;
+ S.aiDB.profile.profileUpdatedAt=new Date().toISOString(); // timbro ultimo-vince fra device
+ sv('ai',S.aiDB);if(typeof syncToDrive==='function')syncToDrive();
+ go('home');
+}
+// ─── PESATA ──────────────────────────────────────────────────────────────────
+// LA PESATA E' UN DATO DEL GIORNO, non del profilo. `profile.peso` e' il valore
+// DICHIARATO (fallback: senza un peso Mifflin non esiste); la pesata vera va in
+// `aiDB.weightLog[data]` -> colonna `peso_loggato` di GIORNI -> serie peso del foglio,
+// e batte sempre il dichiarato (build_profile.pesoFonte). Finora il pulsante non
+// esisteva: `weightLog` era `null` e Mifflin girava da sempre sui 74 kg dichiarati.
+function lastWeighIn(){
+ var wl=(S.aiDB&&S.aiDB.weightLog)||{};
+ var giorni=Object.keys(wl).sort();
+ for(var i=giorni.length-1;i>=0;i--){
+  var v=wl[giorni[i]];var kg=(v&&typeof v==='object')?v.kg:v;
+  if(typeof kg==='number'&&kg>0)return {date:giorni[i],kg:kg};
+ }
+ return null;
+}
+function weighInCard(ultima){
+ var oggi=new Date().toISOString().split('T')[0];
+ var giaOggi=ultima&&ultima.date===oggi;
+ var sub=ultima
+  ?'Ultima: <b style="color:#d4d4d8">'+ultima.kg+' kg</b> · '+new Date(ultima.date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})
+  :'Nessuna pesata ancora: il grafico peso resta vuoto e il mantenimento gira sul peso dichiarato.';
+ return '<div class="card" style="background:#0f1420;border-color:#334155">'
+  +'<div class="lbl" style="color:#818cf8;margin-bottom:8px">PESATA'+(giaOggi?' · oggi fatta':'')+'</div>'
+  +'<div style="display:flex;align-items:center;gap:8px">'
+  +'<input type="number" id="pf-pesata" step="0.1" min="40" max="150" placeholder="'+(ultima?ultima.kg:'—')+'"'
+  +' style="flex:1;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:18px;font-weight:700;padding:12px;outline:none;text-align:center">'
+  +'<button class="btn" style="width:auto;margin:0;padding:12px 16px;font-size:13px;background:#818cf8" onclick="saveWeighIn()">Registra</button>'
+  +'</div>'
+  +'<div style="font-size:11px;color:#52525b;margin-top:8px;line-height:1.45">'+sub+'</div>'
+  +'</div>';
+}
+async function saveWeighIn(){
+ var el=document.getElementById('pf-pesata');
+ var kg=el?parseFloat(el.value):NaN;
+ if(!(kg>0)){alert('Scrivi il peso in kg.');return;}
+ if(kg<40||kg>150){alert('Peso fuori range (40-150 kg).');return;}
+ var oggi=new Date().toISOString().split('T')[0]; // stessa chiave-giorno del resto del blob
+ if(!S.aiDB.weightLog||typeof S.aiDB.weightLog!=='object')S.aiDB.weightLog={};
+ S.aiDB.weightLog[oggi]={kg:kg,loggedAt:new Date().toISOString(),source:'app'};
+ await sv('ai',S.aiDB);syncToDrive();
+ render();
 }
 function scoreToQty(key,score){
  var maps={
@@ -2104,105 +2220,6 @@ async function runNutritionReasoning(){
 }
 
 // ─── HISTORY ─────────────────────────────────────────────────────────────────
-function buildHistChart(){
- var log=S.aiDB.nutritionLog||{};
- var days=[];
- var START='2026-06-22'; // il grafico parte da lunedì 22 giugno
- var todayS=new Date().toISOString().split('T')[0];
- // linea centrale = target riposo. Riusa calcDayCalTarget (bmr/tdee/goalAdj) invece di
- // ricalcolarli qui: il ternario locale era monco (mancava 'ricomposizione'->+100, prendeva
- // +300 come 'massa') e divergeva dalla vera regola dell'obiettivo.
- var maintKcal=calcDayCalTarget(todayS).base;
- for(var t=Date.parse(START+'T00:00:00Z');;t+=86400000){
-  var d=new Date(t).toISOString().split('T')[0];
-  if(d>todayS)break;
-  days.push({date:d,nut:log[d],workout:(S.history||[]).find(function(h){return h.date&&h.date.split('T')[0]===d;})});
- }
- var hasData=days.some(function(d){return d.nut&&!d.nut.skipped;});
- if(!hasData)return '';
- var W=340,pL=30,pR=12;var cW=W-pL-pR;
- var n=days.length;
- function xOf(i){return pL+(n>1?i/(n-1):0)*cW;}
- function scoreColor(s){return s>=75?'#22c55e':s>=50?'#f59e0b':'#ef4444';}
- var x0=days[0].date.slice(5),xN=days[n-1].date.slice(5),xMid=days[Math.floor(n/2)].date.slice(5);
-
- // ===== GRAFICO A: Punteggio alimentazione (0-100), con zone colore =====
- var aT=12,aB=15,aH=92,acH=aH-aT-aB;
- function yA(s){return aT+acH-(s/100)*acH;}
- function band(s1,s2,col){return '<rect x="'+pL+'" y="'+yA(s2)+'" width="'+cW+'" height="'+(yA(s1)-yA(s2))+'" fill="'+col+'" opacity="0.10"/>';}
- var aPath='',aPrev=null,aDots='';
- days.forEach(function(d,i){
-  if(d.nut&&!d.nut.skipped){
-   var sc=calcNutScore(d.nut,d.date),x=xOf(i),y=yA(sc);
-   aPath+=aPrev===null?'M'+x+','+y:' L'+x+','+y;aPrev=sc;
-   aDots+='<circle cx="'+x+'" cy="'+y+'" r="2.8" fill="'+scoreColor(sc)+'" stroke="#09090b" stroke-width="0.8"/>';
-  }
- });
- var svgA='<svg viewBox="0 0 '+W+' '+aH+'" style="width:100%;display:block;overflow:visible">'
-  +band(0,50,'#ef4444')+band(50,75,'#f59e0b')+band(75,100,'#22c55e')
-  +'<line x1="'+pL+'" y1="'+yA(50)+'" x2="'+(pL+cW)+'" y2="'+yA(50)+'" stroke="#52525b" stroke-width="0.4" stroke-dasharray="2,2"/>'
-  +'<line x1="'+pL+'" y1="'+yA(75)+'" x2="'+(pL+cW)+'" y2="'+yA(75)+'" stroke="#52525b" stroke-width="0.4" stroke-dasharray="2,2"/>'
-  +(aPath?'<path d="'+aPath+'" stroke="#a1a1aa" stroke-width="1.5" fill="none"/>':'')
-  +aDots
-  +'<text x="'+(pL-3)+'" y="'+(yA(100)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">100</text>'
-  +'<text x="'+(pL-3)+'" y="'+(yA(75)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">75</text>'
-  +'<text x="'+(pL-3)+'" y="'+(yA(50)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">50</text>'
-  +'<text x="'+(pL-3)+'" y="'+(yA(0)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">0</text>'
-  +'<text x="'+pL+'" y="'+(aH-3)+'" fill="#3f3f46" font-size="7" text-anchor="start">'+x0+'</text>'
-  +'<text x="'+(pL+cW/2)+'" y="'+(aH-3)+'" fill="#3f3f46" font-size="7" text-anchor="middle">'+xMid+'</text>'
-  +'<text x="'+(pL+cW)+'" y="'+(aH-3)+'" fill="#3f3f46" font-size="7" text-anchor="end">'+xN+'</text>'
-  +'</svg>';
-
- // ===== GRAFICO B: Calorie ingerite vs mantenimento =====
- var bT=12,bB=22,bH=100,bcH=bH-bT-bB;
- function scaleKcal(k){return Math.max(0,Math.min(100,50+(k-maintKcal)/1000*50));}
- function yB(pct){return bT+bcH-(pct/100)*bcH;}
- var mY=yB(50);
- var kPath='',kPrev=null,kDots='';
- days.forEach(function(d,i){
-  if(d.nut&&!d.nut.skipped&&d.nut.calories_kcal){
-   var pct=scaleKcal(d.nut.calories_kcal),x=xOf(i),y=yB(pct);
-   kPath+=kPrev===null?'M'+x+','+y:' L'+x+','+y;kPrev=pct;
-   kDots+='<circle cx="'+x+'" cy="'+y+'" r="2.4" fill="#818cf8"/>';
-  }
- });
- var wDots=days.map(function(d,i){
-  if(!d.workout)return'';
-  var c=d.workout.split?d.workout.split.color:'#52525b';
-  return '<rect x="'+(xOf(i)-2.5)+'" y="'+(bT+bcH+5)+'" width="5" height="5" fill="'+c+'"/>';
- }).join('');
- var svgB='<svg viewBox="0 0 '+W+' '+bH+'" style="width:100%;display:block;overflow:visible">'
-  +'<rect x="'+pL+'" y="'+yB(100)+'" width="'+cW+'" height="'+(mY-yB(100))+'" fill="#f59e0b" opacity="0.07"/>'
-  +'<rect x="'+pL+'" y="'+mY+'" width="'+cW+'" height="'+(yB(0)-mY)+'" fill="#818cf8" opacity="0.07"/>'
-  +'<line x1="'+pL+'" y1="'+mY+'" x2="'+(pL+cW)+'" y2="'+mY+'" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" opacity="0.7"/>'
-  +'<text x="'+(pL+cW+1)+'" y="'+(mY+3)+'" fill="#f59e0b" font-size="7" opacity="0.8">mant.</text>'
-  +(kPath?'<path d="'+kPath+'" stroke="#818cf8" stroke-width="2" fill="none"/>':'')
-  +kDots
-  +'<text x="'+(pL-3)+'" y="'+(yB(100)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">+1k</text>'
-  +'<text x="'+(pL-3)+'" y="'+(mY+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">0</text>'
-  +'<text x="'+(pL-3)+'" y="'+(yB(0)+3)+'" fill="#3f3f46" font-size="7" text-anchor="end">-1k</text>'
-  +wDots
-  +'<text x="'+pL+'" y="'+(bH-3)+'" fill="#3f3f46" font-size="7" text-anchor="start">'+x0+'</text>'
-  +'<text x="'+(pL+cW/2)+'" y="'+(bH-3)+'" fill="#3f3f46" font-size="7" text-anchor="middle">'+xMid+'</text>'
-  +'<text x="'+(pL+cW)+'" y="'+(bH-3)+'" fill="#3f3f46" font-size="7" text-anchor="end">'+xN+'</text>'
-  +'</svg>';
-
- return '<div class="card" style="margin-bottom:12px;padding:10px 8px 8px">'
-  +'<div class="lbl" style="margin-bottom:2px;padding-left:4px">Punteggio alimentazione · dal 22 giu</div>'
-  +svgA
-  +'<div style="display:flex;gap:12px;padding:2px 4px 0;flex-wrap:wrap;font-size:10px">'
-  +'<span style="color:#ef4444">● &lt;50 scarso</span><span style="color:#f59e0b">● 50-74 medio</span><span style="color:#22c55e">● ≥75 buono</span>'
-  +'</div>'
-  +'<div style="height:1px;background:#27272a;margin:10px 4px"></div>'
-  +'<div class="lbl" style="margin-bottom:2px;padding-left:4px">Calorie ingerite vs mantenimento</div>'
-  +svgB
-  +'<div style="display:flex;gap:14px;padding:2px 4px 0;flex-wrap:wrap;font-size:10px">'
-  +'<span style="display:flex;align-items:center;gap:5px;color:#818cf8"><span style="width:14px;height:2px;background:#818cf8;display:inline-block"></span>Kcal ingerite</span>'
-  +'<span style="display:flex;align-items:center;gap:5px;color:#f59e0b"><span style="width:14px;border-top:1px dashed #f59e0b;display:inline-block"></span>Mantenimento ('+maintKcal+' kcal)</span>'
-  +'</div>'
-  +'<div style="font-size:9px;color:#3f3f46;padding:3px 4px 0">Quadratini sotto = giorni di allenamento (colore per tipo)</div>'
-  +'</div>';
-}
 // Nomi split PER ESTESO (l'app salva codici abbreviati come "PUSH"/"push2"). Portato 1:1
 // da mod-workout.js (dashboard Sumi Legacy) → app e dashboard mostrano la stessa etichetta.
 var SPLIT_LABELS={PUSH:"Push (spinta)",PULL:"Pull (tirata)","PULL+":"Pull+ (tirata estesa)",LEGS:"Gambe",GAMBE:"Gambe",FULL:"Full body",EXTRA:"Extra (corpo libero)",RIPOSO:"Riposo"};
@@ -2220,178 +2237,19 @@ function mdLite(s){
   .replace(/\n/g,'<br>');
 }
 
-/* ═══ WKUI — i 4 grafici + consigli/card di Sumi Legacy portati nell'app ═══════
+/* ═══ WKUI — consigli/card di Sumi in home ═════════════════════════════════════
    Vetrina SOLA LETTURA: un cervello (Sumi) alimenta app+dashboard dallo stesso feed.
-   I builder SVG sono portati 1:1 da mod-workout.js (dashboard) adattati a leggere da
-   S.aiDB.metrics.* + report da S.aiDB.metrics.report. Namespaced per non toccare nulla
-   dell'app. graf(key) = linee/considerazioni ragionate da Sumi (report.grafici).       */
+   I 4 grafici SVG (benessere/kcal/proteine/frequenza) e il vecchio fallback
+   buildHistChart() sono usciti dall'app il 03/08/2026: storico, grafici e feedback di
+   Sumi si leggono in Sumi Legacy. L'app e' il posto dove si INSERISCE, Legacy quello
+   dove si LEGGE. Qui restano solo i consigli e le card della home — la spinta ad agire,
+   non l'analisi. Non riportarli: la doppia vetrina e' esattamente cio' che si e' tolto. */
 var WKUI=(function(){
- var curReport=null;
- var OBIETTIVO_LABELS={massa:'massa',definizione:'definizione',ricomposizione:'ricomposizione',mantenimento:'mantenimento'};
  var REPORT_COLOR={good:'#22c55e',warn:'#f59e0b',bad:'#ef4444',accent:'#F97316'};
  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
  function reportColor(c){return REPORT_COLOR[c]||REPORT_COLOR.accent;}
- function fmtObiettivo(o){return o?(OBIETTIVO_LABELS[o]||o):'—';}
- function fmtDateShort(iso){return iso?String(iso).slice(0,10):'—';}
- function graf(key){var r=curReport;return (r&&r.grafici&&r.grafici[key])||null;}
- function getThresholds(wk){var t=wk&&wk.scoresMeta&&wk.scoresMeta.thresholds;return {green:(t&&t.green!=null)?t.green:75,amber:(t&&t.amber!=null)?t.amber:50};}
- function verdictTag(val,thr){if(val==null)return 'grey';if(val>=thr.green)return 'good';if(val>=thr.amber)return 'warn';return 'bad';}
- function verdictColorHex(tag){return tag==='good'?'#22c55e':(tag==='warn'?'#fab219':(tag==='bad'?'#d03b3b':'#C9A594'));}
- function trailingMA(days,valByDay,windowSize){var out={};for(var i=0;i<days.length;i++){var sum=0,cnt=0;for(var j=Math.max(0,i-windowSize+1);j<=i;j++){var v=valByDay[days[j]];if(v!=null){sum+=v;cnt++;}}out[days[i]]=cnt?(sum/cnt):null;}return out;}
- function smoothPathFromPoints(pts){if(!pts.length)return '';if(pts.length===1)return 'M'+pts[0].x+','+pts[0].y;var d='M'+pts[0].x+','+pts[0].y;for(var i=1;i<pts.length;i++){var p0=pts[i-1],p1=pts[i];var mx=(p0.x+p1.x)/2,my=(p0.y+p1.y)/2;d+=' Q'+p0.x+','+p0.y+' '+mx+','+my;}var last=pts[pts.length-1];d+=' L'+last.x+','+last.y;return d;}
-
- /* GRAFICO A — punteggio benessere */
- function buildBenessere(wk){
-  var scores=wk.scores||[];var scoreByDay={};
-  scores.forEach(function(s){scoreByDay[s.date]=s.benessere!=null?s.benessere:null;});
-  var days=Object.keys(scoreByDay).sort();var thr=getThresholds(wk);var kpi=wk.kpi||{};
-  var html="<div class='wk-histcard'>";html+="<div class='wk-histcard-lbl'>Punteggio benessere</div>";
-  var bVal=kpi.benessereMedia14!=null?kpi.benessereMedia14:null;var vTag=verdictTag(bVal,thr);
-  var arrowChar=kpi.benessereFreccia==='up'?'▲':(kpi.benessereFreccia==='down'?'▼':(kpi.benessereFreccia==='flat'?'→':''));
-  var trendWord=kpi.benessereFreccia==='up'?'in salita':(kpi.benessereFreccia==='down'?'in calo':(kpi.benessereFreccia==='flat'?'stabile':''));
-  var headlineTxt=bVal!=null?('Benessere '+bVal+(arrowChar?' '+arrowChar:'')+(trendWord?' — '+trendWord+' vs settimana scorsa':'')):'Andamento benessere';
-  html+="<div class='wk-chart-headline' style='color:"+verdictColorHex(vTag)+"'>"+esc(headlineTxt)+"</div>";
-  var hasData=days.some(function(d){return scoreByDay[d]!=null;});
-  if(!days.length||!hasData){html+="<div class='wk-vuoto'>nessun dato</div>";}
-  else{
-   var n=days.length;var W=400,pL=40,pR=18,cW=W-pL-pR;
-   function xOf(i){return pL+(n>1?i/(n-1):0)*cW;}
-   var x0=days[0].slice(5),xN=days[n-1].slice(5),xMid=days[Math.floor(n/2)].slice(5);
-   var aT=18,aB=30,aH=232,acH=aH-aT-aB;
-   var _sv=[];days.forEach(function(d){if(scoreByDay[d]!=null)_sv.push(scoreByDay[d]);});
-   var yLo=40,yHi=90;
-   if(_sv.length){var _mn=Math.min.apply(null,_sv),_mx=Math.max.apply(null,_sv);yLo=Math.max(0,Math.floor((_mn-8)/5)*5);yHi=Math.min(100,Math.ceil((_mx+8)/5)*5);if(yHi-yLo<20){yHi=Math.min(100,yLo+20);}}
-   function yA(s){return aT+acH-((s-yLo)/(yHi-yLo))*acH;}
-   function dotColor(s){return s>=thr.green?'#22c55e':(s>=thr.amber?'#fab219':'#d03b3b');}
-   var rawPts=[];days.forEach(function(d,i){var sc=scoreByDay[d];if(sc==null)return;rawPts.push({x:xOf(i),y:yA(sc)});});
-   var rawPath=rawPts.length>1?'M'+rawPts.map(function(p){return p.x+','+p.y;}).join(' L'):'';
-   var aDots='';days.forEach(function(d,i){var sc=scoreByDay[d];if(sc==null)return;aDots+="<circle cx='"+xOf(i)+"' cy='"+yA(sc)+"' r='2' fill='"+dotColor(sc)+"' stroke='rgba(9,9,11,.85)' stroke-width='0.8'><title>"+esc(d+' · '+sc)+"</title></circle>";});
-   var maByDay=trailingMA(days,scoreByDay,7);var maPts=[];days.forEach(function(d,i){var ma=maByDay[d];if(ma==null)return;maPts.push({x:xOf(i),y:yA(ma),d:d,ma:ma});});
-   var maPath=smoothPathFromPoints(maPts.map(function(p){return {x:p.x,y:p.y};}));
-   var maTitle=maPts.length?"<title>media 7gg — ultimo: "+esc(maPts[maPts.length-1].d+' · '+Math.round(maPts[maPts.length-1].ma))+"</title>":'';
-   var gLines='';[50,75].forEach(function(gv){if(gv<=yLo||gv>=yHi)return;var gy=yA(gv);gLines+="<line x1='"+pL+"' y1='"+gy+"' x2='"+(pL+cW)+"' y2='"+gy+"' stroke='rgba(255,255,255,.08)' stroke-width='0.6' stroke-dasharray='2,4'/>"+"<text x='"+(pL-6)+"' y='"+(gy+2)+"' fill='#B79684' font-size='9' text-anchor='end'>"+gv+"</text>";});
-   html+="<svg viewBox='0 0 "+W+" "+aH+"' style='width:100%;display:block;overflow:visible'>"+gLines+(rawPath?"<path d='"+rawPath+"' stroke='rgba(255,255,255,.10)' stroke-width='0.7' fill='none'/>":'')+aDots+(maPath?"<path d='"+maPath+"' stroke='#FFD9A0' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'>"+maTitle+"</path>":'')+"<text x='"+pL+"' y='"+(aH-4)+"' fill='#B79684' font-size='9' text-anchor='start'>"+esc(x0)+"</text>"+"<text x='"+(pL+cW/2)+"' y='"+(aH-4)+"' fill='#B79684' font-size='9' text-anchor='middle'>"+esc(xMid)+"</text>"+"<text x='"+(pL+cW)+"' y='"+(aH-4)+"' fill='#B79684' font-size='9' text-anchor='end'>"+esc(xN)+"</text>"+"</svg>";
-   html+="<div class='wk-histcard-leg'><span style='color:#FFD9A0'>▬ media 7gg</span><span style='color:#22c55e'>● &ge;75</span><span style='color:#fab219'>● 50-74</span><span style='color:#d03b3b'>● &lt;50</span></div>";
-  }
-  html+="</div>";return html;
- }
-
- /* GRAFICO B — kcal ingerite vs mantenimento + trend settimanale + verdetto */
- function buildKcal(wk){
-  var kcalSeries=wk.kcalSeries||[];var daysObj=wk.days||{};var kcalWeekly=wk.kcalWeekly||[];
-  var kcalByDay={},maintByDay={},trainedByDay={};
-  kcalSeries.forEach(function(r){kcalByDay[r.date]=r.kcal!=null?r.kcal:null;maintByDay[r.date]=r.maintenance!=null?r.maintenance:null;});
-  Object.keys(daysObj).forEach(function(d){if(daysObj[d]&&daysObj[d].session)trainedByDay[d]=true;});
-  var days=Object.keys(kcalByDay).sort();
-  var html="<div class='wk-histcard'>";html+="<div class='wk-histcard-lbl'>Calorie ingerite vs mantenimento</div>";
-  var gCal=graf('calorie');
-  if(gCal&&gCal.considerazione){html+="<div class='wk-chart-headline' style='color:#FFFFFF'>"+esc(gCal.considerazione)+"</div>";}
-  else{var lastWeek=kcalWeekly.length?kcalWeekly[kcalWeekly.length-1]:null;
-   if(lastWeek){var vColor=lastWeek.allineato===true?'#22c55e':(lastWeek.allineato===false?'#fab219':'#C9A594');var obLab=fmtObiettivo(wk.profile&&wk.profile.obiettivo);var devTxt=lastWeek.dev!=null?((lastWeek.dev>=0?'+':'')+lastWeek.dev):'—';var verdictLab=lastWeek.verdict||'—';var phrase='Questa settimana: media '+(lastWeek.avgIntake!=null?lastWeek.avgIntake:'—')+' vs mantenimento '+(lastWeek.avgMaintenance!=null?lastWeek.avgMaintenance:'—')+' kcal = '+verdictLab+' ('+devTxt+'/gg)'+(obLab!=='—'?' — obiettivo '+obLab+(lastWeek.allineato===true?': in linea':(lastWeek.allineato===false?': fuori linea':'')):'');html+="<div class='wk-chart-headline' style='color:"+vColor+"'>"+esc(phrase)+"</div>";}}
-  if(!days.length){html+="<div class='wk-vuoto'>nessun dato</div>";}
-  else{
-   var n=days.length;var W=400,pL=48,pR=78,cW=W-pL-pR;
-   function xOf(i){return pL+(n>1?i/(n-1):0)*cW;}
-   var x0=days[0].slice(5),xN=days[n-1].slice(5),xMid=days[Math.floor(n/2)].slice(5);
-   var bT=22,bB=54,bH=270,bcH=bH-bT-bB;
-   var lastWeekEarly=kcalWeekly.length?kcalWeekly[kcalWeekly.length-1]:null;
-   var refMaint=(lastWeekEarly&&lastWeekEarly.avgMaintenance!=null)?lastWeekEarly.avgMaintenance:null;
-   if(refMaint==null){var mVals=days.map(function(d){return maintByDay[d];}).filter(function(v){return v!=null;});if(mVals.length)refMaint=mVals.reduce(function(a,b){return a+b;},0)/mVals.length;}
-   var kVals=days.map(function(d){return kcalByDay[d];}).filter(function(v){return v!=null;});
-   var domainVals=kVals.slice();if(refMaint!=null)domainVals.push(refMaint);
-   var refMassa=(gCal&&gCal.obiettivoMassa!=null)?gCal.obiettivoMassa:null;if(refMassa!=null)domainVals.push(refMassa);
-   var refDef=(gCal&&gCal.definizione!=null)?gCal.definizione:null;if(refDef!=null)domainVals.push(refDef);
-   var yMin=0,yMax=2900;
-   if(domainVals.length){var vmin=Math.min.apply(null,domainVals),vmax=Math.max.apply(null,domainVals);var pad=Math.max(100,(vmax-vmin)*0.10);yMin=Math.max(0,Math.floor((vmin-pad)/50)*50);yMax=Math.ceil((vmax+pad)/50)*50;}
-   var ySpan=Math.max(1,yMax-yMin);function yOf(kcal){return bT+bcH-((kcal-yMin)/ySpan)*bcH;}
-   var refY=refMaint!=null?yOf(refMaint):null;var refMassaY=refMassa!=null?yOf(refMassa):null;var refDefY=refDef!=null?yOf(refDef):null;
-   var stems='';if(refY!=null){days.forEach(function(d,i){var v=kcalByDay[d];if(v==null)return;var x=xOf(i),y=yOf(v);var col=v>refMaint?'rgba(255,217,160,.30)':'rgba(201,165,148,.30)';stems+="<line x1='"+x+"' y1='"+refY+"' x2='"+x+"' y2='"+y+"' stroke='"+col+"' stroke-width='1'/>";});}
-   var kPts=[];days.forEach(function(d,i){var v=kcalByDay[d];if(v==null)return;kPts.push({x:xOf(i),y:yOf(v)});});
-   var kPath=kPts.length>1?'M'+kPts.map(function(p){return p.x+','+p.y;}).join(' L'):'';
-   var kDots='';days.forEach(function(d,i){var v=kcalByDay[d];if(v==null)return;kDots+="<circle cx='"+xOf(i)+"' cy='"+yOf(v)+"' r='1.9' fill='#FFFFFF'><title>"+esc(d+' · '+v+' kcal')+"</title></circle>";});
-   var weekSegs='';kcalWeekly.forEach(function(w){if(w.avgIntake==null)return;var i0=-1,i1=-1;days.forEach(function(d,i){if(d>=w.weekStart&&d<=w.weekEnd){if(i0===-1)i0=i;i1=i;}});if(i0===-1)return;var y=yOf(w.avgIntake),x1=xOf(i0),x2=xOf(i1);weekSegs+="<line x1='"+x1+"' y1='"+y+"' x2='"+x2+"' y2='"+y+"' stroke='#FFD9A0' stroke-width='1.7' stroke-dasharray='6,4' opacity='0.95'><title>"+esc(w.weekStart+' → '+w.weekEnd+' · media '+w.avgIntake+' kcal')+"</title></line>";});
-   var trainTicks=days.map(function(d,i){if(!trainedByDay[d])return '';var x=xOf(i);return "<line x1='"+x+"' y1='"+(bT+bcH+5)+"' x2='"+x+"' y2='"+(bT+bcH+11)+"' stroke='#FFD9A0' stroke-width='1.1' opacity='0.55'><title>"+esc(d+' · giorno allenato')+"</title></line>";}).join('');
-   html+="<svg viewBox='0 0 "+W+" "+bH+"' style='width:100%;display:block;overflow:visible'>"+stems+(refY!=null?"<line x1='"+pL+"' y1='"+refY+"' x2='"+(pL+cW)+"' y2='"+refY+"' stroke='#C9A594' stroke-width='1' opacity='0.75'/>"+"<text x='"+(pL+cW+3)+"' y='"+(refY+2)+"' fill='#C9A594' font-size='9' opacity='0.9'>mantenimento</text>":'')+(refMassaY!=null?"<line x1='"+pL+"' y1='"+refMassaY+"' x2='"+(pL+cW)+"' y2='"+refMassaY+"' stroke='#8FD9B6' stroke-width='1' stroke-dasharray='2,2' opacity='0.85'/>"+"<text x='"+(pL+cW+3)+"' y='"+(refMassaY+2)+"' fill='#8FD9B6' font-size='9' opacity='0.9'>obiettivo massa</text>":'')+(refDefY!=null?"<line x1='"+pL+"' y1='"+refDefY+"' x2='"+(pL+cW)+"' y2='"+refDefY+"' stroke='#E8956B' stroke-width='1' stroke-dasharray='2,2' opacity='0.85'/>"+"<text x='"+(pL+cW+3)+"' y='"+(refDefY+2)+"' fill='#E8956B' font-size='9' opacity='0.9'>definizione</text>":'')+(kPath?"<path d='"+kPath+"' stroke='#FFFFFF' stroke-width='1.4' fill='none' opacity='0.9'/>":'')+kDots+weekSegs+trainTicks+"<text x='"+(pL-6)+"' y='"+(yOf(yMax)+2)+"' fill='#B79684' font-size='9' text-anchor='end'>"+esc(Math.round(yMax))+"</text>"+"<text x='"+(pL-6)+"' y='"+(yOf(yMin)+2)+"' fill='#B79684' font-size='9' text-anchor='end'>"+esc(Math.round(yMin))+"</text>"+"<text x='"+pL+"' y='"+(bH-5)+"' fill='#B79684' font-size='9' text-anchor='start'>"+esc(x0)+"</text>"+"<text x='"+(pL+cW/2)+"' y='"+(bH-5)+"' fill='#B79684' font-size='9' text-anchor='middle'>"+esc(xMid)+"</text>"+"<text x='"+(pL+cW)+"' y='"+(bH-5)+"' fill='#B79684' font-size='9' text-anchor='end'>"+esc(xN)+"</text>"+"</svg>";
-   html+="<div class='wk-histcard-leg'>"+"<span style='display:flex;align-items:center;gap:5px;color:#FFFFFF'><span style='width:14px;height:2px;background:#FFFFFF;display:inline-block;opacity:.9'></span>Kcal ingerite (giorno)</span>"+"<span style='display:flex;align-items:center;gap:5px;color:#FFD9A0'><span style='width:14px;border-top:2.5px dashed #FFD9A0;display:inline-block'></span>Media settimanale</span>"+"<span style='display:flex;align-items:center;gap:5px;color:#C9A594'><span style='width:14px;border-top:1.5px solid #C9A594;display:inline-block'></span>Mantenimento</span>"+(refMassaY!=null?"<span style='display:flex;align-items:center;gap:5px;color:#8FD9B6'><span style='width:14px;border-top:1.5px dashed #8FD9B6;display:inline-block'></span>Obiettivo massa</span>":'')+(refDefY!=null?"<span style='display:flex;align-items:center;gap:5px;color:#E8956B'><span style='width:14px;border-top:1.5px dashed #E8956B;display:inline-block'></span>Definizione</span>":'')+"</div>";
-   if(gCal&&gCal.todo){html+="<div class='wk-graf-todo'><b>Da qui in poi:</b> "+esc(gCal.todo)+"</div>";}
-   else{html+="<div class='wk-histcard-note'>Tacca sotto = giorno allenato · mantenimento = stima da formula, kcal reali solo dai giorni con foto pasti</div>";}
-  }
-  html+="</div>";return html;
- }
-
- /* GRAFICO B-bis — proteine/giorno vs 3 fasce ragionate da Sumi */
- function buildProteine(wk){
-  var daysObj=wk.days||{};var protByDay={};
-  Object.keys(daysObj).forEach(function(d){var nut=daysObj[d]&&daysObj[d].nutrition;protByDay[d]=(nut&&nut.protein!=null)?nut.protein:null;});
-  var days=Object.keys(protByDay).sort();var gPro=graf('proteine');
-  var html="<div class='wk-histcard'>";html+="<div class='wk-histcard-lbl'>Proteine ingerite vs fasce obiettivo</div>";
-  if(gPro&&gPro.considerazione){html+="<div class='wk-chart-headline' style='color:#FFFFFF'>"+esc(gPro.considerazione)+"</div>";}
-  var hasData=days.some(function(d){return protByDay[d]!=null;});
-  if(!hasData){html+="<div class='wk-vuoto'>nessun dato proteine</div></div>";return html;}
-  var n=days.length;var W=720,pL=66,pR=104,cW=W-pL-pR;
-  function xOf(i){return pL+(n>1?i/(n-1):0)*cW;}
-  var x0=days[0].slice(5),xN=days[n-1].slice(5),xMid=days[Math.floor(n/2)].slice(5);
-  var bT=18,bB=46,bH=178,bcH=bH-bT-bB;
-  var refDef=(gPro&&gPro.definizione!=null)?gPro.definizione:null;
-  var refRicomp=(gPro&&gPro.targetRicomp!=null)?gPro.targetRicomp:null;
-  var refMassa=(gPro&&gPro.obiettivoMassa!=null)?gPro.obiettivoMassa:null;
-  var pVals=days.map(function(d){return protByDay[d];}).filter(function(v){return v!=null;});
-  var domainVals=pVals.slice();[refDef,refRicomp,refMassa].forEach(function(v){if(v!=null)domainVals.push(v);});
-  var yMin=0,yMax=200;
-  if(domainVals.length){var vmin=Math.min.apply(null,domainVals),vmax=Math.max.apply(null,domainVals);var pad=Math.max(10,(vmax-vmin)*0.10);yMin=Math.max(0,Math.floor((vmin-pad)/10)*10);yMax=Math.ceil((vmax+pad)/10)*10;}
-  var ySpan=Math.max(1,yMax-yMin);function yOf(g){return bT+bcH-((g-yMin)/ySpan)*bcH;}
-  var pPts=[];days.forEach(function(d,i){var v=protByDay[d];if(v==null)return;pPts.push({x:xOf(i),y:yOf(v)});});
-  var pPath=pPts.length>1?'M'+pPts.map(function(p){return p.x+','+p.y;}).join(' L'):'';
-  var pDots='';days.forEach(function(d,i){var v=protByDay[d];if(v==null)return;pDots+="<circle cx='"+xOf(i)+"' cy='"+yOf(v)+"' r='1.9' fill='#FFFFFF'><title>"+esc(d+' · '+v+' g')+"</title></circle>";});
-  function refLine(val,color,label){if(val==null)return '';var y=yOf(val);return "<line x1='"+pL+"' y1='"+y+"' x2='"+(pL+cW)+"' y2='"+y+"' stroke='"+color+"' stroke-width='1' stroke-dasharray='2,2' opacity='0.85'/>"+"<text x='"+(pL+cW+3)+"' y='"+(y+2)+"' fill='"+color+"' font-size='9' opacity='0.9'>"+esc(label)+"</text>";}
-  html+="<svg viewBox='0 0 "+W+" "+bH+"' style='width:100%;display:block;overflow:visible'>"+refLine(refMassa,'#8FD9B6','massa')+refLine(refDef,'#E8956B','definizione')+refLine(refRicomp,'#FFD9A0','ricomposizione')+(pPath?"<path d='"+pPath+"' stroke='#FFFFFF' stroke-width='1.4' fill='none' opacity='0.9'/>":'')+pDots+"<text x='"+(pL-6)+"' y='"+(yOf(yMax)+2)+"' fill='#B79684' font-size='9' text-anchor='end'>"+esc(Math.round(yMax))+"g</text>"+"<text x='"+(pL-6)+"' y='"+(yOf(yMin)+2)+"' fill='#B79684' font-size='9' text-anchor='end'>"+esc(Math.round(yMin))+"g</text>"+"<text x='"+pL+"' y='"+(bH-5)+"' fill='#B79684' font-size='9' text-anchor='start'>"+esc(x0)+"</text>"+"<text x='"+(pL+cW/2)+"' y='"+(bH-5)+"' fill='#B79684' font-size='9' text-anchor='middle'>"+esc(xMid)+"</text>"+"<text x='"+(pL+cW)+"' y='"+(bH-5)+"' fill='#B79684' font-size='9' text-anchor='end'>"+esc(xN)+"</text>"+"</svg>";
-  html+="<div class='wk-histcard-leg'>"+"<span style='display:flex;align-items:center;gap:5px;color:#FFFFFF'><span style='width:14px;height:2px;background:#FFFFFF;display:inline-block;opacity:.9'></span>Proteine (giorno)</span>"+(refDef!=null?"<span style='display:flex;align-items:center;gap:5px;color:#E8956B'><span style='width:14px;border-top:1.5px dashed #E8956B;display:inline-block'></span>Definizione</span>":'')+(refRicomp!=null?"<span style='display:flex;align-items:center;gap:5px;color:#FFD9A0'><span style='width:14px;border-top:1.5px dashed #FFD9A0;display:inline-block'></span>Ricomposizione</span>":'')+(refMassa!=null?"<span style='display:flex;align-items:center;gap:5px;color:#8FD9B6'><span style='width:14px;border-top:1.5px dashed #8FD9B6;display:inline-block'></span>Massa</span>":'')+"</div>";
-  if(gPro&&gPro.todo){html+="<div class='wk-graf-todo'><b>Da qui in poi:</b> "+esc(gPro.todo)+"</div>";}
-  html+="</div>";return html;
- }
-
- /* GRAFICO C — frequenza allenamenti/settimana */
- function buildFrequency(wk){
-  var trend=wk.trend||[];var html="<div class='wk-histcard'>";html+="<div class='wk-histcard-lbl'>Frequenza allenamenti</div>";
-  if(!trend.length){html+="<div class='wk-vuoto'>nessun dato</div></div>";return html;}
-  var target=4,okThr=target-1;var n=trend.length;var W=400,pL=32,pR=20,cW=W-pL-pR;
-  var maxS=target+2;trend.forEach(function(t){if(t.sessions!=null&&t.sessions>maxS)maxS=t.sessions;});
-  var bH=224,bT=20,bB=36,bcH=bH-bT-bB;function yOf(s){return bT+bcH-(s/maxS)*bcH;}
-  var slot=cW/n,barW=Math.min(30,slot*0.5);var bars='';
-  trend.forEach(function(t,i){var s=t.sessions!=null?t.sessions:0;var cx=pL+slot*i+slot/2;var y=yOf(s);var col=s>=target?'#22c55e':(s>=okThr?'#fab219':'#d03b3b');var lab=fmtDateShort(t.weekStart).slice(5);bars+="<rect x='"+(cx-barW/2)+"' y='"+y+"' width='"+barW+"' height='"+(bT+bcH-y)+"' rx='2.5' fill='"+col+"' opacity='0.85'><title>"+esc(t.weekStart+' → '+t.weekEnd+' · '+s+' sessioni')+"</title></rect>";bars+="<text x='"+cx+"' y='"+(bH-5)+"' fill='#B79684' font-size='9' text-anchor='middle'>"+esc(lab)+"</text>";});
-  var targetY=yOf(target);
-  html+="<svg viewBox='0 0 "+W+" "+bH+"' style='width:100%;display:block;overflow:visible'>"+"<line x1='"+pL+"' y1='"+targetY+"' x2='"+(pL+cW)+"' y2='"+targetY+"' stroke='rgba(255,255,255,.25)' stroke-width='0.6' stroke-dasharray='2,3'/>"+"<text x='"+(pL+cW+2)+"' y='"+(targetY+2.5)+"' fill='#B79684' font-size='9'>obiettivo "+target+"</text>"+bars+"</svg>";
-  var kpi=wk.kpi||{};var freqTxt=kpi.freqSettimana!=null?kpi.freqSettimana.toFixed(1)+' sessioni/settimana (media)':'—';
-  html+="<div class='wk-hint'>"+esc(freqTxt)+(kpi.settimaneOk!=null?' · '+esc(kpi.settimaneOk)+'/'+n+' settimane in target':'')+"</div>";
-  html+="<div class='wk-histcard-note'>Il riposo non è un fallimento: una settimana con almeno "+okThr+" sessioni resta in target.</div>";
-  html+="</div>";return html;
- }
-
- function ensureCss(){
-  if(document.getElementById('wk-charts-css'))return;
-  var css=
-   ".wk-charts-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}"+
-   ".wk-histcard{background:#18181b;border:1px solid #27272a;border-radius:12px;padding:12px 10px 10px}"+
-   ".wk-histcard-lbl{color:#a1a1aa;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:3px;padding-left:4px}"+
-   ".wk-histcard-leg{display:flex;gap:12px;padding:3px 4px 0;flex-wrap:wrap;font-size:10px;color:#a1a1aa}"+
-   ".wk-histcard-note{font-size:9px;color:#52525b;padding:4px 4px 0}"+
-   ".wk-chart-headline{font-size:13.5px;font-weight:700;padding:0 4px 10px;line-height:1.4}"+
-   ".wk-hint{color:#a1a1aa;font-size:12px;padding:4px 2px 0}"+
-   ".wk-vuoto{color:#52525b;font-size:13px;padding:8px 2px}"+
-   ".wk-graf-todo{font-size:12px;color:#d4d4d8;line-height:1.5;padding:6px 4px 0;border-top:1px solid #27272a;margin-top:8px}"+
-   ".wk-graf-todo b{color:#FFD9A0;font-weight:700}";
-  var st=document.createElement('style');st.id='wk-charts-css';st.textContent=css;document.head.appendChild(st);
- }
 
  return {
-  /* STORICO: i 4 grafici. metrics = S.aiDB.metrics (deve avere le serie). */
-  storico:function(metrics){
-   if(!metrics||!metrics.kcalSeries)return '';
-   ensureCss();curReport=metrics.report||null;
-   var wk=metrics;
-   var out="<div class='wk-charts-grid'>"+buildBenessere(wk)+buildKcal(wk)+buildProteine(wk)+buildFrequency(wk)+"</div>";
-   curReport=null;return out;
-  },
   hasReport:function(report){return !!(report&&((report.consigli&&report.consigli.length)||(report.card&&report.card.length)));},
   /* HOME §1 — consigli di Sumi (lista numerata, stile nativo home) */
   consigli:function(report){
@@ -2424,102 +2282,108 @@ var WKUI=(function(){
  };
 })();
 
+// ─── NUTRIZIONE · gli ultimi 20 giorni ───────────────────────────────────────
+// Questa pagina era lo STORICO: 3 tessere di numeri, i 4 grafici di Sumi e le card
+// giorno-per-giorno con i punteggi derivati. Dal 03/08/2026 storico, grafici e feedback
+// di Sumi si leggono in Sumi Legacy — l'app e' il posto dove si INSERISCE. Qui resta
+// l'unica cosa che si fa col telefono in mano: COMPILARE la nutrizione, anche indietro.
+// La finestra e' la stessa di getMissingNutritionDays (NUT_WINDOW_DAYS): un giorno che
+// il promemoria considera da compilare e' un giorno che si vede e si tocca, sempre.
+// Il giorno in corso c'e' in cima ma non e' mai un buco: la giornata non e' finita.
 function rHist(){
  var log=S.aiDB.nutritionLog||{};
- var MET=(S.aiDB.metrics&&S.aiDB.metrics.days)||{};
- var BUCHI=(S.aiDB.metrics&&S.aiDB.metrics.buchi)||[];
- var avg=S.history.length?Math.round(S.history.reduce(function(s,h){return s+(h.duration||0);},0)/S.history.length):0;
- var thisWeek=S.history.filter(function(h){return new Date(h.date)>new Date(Date.now()-7*864e5);}).length;
- // Costruisci lista giorni: dal primo allenamento a oggi
- var todayStr=new Date().toISOString().split('T')[0]; // UTC, come le chiavi nutritionLog e le sessioni
- var firstStr=todayStr;
- if(S.history&&S.history.length){
-  var sorted=S.history.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);});
-  firstStr=sorted[0].date.split('T')[0];
+ var todayStr=new Date().toISOString().split('T')[0]; // UTC, come le chiavi nutritionLog
+ var giorni=nutWindowDays().slice().reverse();        // da ieri all'indietro
+ giorni.unshift(todayStr);
+ var mancanti=getMissingNutritionDays().length;
+ function stato(ds){
+  var v=log[ds];
+  if(v&&!v.skipped)return 'compilato';
+  if(v&&v.skipped)return 'saltato';
+  if(ds===todayStr)return 'oggi';
+  return nutFilledOnServer(ds)===true?'compilato_altrove':'buco';
  }
- var days=[];
- var cur=new Date(todayStr+'T12:00:00Z');
- var first=new Date(firstStr+'T12:00:00Z');
- while(cur>=first){
-  var d=cur.toISOString().split('T')[0];
-  var daySessions=(S.history||[]).filter(function(h){return h.date&&h.date.split('T')[0]===d;});
-  // Primario = primo allenamento non-extra (per quiz/serie); l'EXTRA si aggiunge al sottotitolo
-  var workout=daySessions.find(function(h){return !(h.split&&h.split.id==='extra');})||daySessions[0];
-  var nut=log[d];
-  days.push({date:d,workout:workout,sessions:daySessions,nut:nut});
-  cur=new Date(cur.getTime()-86400000);
- }
- function nutCard(nut,date){
-  var score=nut&&!nut.skipped?calcNutScore(nut,date):null; // ricalcola con la formula attuale → coerente col survey
-  var sc=score===null?'#3f3f46':score>=75?'#22c55e':score>=50?'#f59e0b':'#ef4444';
-  var kcal=nut&&!nut.skipped&&nut.calories_kcal?nut.calories_kcal:null;
-  var calLabel='',calColor='#52525b';
+ var cards=giorni.map(function(ds){
+  var st=stato(ds);
+  var v=log[ds];
+  var score=(st==='compilato')?calcNutScore(v,ds):null; // ricalcolo con la formula attuale
+  var col=st==='compilato'?(score>=75?'#22c55e':score>=50?'#f59e0b':'#ef4444')
+        :st==='compilato_altrove'?'#3f3f46'
+        :st==='buco'?'#ef4444':'#3f3f46';
+  var kcal=(st==='compilato'&&v.calories_kcal)?v.calories_kcal:null;
+  var kcalHtml='';
   if(kcal){
-   var dt=calcDayCalTarget(date);
-   var delta=kcal-dt.target;
-   if(Math.abs(delta)<=150){calLabel='Mantenimento';calColor='#22c55e';}
-   else if(delta>400){calLabel='Surplus alto';calColor='#ef4444';}
-   else if(delta>0){calLabel='Surplus';calColor='#f97316';}
-   else if(delta>-400){calLabel='Deficit lieve';calColor='#818cf8';}
-   else{calLabel='Deficit';calColor='#818cf8';}
+   var dt=calcDayCalTarget(ds),delta=kcal-dt.target;
+   var lab=Math.abs(delta)<=150?'Mantenimento':delta>400?'Surplus alto':delta>0?'Surplus':delta>-400?'Deficit lieve':'Deficit';
+   var lc=Math.abs(delta)<=150?'#22c55e':delta>400?'#ef4444':delta>0?'#f97316':'#818cf8';
+   kcalHtml='<div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:#d4d4d8">'+kcal+' kcal</div><div style="font-size:10px;font-weight:700;color:'+lc+'">'+lab+'</div></div>';
   }
-  return {scoreBadge:'<div style="width:38px;height:38px;border-radius:50%;border:2.5px solid '+sc+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:'+sc+';flex-shrink:0">'+(score!==null?score:'—')+'</div>',
-   kcalHtml:kcal?'<div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:#d4d4d8">'+kcal+' kcal</div><div style="font-size:10px;font-weight:700;color:'+calColor+'">'+calLabel+'</div></div>':'<div style="color:#3f3f46;font-size:10px;flex-shrink:0">'+(nut&&nut.skipped?'saltato':'nut. n/d')+'</div>'};
- }
- var cards=days.map(function(day){
-  var date=day.date;
-  var h=day.workout;
-  var nut=day.nut;
-  var isRest=!h;
-  var sp=h&&h.split;var q=h&&h.quiz;
-  var nc=nutCard(nut,date);
-  var dateStr=new Date(date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
-  // Overlay dalle metriche canoniche (Sumi): punteggi derivati server-side + flag buco.
-  // Se metrics assente per il giorno, resta il comportamento locale (fallback).
-  var m=MET[date];
-  var isBuco=BUCHI.indexOf(date)>=0;
-  var metHtml='';
-  if(m){
-   var msc=m.scores||{},mtr=m.training||{};
-   var chip=function(lbl,val){return (val==null)?'':'<span style="color:#a1a1aa;font-size:11px">'+lbl+' <b style="color:#e4e4e7">'+val+'</b></span>';};
-   var line1=[chip('Totale',msc.totale),chip('Benessere',msc.benessere),chip('Allenamento',msc.allenamento)].filter(Boolean).join('<span style="color:#3f3f46">·</span>');
-   var line2=[chip('Esecuzione',mtr.esecuzione),chip('Stimolo',mtr.stimolo),chip('Durata',mtr.durata)].filter(Boolean).join('<span style="color:#3f3f46">·</span>');
-   if(line1||line2){
-    metHtml='<div style="border-top:1px solid #27272a;padding-top:7px;margin-top:7px;display:flex;flex-direction:column;gap:4px">'
-     +(line1?'<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">'+line1+'</div>':'')
-     +(line2?'<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">'+line2+'</div>':'')
-     +'</div>';
-   }
-  }
-  var bucoBadge=isBuco?'<span style="background:#450a0a;border:1px solid #ef4444;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle">buco</span>':'';
-  return '<div style="background:'+(isRest?'#111':'#18181b')+';border:1px solid '+(isBuco?'#7f1d1d':(isRest?'#1f1f23':'#27272a'))+';border-radius:14px;padding:12px;margin-bottom:8px">'
-   +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:'+((q||metHtml)?8:0)+'px">'
-   +nc.scoreBadge
+  var dateStr=new Date(ds+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+  if(ds===todayStr)dateStr='Oggi · '+dateStr;
+  // sottotitolo: cosa e' stato quel giorno (serve a ricordarsi cosa si e' mangiato)
+  var sess=(S.history||[]).filter(function(h){return h.date&&h.date.split('T')[0]===ds;});
+  var sub=sess.length
+   ?sess.map(function(s){var nm=(s.split&&s.split.name)?splitLabel(s.split.name):'Workout';return nm+' · '+(s.duration||'?')+'min';}).join('  +  ')
+   :'Riposo';
+  var badge=st==='buco'?'<span style="background:#450a0a;border:1px solid #ef4444;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle">da compilare</span>'
+   :st==='saltato'?'<span style="background:#1c1c1e;border:1px solid #3f3f46;color:#71717a;font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle">saltato</span>'
+   :st==='compilato_altrove'?'<span style="background:#0f172a;border:1px solid #334155;color:#94a3b8;font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle">gia\' su Sumi</span>'
+   :'';
+  var azioni=(st==='compilato')
+   ?'<button onclick="openNutritionDay(\''+ds+'\')" style="flex:1;padding:8px;border-radius:9px;border:1px solid #3f3f46;background:transparent;color:#a1a1aa;font-size:12px;font-weight:700;cursor:pointer">Modifica</button>'
+    +'<button onclick="removeNutritionDay(\''+ds+'\')" style="padding:8px 12px;border-radius:9px;border:1px solid #7f1d1d;background:transparent;color:#f87171;font-size:12px;font-weight:700;cursor:pointer">Rimuovi</button>'
+   :'<button onclick="openNutritionDay(\''+ds+'\')" style="flex:1;padding:8px;border-radius:9px;border:1px solid '+(st==='buco'?'#f59e0b':'#3f3f46')+';background:transparent;color:'+(st==='buco'?'#f59e0b':'#a1a1aa')+';font-size:12px;font-weight:700;cursor:pointer">'+(st==='compilato_altrove'?'Sovrascrivi':'Compila')+'</button>';
+  return '<div style="background:#18181b;border:1px solid '+(st==='buco'?'#7f1d1d':'#27272a')+';border-radius:14px;padding:12px;margin-bottom:8px">'
+   +'<div style="display:flex;align-items:center;gap:10px">'
+   +'<div style="width:38px;height:38px;border-radius:50%;border:2.5px solid '+col+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:'+col+';flex-shrink:0">'+(score!==null?score:'—')+'</div>'
    +'<div style="flex:1;min-width:0">'
-   +'<div style="font-weight:700;font-size:13px;color:#fafafa">'+dateStr+bucoBadge+'</div>'
-   +'<div style="font-size:11px;color:#71717a;margin-top:1px">'+(isRest?'Riposo':(day.sessions||[h]).map(function(s){var nm=(s.split&&s.split.name)?splitLabel(s.split.name):'Workout';var ex=(s.split&&s.split.id==='extra');return nm+' · '+(s.duration||'?')+'min'+(ex?'':' · '+(s.sets||'?')+' serie');}).join('  +  '))+'</div>'
+   +'<div style="font-weight:700;font-size:13px;color:#fafafa">'+dateStr+badge+'</div>'
+   +'<div style="font-size:11px;color:#71717a;margin-top:1px">'+sub+'</div>'
    +'</div>'
-   +nc.kcalHtml
+   +kcalHtml
    +'</div>'
-   +(q?'<div style="display:flex;gap:16px;border-top:1px solid #27272a;padding-top:7px">'
-    +'<span style="color:#71717a;font-size:11px">Energia '+(q.energy||'?')+'/4</span>'
-    +'<span style="color:#71717a;font-size:11px">Difficolta '+(q.difficulty||'?')+'/4</span>'
-    +(q.muscleWork?'<span style="color:#71717a;font-size:11px">Pompa '+(q.muscleWork||'?')+'/4</span>':'')
-    +'</div>':'')
-   +metHtml
+   +'<div style="display:flex;gap:6px;margin-top:10px">'+azioni+'</div>'
    +'</div>';
  }).join('');
  return '<div class="pg">'
-  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">←</button><span style="font-weight:800;font-size:16px">STORICO</span></div>'
-  +'<div class="g3" style="margin-bottom:12px">'
-  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:18px;font-weight:900">'+S.history.length+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Sessioni</div></div>'
-  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:18px;font-weight:900">'+avg+'m</div><div class="lbl" style="font-size:9px;margin-top:2px">Media</div></div>'
-  +'<div class="card" style="text-align:center;margin:0"><div style="font-size:18px;font-weight:900">'+thisWeek+'</div><div class="lbl" style="font-size:9px;margin-top:2px">Questa sett.</div></div>'
-  +'</div>'
-  // 4 grafici di Sumi Legacy (dal feed aiDB.metrics); fallback ai 2 vecchi se il feed manca
-  +((S.aiDB.metrics&&S.aiDB.metrics.kcalSeries)?WKUI.storico(S.aiDB.metrics):buildHistChart())
-  +(!days.length?'<div style="text-align:center;color:#52525b;margin-top:60px"><p>Nessun allenamento ancora</p></div>':cards)
+  +'<div class="hdr"><button class="back" onclick="go(\'home\')" style="margin:0">←</button><span style="font-weight:800;font-size:16px">NUTRIZIONE</span></div>'
+  +(mancanti>0
+   ?'<button class="btn" style="background:#f59e0b;color:#000;margin:0 0 12px" onclick="openNutrition()">Compila i '+mancanti+' giorni mancanti →</button>'
+   :'<div style="background:#0f1a0f;border:1px solid #22c55e30;border-radius:12px;padding:10px 14px;margin-bottom:12px;color:#22c55e;font-size:12px;font-weight:700;text-align:center">Ultimi '+NUT_WINDOW_DAYS+' giorni: nessun buco</div>')
+  +cards
+  +'<div style="font-size:10px;color:#3f3f46;text-align:center;margin-top:14px;line-height:1.5">Grafici, punteggi e feedback di Sumi si leggono in Sumi Legacy.<br>Qui si compila e basta.</div>'
   +'</div>';
+}
+// Compila o RI-compila un giorno preciso. Sovrascrive: la survey vecchia viene ripresa
+// come punto di partenza (nessuno vuole riscrivere da zero per correggere un campo).
+function openNutritionDay(date){
+ S.trialNutMode=false;
+ S.nutQueue=[];S.nutQueueIdx=0;S.nutPhotoUploads=[];S.nutQty={};
+ S.nutTarget={date:date};
+ var prev=(S.aiDB.nutritionLog||{})[date];
+ var seed={};
+ if(prev&&!prev.skipped){
+  seed=Object.assign({},prev);
+  delete seed.savedAt;delete seed.score;   // si ricalcolano al salvataggio
+ }
+ go('nutrition',{qStep:-1,qAns:seed});
+}
+// "Rimuovi" = il giorno torna a essere da compilare. NON si cancella la chiave: il
+// mergeDown della nutrizione e' LAST-WINS per data su `savedAt`, quindi una chiave
+// sparita verrebbe risorta dal blob del server al primo merge. Si scrive invece la
+// stessa lapide che usa "Salta" ({skipped:true} con savedAt fresco), che il merge
+// rispetta perche' e' piu' recente.
+// Le foto pasti del giorno restano: `mealLog` si fonde in UNIONE (mai in rimozione),
+// quindi cancellarle in locale non reggerebbe al primo sync. Se il giorno si ricompila,
+// le foto tornano utili; se davvero vanno tolte, si tolgono dal foglio.
+async function removeNutritionDay(date){
+ var d=new Date(date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+ if(!confirm('Rimuovo la nutrizione di '+d+'?\n\nIl giorno torna "da compilare". Le foto pasti restano.'))return;
+ if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};
+ S.aiDB.nutritionLog[date]={skipped:true,savedAt:new Date().toISOString()};
+ S.aiDB.nutrition=(S.aiDB.nutrition||[]).filter(function(n){return n.date!==date;});
+ await sv('ai',S.aiDB);syncToDrive();
+ render();
 }
 
 // ─── AI COACH (pagina completa) ───────────────────────────────────────────────

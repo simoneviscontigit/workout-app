@@ -3,6 +3,7 @@
 workout_data*.json
 chiavi/
 backups/
+bkp/
 .DS_Store
 # Vecchie versioni con API key in chiaro / snapshot di rollback
 LIVE_*.html
