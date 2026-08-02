@@ -101,61 +101,70 @@ const DB={
  push:[
   {id:'p1',cat:'push',name:'Archer Push-up',video:'Archer push-up.mp4',
    desc:'Mano larga sul lato, l\'altra tesa di fianco. Piega solo il gomito del braccio largo tenendo il corpo basso. Alterna ogni rep. Core contratto.',
-   muscles:'Petto unilat., Tricipiti, Core',reps:8,repsMax:11,sets:4},
+   muscles:'Petto unilat., Tricipiti, Core',reps:8,repsMax:11,sets:4,restSec:90},
   {id:'p2',cat:'push',name:'Pseudo Planche Push-up',video:'Pseudo planche push-up.mp4',
    desc:'Mani rivolte verso i fianchi, braccia leggermente inclinate. Inclina il corpo avanti il più possibile prima di scendere. Testa e spalle avanzano oltre le mani.',
-   muscles:'Petto basso, Spalle, Core',reps:6,repsMax:9,sets:4},
+   muscles:'Petto basso, Spalle, Core',reps:6,repsMax:9,sets:4,restSec:90},
   {id:'p3',cat:'push',name:'Chair Dips',video:'Dip su sedie.mp4',
    desc:'Due sedie stabili, mani sul bordo. Scendi finché i gomiti superano le spalle. Busto leggermente inclinato avanti per coinvolgere il petto.',
-   muscles:'Tricipiti, Petto basso',reps:12,repsMax:16,sets:4},
+   muscles:'Tricipiti, Petto basso',reps:12,repsMax:16,sets:4,restSec:90},
   {id:'p4',cat:'push',name:'Band Chest Press',video:'Band chest press.mp4',
    desc:'Elastico ancorato alla porta a altezza petto. Premi le maniglie avanti con polsi dritti. Abbassa lento 3 secondi. Senti lo stretch del petto in fondo.',
-   muscles:'Petto, Tricipiti',reps:12,repsMax:16,sets:4,band:'15-25kg'},
+   muscles:'Petto, Tricipiti',reps:12,repsMax:16,sets:4,band:'15-25kg',restSec:90},
   {id:'p5',cat:'push',name:'Elevated Pike Push-up',video:'Pike push-up su rialzo.mp4',
    desc:'Piedi su sedia, corpo a V stretta, fianchi alti. Scendi con la testa verso il suolo tra le mani. Movimento verticale puro — spalle, non petto.',
-   muscles:'Spalle ant., Tricipiti',reps:8,repsMax:11,sets:4},
+   muscles:'Spalle ant., Tricipiti',reps:8,repsMax:11,sets:4,restSec:90},
  ],
  pull:[
   {id:'r1',cat:'pull',name:'Band Bent-over Row',video:'Band bent-over row .mp4',
    desc:'Piedi sull\'elastico, busto a 45° (schiena piatta!). Tira i gomiti dietro verso l\'anca, non verso il soffitto. Contrai la schiena in cima. Abbassa 3s.',
-   muscles:'Dorsali, Romboidi',reps:12,repsMax:16,sets:4,band:'20-30kg'},
+   muscles:'Dorsali, Romboidi',reps:12,repsMax:16,sets:4,band:'20-30kg',restSec:90},
   {id:'r2',cat:'pull',name:'Band Pullover',video:'Band Pullover.mp4',
    desc:'Elastico ancorato in ALTO sulla porta. Allontanati, braccia tese sopra la testa. Tira in arco verso le cosce mantenendo i gomiti quasi dritti. La tensione è presente da subito.',
-   muscles:'Dorsali, Core',reps:12,repsMax:16,sets:4,band:'15-25kg'},
+   muscles:'Dorsali, Core',reps:12,repsMax:16,sets:4,band:'15-25kg',restSec:90},
   {id:'r3',cat:'pull',name:'Biceps Curl',video:'Band Biceps Hammer Curl.mp4',
    desc:'Piedi sull\'elastico, presa supinata. Gomiti fissi ai fianchi — non muoverli mai. Curla supinando il polso in cima 1s. Abbassa lento 3 secondi.',
-   muscles:'Bicipiti',reps:10,repsMax:14,sets:4,band:'35kg'},
+   muscles:'Bicipiti',reps:10,repsMax:14,sets:4,band:'35kg',restSec:60},
   {id:'r4',cat:'pull',name:'Hammer Curl',video:'Band Biceps Hammer Curl.mp4',
    desc:'Presa neutra, pollice verso l\'alto per tutta l\'esecuzione. Gomiti fissi. Colpisce brachiale e brachioradiale. Movimento lento e controllato.',
-   muscles:'Bicipiti, Brachiale',reps:12,repsMax:16,sets:3,band:'25-35kg'},
+   muscles:'Bicipiti, Brachiale',reps:12,repsMax:16,sets:3,band:'25-35kg',restSec:60},
   {id:'r5',cat:'pull',name:'Tricep Overhead',video:'Band Tricep Overhead.mp4',
    desc:'Elastico ancorato basso. Braccio sopra la testa, gomito fisso. Estendi verso l\'alto. Il lungo capo del tricipite è massimamente allungato in questa posizione.',
-   muscles:'Tricipiti (lungo capo)',reps:12,repsMax:16,sets:3,band:'15-20kg'},
+   muscles:'Tricipiti (lungo capo)',reps:12,repsMax:16,sets:3,band:'15-20kg',restSec:60},
+  {id:'r6',cat:'pull',name:'Band Lat Pulldown',video:'Band lat pulldown.mp4',
+   desc:'Elastico ancorato in alto. Ginocchia leggermente piegate, busto stabile. Tira le maniglie verso il petto portando i gomiti giù e indietro. Contrai i dorsali in fondo 1s, risali lento.',
+   muscles:'Dorsali, Bicipiti',reps:12,repsMax:16,sets:4,band:'20-30kg',restSec:90},
  ],
  shoulders:[
   {id:'s1',cat:'shoulders',name:'Band Shoulder Press',video:'Band shoulder press.mp4',
    desc:'Piedi sull\'elastico, maniglie alle orecchie. Premi sopra la testa bloccando i gomiti 1s in cima. Abbassa lento 3s. Compound spalle.',
-   muscles:'Deltoide, Tricipiti',reps:10,repsMax:14,sets:4,band:'35kg'},
+   muscles:'Deltoide, Tricipiti',reps:10,repsMax:14,sets:4,band:'35kg',restSec:90},
   {id:'s2',cat:'shoulders',name:'Lateral Raises',video:'Band Lateral Raises.mp4',
    desc:'Piedi sull\'elastico. Alza le braccia di lato a gomiti semi-flessi. Pausa 1 secondo in alto. Abbassa 3 secondi. Deltoide medio — insostituibile.',
-   muscles:'Deltoide medio',reps:15,repsMax:20,sets:4,band:'10-15kg'},
+   muscles:'Deltoide medio',reps:15,repsMax:20,sets:4,band:'10-15kg',restSec:60},
   {id:'s3',cat:'shoulders',name:'Face Pull',video:'Face pull con elastico.mp4',
    desc:'Elastico ancorato al viso. Tira verso il naso dividendo le mani verso le orecchie. Gomiti SOPRA le spalle. Salute spalle + deltoide posteriore.',
-   muscles:'Deltoide post., Rotatori',reps:15,repsMax:20,sets:3,band:'15-20kg'},
+   muscles:'Deltoide post., Rotatori',reps:15,repsMax:20,sets:3,band:'15-20kg',restSec:60},
  ],
  legs:[
   {id:'l1',cat:'legs',name:'Pistol Squat',video:'Pistol squat.mp4',
    desc:'Squat su 1 gamba, altra tesa avanti. Scendi il più in basso possibile mantenendo il tallone a terra. Usa supporto leggero per il bilanciamento se serve.',
-   muscles:'Quadricipiti, Glutei, Core',reps:6,repsMax:9,sets:4},
+   muscles:'Quadricipiti, Glutei, Core',reps:6,repsMax:9,sets:4,restSec:120},
   {id:'l2',cat:'legs',name:'Bulgarian Split Squat',video:'Bulgarian split squat con elastico.mp4',
    desc:'Piede posteriore su sedia. Scendi col ginocchio anteriore a 90°. Elastico sulle spalle per overload. Busto eretto, spingi col tallone avanti.',
-   muscles:'Quadricipiti, Glutei',reps:10,repsMax:14,sets:4,band:'25kg'},
+   muscles:'Quadricipiti, Glutei',reps:10,repsMax:14,sets:4,band:'25kg',restSec:120},
   {id:'l3',cat:'legs',name:'Band Squat',video:'Band Squat.mp4',
    desc:'Elastico sulle spalle. Squat profondo, cosce parallele al suolo. Talloni a terra, ginocchia sui piedi. Variante bilaterale con carico progressivo.',
-   muscles:'Quadricipiti, Glutei',reps:15,repsMax:20,sets:4,band:'25-35kg'},
+   muscles:'Quadricipiti, Glutei',reps:15,repsMax:20,sets:4,band:'25-35kg',restSec:120},
   {id:'l4',cat:'legs',name:'Band Leg Curl',video:'Band leg curl .mp4',
    desc:'A pancia in giù, elastico ancorato davanti alla caviglia. Curla il tallone verso il gluteo. Contrai il femorale in cima 1s. Abbassa lento 3s.',
-   muscles:'Femorali',reps:12,repsMax:16,sets:3,band:'15-25kg'},
+   muscles:'Femorali',reps:12,repsMax:16,sets:4,band:'15-25kg',restSec:60},
+  {id:'l5',cat:'legs',name:'RDL con Elastico',
+   desc:'Piedi sull\'elastico, presa neutra. Spingi i fianchi indietro mantenendo la schiena piatta e le ginocchia morbide, scendi finché senti lo stretch dei femorali. Risali contraendo i glutei.',
+   muscles:'Femorali, Glutei',reps:12,repsMax:16,sets:3,band:'20-30kg',restSec:90},
+  {id:'l6',cat:'legs',name:'Calf Raise',
+   desc:'In piedi, punte su un rialzo (o piatte). Sali sulle punte il più in alto possibile, pausa 1s in cima, scendi lento sotto il livello del tallone. Elastico sulle spalle per overload se serve.',
+   muscles:'Polpacci',reps:15,repsMax:20,sets:3,restSec:60},
  ],
  core:[
   {id:'c1', cat:'core',name:'Hollow Body Hold',    video:'core-hollow-body-hold.mp4',    time:30, desc:'Schiena piatta, lombare incollata. Braccia tese sopra la testa, gambe a 30cm. Spalle alzate. Nessun cedimento.',muscles:'Core completo'},
@@ -208,12 +217,12 @@ const COLOR_VARIANTS={
  '#f59e0b':{light:'#fde68a',dark:'#b45309'}, // CORE — ambra
 };
 const PLAN=[
- {id:'push', name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:1},desc:'Petto · Tricipiti · Spalle'},
- {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4},            must:['r3'],desc:'Dorsali · Bicipiti (curl) · Braccia'},
- {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:4},            desc:'Quadricipiti · Glutei · Femorali'},
- {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:1},desc:'Petto · Tricipiti · Spalle'},
+ {id:'push', name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:1},must:['p4'],   desc:'Petto · Tricipiti · Spalle'},
+ {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4},            must:['r3','r6'],desc:'Dorsali · Bicipiti (curl) · Braccia'},
+ {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:4},            must:['l4','l6'],desc:'Quadricipiti · Glutei · Femorali'},
+ {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:1},must:['p1'],   desc:'Petto · Tricipiti · Spalle'},
  {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:3,shoulders:1},must:['r4'],desc:'Dorsali · Bicipiti (hammer) + Spalle'},
- {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:1,legs:1,shoulders:1},desc:'Corpo completo · Mix intelligente'},
+ {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:1,legs:1,shoulders:1},must:['l4'],desc:'Corpo completo · Mix intelligente'},
 ];
 
 // ─── MODALITÀ RECUPERO (post-intervento) ─────────────────────────────────────
@@ -228,7 +237,7 @@ const RECOVERY_PHASES=[
  {ph:3,fromDay:20,toDay:29,mult:0.9, setsAdj:0, maxMin:3,label:'Costruzione',  note:'Selezione esercizi verso normale · risali al carico pieno'},
 ];
 // Fase minima ammessa per esercizio (1=sicuro da g10, 2=da g15, 3=da g20). Default 1.
-const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3, r1:3,r2:2,r3:1,r4:1,r5:2, s1:3,s2:1,s3:2, l1:3,l2:2,l3:2,l4:2};
+const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3, r1:3,r2:2,r3:1,r4:1,r5:2,r6:2, s1:3,s2:1,s3:2, l1:3,l2:2,l3:2,l4:2,l5:3,l6:1};
 function recoveryDayN(){return Math.floor((Date.now()-new Date(RECOVERY_OP_DATE+'T00:00:00'))/86400000);}
 function recoveryActive(){var rm=S.aiDB&&S.aiDB.recoveryMode;return !!(rm&&rm.active);}
 // Fase corrente {ph,mult,setsAdj,maxMin,label,note,dayN,waiting} o null se non attiva / ciclo finito.
@@ -400,11 +409,24 @@ function computeProgression(session){
    var sets=r.reps,max=r.max||r.target||8,target=r.target||8,nSets=sets.length;
    var allTop=sets.every(function(x){return x>=max;});
    var allBelow=sets.every(function(x){return x<target;});
-   var cur=(S.aiDB.progression[id]&&S.aiDB.progression[id].band)||r.band||'';
+   var prevProg=S.aiDB.progression[id]||{};
+   var cur=prevProg.band||r.band||'';
+   var hasBand=!!cur; // niente elastico → esercizio a corpo libero, progressione su reps invece che su carico
    var entry={name:r.name,date:new Date().toISOString().split('T')[0],lastReps:sets};
    if(allTop&&nSets>=2){
-    entry.band=nextBandStep(cur);
-    entry.note=(cur?'+5kg: ':'progredisci (variante più dura): ')+'chiuso il max ('+sets.join(',')+')';
+    if(hasBand){
+     entry.band=nextBandStep(cur);
+     entry.note='+5kg: chiuso il max ('+sets.join(',')+')';
+    } else {
+     var curTarget=prevProg.reps||target,curMax=prevProg.repsMax||max;
+     if(curMax>=25){
+      entry.note='Tetto reps raggiunto (25) — passa a variante più dura: chiuso il max ('+sets.join(',')+')';
+     } else {
+      entry.reps=Math.min(25,curTarget+2);
+      entry.repsMax=Math.min(25,curMax+2);
+      entry.note='+2 reps ('+entry.reps+'-'+entry.repsMax+'): chiuso il max ('+sets.join(',')+')';
+     }
+    }
    } else if(allBelow&&nSets>=2){
     entry.band=cur;entry.note='Sotto target ('+sets.join(',')+') — mantieni e consolida';
    } else {
@@ -476,7 +498,8 @@ function buildSteps(all){
   } else {
    var ts=ex.sets||3;
    for(var i=1;i<=ts;i++){
-    s.push({type:'work',ex:ex,exIdx:ei,setNum:i,totalSets:ts});
+    // Ultima serie a carico = AMRAP: sfonda il tetto del range così la regola di progressione (tutte le serie ≥ repsMax) scatta prima
+    s.push({type:'work',ex:ex,exIdx:ei,setNum:i,totalSets:ts,amrap:(i===ts)});
     if(i<ts) s.push({type:'rest',dur:(ex.restSec||90),isSetRest:true,nextName:ex.name,nextBand:ex.band||null});
     else if(ei<all.length-1) s.push({type:'rest',dur:60,isSetRest:false,nextName:all[ei+1].name,nextBand:all[ei+1].band||null});
    }
@@ -554,6 +577,9 @@ function mergeDown(dd){
  if(typeof r.splitIdx==='number'&&newer(r.splitIdxUpdatedAt,S.aiDB.splitIdxUpdatedAt)){S.splitIdx=r.splitIdx;S.aiDB.splitIdx=r.splitIdx;S.aiDB.splitIdxUpdatedAt=r.splitIdxUpdatedAt;}
  // LAST-WINS timbrato (modalità recupero): vince il device che ha timbrato updatedAt per ultimo
  if(r.recoveryMode&&newer(r.recoveryMode.updatedAt,S.aiDB.recoveryMode&&S.aiDB.recoveryMode.updatedAt))S.aiDB.recoveryMode=r.recoveryMode;
+ // LAST-WINS timbrato (adaptation IA): confronto per ISTANTE su lastUpdated (mai lessicografico) —
+ // evita che il telefono ri-pushi un'adaptation locale stale sopra un reset/normalizzazione server (guardia coach_run.py).
+ if(r.adaptation&&newer(r.adaptation.lastUpdated,S.aiDB.adaptation&&S.aiDB.adaptation.lastUpdated))S.aiDB.adaptation=r.adaptation;
  S.aiDB._lastServerSync=r.serverUpdatedAt;
 }
 
@@ -1060,7 +1086,7 @@ function rWorkout(){
   return '<div style="display:flex;flex-direction:column;justify-content:center;min-height:100vh;background:#09090b;padding:20px;gap:12px">'
    +'<div style="text-align:center;margin-bottom:6px">'
    +'<div class="font-display" style="font-size:28px;font-weight:700;text-transform:uppercase">'+rx.name+'</div>'
-   +'<div class="lbl" style="margin-top:6px;color:'+sp.color+'">Serie '+step.setNum+'/'+step.totalSets+' · quante reps?</div>'
+   +'<div class="lbl" style="margin-top:6px;color:'+sp.color+'">Serie '+step.setNum+'/'+step.totalSets+(step.amrap?' · AMRAP — MASSIME REPS PULITE':' · quante reps?')+'</div>'
    +'</div>'
    +'<button class="btn" style="width:100%;padding:24px;margin:0;background:'+sp.color+';color:#000;font-size:19px;font-weight:700" onclick="logReps('+hi+')">'+hi+'+ · CHIUSO IL MAX</button>'
    +(nums?'<div style="display:flex;gap:8px;flex-wrap:wrap">'+nums+'</div>':'')
@@ -1169,6 +1195,7 @@ function rWorkout(){
   +'</div>'
   +'</div>'
   +'<div class="font-display" style="font-size:34px;font-weight:800;letter-spacing:-.2px;margin-bottom:10px;line-height:1">'+ex.name+'</div>'
+  +(step.amrap?'<div class="tag-core">AMRAP · ULTIMA SERIE — MASSIME REPS PULITE</div>':'')
   +(ex.band?'<div style="border:2px solid '+ac+';color:'+ac+';padding:9px 12px;margin-bottom:8px;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase">Elastico · '+ex.band+'</div>':'')
   +(ex.coachNote?'<div style="border:2px solid #1e3a5f;background:#0a1420;padding:7px 11px;margin-bottom:8px;color:#7dd3fc;font-size:11px;line-height:1.4;letter-spacing:.5px"><b>'+(ex.coachSrc==='sumi'?'SUMI':'COACH')+'</b> · '+ex.coachNote+'</div>':'')
   +mediaHtml(ex)
@@ -2061,13 +2088,21 @@ async function runNutritionReasoning(){
    var obj=JSON.parse(clean);
    S.aiDB.nutritionAdvice=obj.compensationAdvice||'';
    if(typeof obj.recoveryFlag!=='undefined'){
+    var wasRec=S.aiDB.adaptation.recoveryFlag;
     S.aiDB.adaptation.recoveryFlag=obj.recoveryFlag;
     S.aiDB.adaptation.recoveryAction=obj.recoveryAction||'';
     // Imposta automaticamente setsAdjustment se in recovery
     if(obj.recoveryFlag){
      S.aiDB.adaptation.setsAdjustment=-1;
      S.aiDB.adaptation.repsMultiplier=0.9;
+    }else if(wasRec&&S.aiDB.adaptation.repsMultiplier===0.9&&S.aiDB.adaptation.setsAdjustment===-1){
+     // uscita dal recovery: ripristina cio' che il recovery aveva auto-ridotto
+     // (senza questo, 0.9/-1 restavano attivi per sempre — successo dal 25/06 al 02/08)
+     S.aiDB.adaptation.setsAdjustment=0;
+     S.aiDB.adaptation.repsMultiplier=1.0;
     }
+    // timbro obbligatorio: senza lastUpdated fresco il mergeDown non puo' mai correggere da server
+    S.aiDB.adaptation.lastUpdated=new Date().toISOString();
    }
    await sv('ai',S.aiDB);
    render(); // aggiorna home con eventuale banner recovery
