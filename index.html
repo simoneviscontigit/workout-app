@@ -1000,14 +1000,8 @@ async function handleNutPhotos(event){
   var file=files[i];
   var idx=startIdx+i;
   try{
-   var b64=await new Promise(function(res,rej){
-    var fr=new FileReader();
-    fr.onload=function(e){res(e.target.result.split(',')[1]);};
-    fr.onerror=rej;
-    fr.readAsDataURL(file);
-   });
-   var mt=file.type||'image/jpeg';
-   var est=await estimateMealFromPhoto(b64,mt,'');
+   var b64=await fileToJpegBase64(file);
+   var est=await estimateMealFromPhoto(b64,'image/jpeg','');
    S.nutPhotoUploads[idx]={status:'done',estimate:est};
   }catch(e){
    S.nutPhotoUploads[idx]={status:'error',error:e.message};
@@ -1806,6 +1800,25 @@ async function addManualTextMeal(){
  }
  render();
 }
+async function fileToJpegBase64(file){
+ // Decodifica: createImageBitmap legge HEIC su Safari iOS; fallback <img> per il resto.
+ var bmp;
+ try{bmp=await createImageBitmap(file);}
+ catch(e){
+  bmp=await new Promise(function(res,rej){
+   var url=URL.createObjectURL(file);
+   var img=new Image();
+   img.onload=function(){URL.revokeObjectURL(url);res(img);};
+   img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('Formato non supportato (HEIC?). Usa JPG/PNG.'));};
+   img.src=url;
+  });
+ }
+ var w=bmp.width,h=bmp.height,max=1280;
+ if(w>max||h>max){var s=Math.min(max/w,max/h);w=Math.round(w*s);h=Math.round(h*s);}
+ var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+ cv.getContext('2d').drawImage(bmp,0,0,w,h);
+ return cv.toDataURL('image/jpeg',0.85).split(',')[1];
+}
 async function estimateMealFromPhoto(base64,mediaType,noteText){
  var prompt='Stima i macronutrienti di questo pasto.'+(noteText?' Dettagli aggiuntivi: '+noteText:'')
   +'\nRispondi SOLO con JSON valido senza markdown:\n{"protein_g":N,"carbs_g":N,"fats_g":N,"calories":N,"foodDescription":"breve descrizione","confidence":"alta|media|bassa"}';
@@ -1890,16 +1903,12 @@ async function handleMealPhotoFile(event){
  var noteEl=document.getElementById('meal-note');
  S.mealPhotoState.note=noteEl?noteEl.value:'';
  S.mealPhotoState.loading=true;S.mealPhotoState.error='';render();
- var reader=new FileReader();
- reader.onload=async function(){
-  try{
-   var base64=reader.result.split(',')[1];
-   var est=await estimateMealFromPhoto(base64,file.type,S.mealPhotoState.note);
-   S.mealPhotoState.estimate=est;
-  }catch(e){S.mealPhotoState.error='Errore analisi: '+e.message;}
-  S.mealPhotoState.loading=false;render();
- };
- reader.readAsDataURL(file);
+ try{
+  var base64=await fileToJpegBase64(file);
+  var est=await estimateMealFromPhoto(base64,'image/jpeg',S.mealPhotoState.note);
+  S.mealPhotoState.estimate=est;
+ }catch(e){S.mealPhotoState.error='Errore analisi: '+e.message;}
+ S.mealPhotoState.loading=false;render();
 }
 async function confirmMealEstimate(){
  var ps=S.mealPhotoState;
