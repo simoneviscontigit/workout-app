@@ -1509,6 +1509,7 @@ function rNutPhotoScreen(){
    +'<div style="color:#d4d4d8;font-size:13px;font-weight:600;margin-bottom:3px">'+e.foodDescription+'</div>'
    +'<div style="color:#71717a;font-size:11px">P:'+Math.round(e.protein_g)+'g · C:'+Math.round(e.carbs_g)+'g · F:'+Math.round(e.fats_g)+'g · '+Math.round(e.calories)+'kcal'
    +' <span style="color:'+(e.confidence==='alta'?'#22c55e':e.confidence==='media'?'#f59e0b':'#ef4444')+'">'+e.confidence+'</span></div>'
+   +(e.implausibile?'<div style="color:#f87171;font-size:11px;margin-top:5px">⚠︎ Stima fuori scala: '+e.implausibile+'. Controllala prima di salvare.</div>':'')
    +'</div>';
  }).join('');
  return '<div class="pg">'
@@ -1911,48 +1912,110 @@ function macrosToScoreLevel(macros){
 // Regole anti-sottostima condivise foto+testo (25/07, portate da Sumi Legacy mod-workout.js
 // il 02/08 — il prompt nudo produceva totali dimezzati: il modello ragiona su porzioni da
 // tabella e non vede i grassi di cottura -> giornate a 1100-1400 kcal, peso fermo).
+//
+// Riscritte il 04/08 dopo il caso opposto: il 03/08 la stima ha sparato 5363 kcal / 256 g di
+// proteine su 6 pasti mediorientali. Tre difetti, tutti chiusi qui:
+//   (a) c'era un tetto sulle kcal (regola 5) ma NESSUNO sui macro -> 42 g di proteine a pasto
+//       passavano senza attrito;
+//   (b) la regola 1 ("piatto asiatico 700-1000 kcal") e la 5 ("pasto normale 600-900") si
+//       contraddicevano: su un mezze a sei componenti il modello sceglieva in alto;
+//   (c) niente ancore di densita', quindi nessun modo di accorgersi che 256 g di proteine
+//       significano ~1,2 kg di carne.
+// Il prompt ora impone di SCOMPORRE prima e sommare dopo: i componenti diventano l'evidenza
+// su cui reconcileMealKcal puo' fare il controllo (prima non c'era niente da controllare).
 var MEAL_RULES=
  "Sei un nutrizionista che stima un pasto REALE gia' mangiato, non una porzione da manuale.\n"+
- "La sottostima e' l'errore tipico su questo compito: queste regole servono a evitarla.\n"+
- "1. Conta i grassi INVISIBILI: olio di cottura, frittura, burro, salse, dressing, mantecature, condimenti. "+
- "Un saltato in padella o un fritto porta 15-30 g di olio che nella foto non si vedono. Un piatto asiatico "+
- "da ristorante (pad thai, fried rice, curry, kao soi) sta quasi sempre su 700-1000 kcal, non 500.\n"+
- "2. Stima la porzione COME SERVITA: piatto pieno, ristorante/takeaway = porzioni abbondanti. "+
- "Non ridurre alla porzione standard consigliata.\n"+
- "3. Se il pasto contiene piu' piatti o un dolce, sommali tutti.\n"+
- "4. Coerenza obbligatoria: calories = 4*protein_g + 4*carbs_g + 9*fats_g (tolleranza 5%).\n"+
- "5. Punta alla stima CENTRALE realistica, non all'estremo: le regole 1-2 correggono gia' la "+
- "sottostima e non vanno sommate a un ulteriore margine. Un pasto normale di un uomo di 74 kg sta su "+
- "600-900 kcal; sopra le 1200 kcal solo se e' davvero abbondante o sono piu' piatti insieme.\n"+
- "6. In foodDescription chiudi con i grammi che hai assunto per ogni componente, tra parentesi "+
- '(es. "Pad Thai con pollo (~300g noodles, 120g pollo, 25g olio, 30g arachidi)") — servono a Simone per correggerti.\n';
+ "Lavori in tre passi: SCOMPONI, poi assegna i macro, poi somma e verifica. Non partire dal totale.\n"+
+ "\nPASSO 1 — componenti.\n"+
+ "Elenca ogni componente, visibile o implicito, con i grammi che assumi (peso COTTO, come servito).\n"+
+ "I grassi INVISIBILI sono un componente a se' e vanno sempre messi: olio di cottura, frittura, "+
+ "burro, ghee, panna, salse, maionese, dressing, mantecature. Un saltato in padella o un fritto "+
+ "porta 15-30 g di olio che nella foto non si vedono; un curry o un piatto mantecato spesso 20-40 g.\n"+
+ "\nPASSO 2 — macro per componente. Densita' di riferimento, per 100 g di prodotto COTTO:\n"+
+ "- carne o pesce: 25-30 g proteine, 0 carbo, 3-20 g grassi secondo il taglio\n"+
+ "- uovo intero medio (50 g): 6 g proteine, 5 g grassi\n"+
+ "- formaggio stagionato: 25-30 g proteine e 25-35 g grassi; latticini freschi: 3-12 g proteine\n"+
+ "- legumi cotti: 7-9 g proteine, 15-20 g carbo\n"+
+ "- pasta, riso, pane, noodles, cous cous, pita (cotti): 2-5 g proteine, 25-30 g carbo\n"+
+ "- verdura: trascurabile, salvo il condimento\n"+
+ "- olio, burro, strutto: 100 g di grassi, cioe' 900 kcal\n"+
+ "\nPASSO 3 — totali e controlli. Somma i componenti, poi verifica TUTTI questi limiti:\n"+
+ "- calories = 4*protein_g + 4*carbs_g + 9*fats_g (tolleranza 5%)\n"+
+ "- una porzione singola di carne o pesce al ristorante raramente supera 250 g cotti, cioe' ~70 g "+
+ "di proteine. Un pasto intero, anche abbondante e con piu' piatti, raramente supera 90 g di "+
+ "proteine. Se il tuo totale li supera hai sovrastimato una grammatura: torna al passo 1 e correggila.\n"+
+ "- un pasto sta di norma su 600-1000 kcal (la fascia alta e' quella dei piatti da ristorante "+
+ "asiatici o mediorientali: pad thai, fried rice, curry, kao soi, mezze, shawarma). Sopra 1200 kcal "+
+ "solo se e' davvero abbondante o sono piu' piatti insieme; sopra 1800 kcal quasi mai.\n"+
+ "\nPorzioni: stima COME SERVITA — piatto pieno, ristorante e takeaway hanno porzioni abbondanti, "+
+ "non ridurre alla porzione standard consigliata. Se il pasto contiene piu' piatti o un dolce, "+
+ "sommali tutti. **Simone finisce sempre il piatto**: conta tutto quello che vedi come mangiato, "+
+ "non ipotizzare avanzi ne' porzioni lasciate a meta' (confermato da lui il 04/08).\n"+
+ "Punta alla stima CENTRALE realistica, non all'estremo: le regole sui grassi invisibili e sulle "+
+ "porzioni correggono gia' la sottostima, non vanno sommate a un ulteriore margine di sicurezza.\n"+
+ "\nconfidence: \"alta\" solo se riconosci tutti i componenti e le grammature sono leggibili dalla "+
+ "foto o dichiarate nel testo; \"bassa\" se stai indovinando la ricetta o i condimenti. Non mettere "+
+ "\"alta\" per abitudine: e' il segnale con cui Simone decide se fidarsi.\n";
+// Il formato resta imposto a parole, non da `output_config.format` (structured outputs): il proxy
+// `/api/ai-chat` di Sumi DB non fa passthrough del body, ricostruisce la richiesta con una
+// whitelist (`model`, `max_tokens`, `system?`, `messages`), quindi un `output_config` verrebbe
+// scartato in silenzio. Quando il proxy lo inoltrera', questo blocco diventa uno schema JSON e il
+// parsing qui sotto (fence-stripping + JSON.parse) puo' sparire.
 var MEAL_JSON=
  "Rispondi SOLO con JSON valido senza markdown:\n"+
- '{"protein_g":N,"carbs_g":N,"fats_g":N,"calories":N,"foodDescription":"descrizione + grammi assunti","confidence":"alta|media|bassa"}';
-// Guardia di coerenza: se le calorie dichiarate divergono >5% dai macro (4/4/9), vince il
-// calcolo dai macro — il modello sbaglia il totale piu' spesso dei singoli macro.
+ '{"componenti":[{"nome":"...","grammi":N,"proteine_g":N,"carbo_g":N,"grassi_g":N}],'+
+ '"protein_g":N,"carbs_g":N,"fats_g":N,"calories":N,'+
+ '"foodDescription":"descrizione discorsiva + grammi per componente","confidence":"alta|media|bassa"}';
+// Tetti di plausibilita' per UN pasto. Non sono limiti fisici, sono la soglia oltre la quale la
+// stima non e' piu' affidabile e non deve entrare nelle medie senza che qualcuno la guardi.
+var MEAL_MAX_PROT=90,MEAL_MAX_KCAL=1800;
+// Guardia in tre passi (04/08). L'ordine NON e' invertibile.
+// La vecchia versione faceva solo il passo 3 (coerenza 4/4/9) e quindi, davanti a macro gonfiati,
+// RIALZAVA le calorie per farle tornare: si fidava dei macro e correggeva il totale, mentre il
+// macro era esattamente la cosa sbagliata. E' il meccanismo che ha prodotto le 5363 kcal del 03/08.
 function reconcileMealKcal(est){
  if(!est)return est;
- var fromMacros=4*(+est.protein_g||0)+4*(+est.carbs_g||0)+9*(+est.fats_g||0);
- var declared=+est.calories||0;
- if(fromMacros>0&&(!declared||Math.abs(declared-fromMacros)/fromMacros>0.05)){
-  est.calories=Math.round(fromMacros);
+ var n=function(v){var x=+v;return isFinite(x)&&x>0?x:0;};
+ // 1. I componenti sono l'evidenza. Se la loro somma diverge dai totali dichiarati, vincono loro:
+ //    sbagliare una grammatura e' un errore locale, sbagliare il totale li nasconde tutti.
+ var comp=Array.isArray(est.componenti)?est.componenti:null;
+ if(comp&&comp.length){
+  var s={protein_g:0,carbs_g:0,fats_g:0};
+  comp.forEach(function(c){s.protein_g+=n(c.proteine_g);s.carbs_g+=n(c.carbo_g);s.fats_g+=n(c.grassi_g);});
+  ['protein_g','carbs_g','fats_g'].forEach(function(k){
+   var d=n(est[k]);
+   if(s[k]>0&&(!d||Math.abs(d-s[k])/s[k]>0.15))est[k]=Math.round(s[k]);
+  });
  }
+ // 2. Coerenza 4/4/9, ma solo DOPO che i macro sono stati riconciliati sui componenti.
+ var fromMacros=4*n(est.protein_g)+4*n(est.carbs_g)+9*n(est.fats_g);
+ if(fromMacros>0)est.calories=Math.round(fromMacros);
+ // 3. Plausibilita'. Il numero NON si tocca — clamparlo in silenzio produrrebbe una stima che
+ //    sembra buona e non lo e'. Si marca, e chi legge decide: la UI lo mostra in rosso e il
+ //    travaso puo' escludere il giorno dalle medie invece di ereditare il gonfiaggio.
+ var warn=[];
+ if(n(est.protein_g)>MEAL_MAX_PROT)warn.push(Math.round(n(est.protein_g))+' g di proteine in un solo pasto');
+ if(n(est.calories)>MEAL_MAX_KCAL)warn.push(Math.round(n(est.calories))+' kcal in un solo pasto');
+ if(warn.length){est.implausibile=warn.join(' · ');est.confidence='bassa';}
  return est;
 }
 async function estimateMealFromText(description){
- var prompt=MEAL_RULES
-  +'\nPasto descritto a testo da Simone: "'+description+'"\n'
-  +"Se la descrizione non dice la quantita', assumi una porzione NORMALE da uomo adulto (ne' minima "
-  +"ne' abbondante): senza foto non hai motivo di presumere una porzione fuori misura.\n\n"
+ // Le regole vanno in `system` (04/08): e' la loro casa naturale — persona + vincoli fissi — e il
+ // proxy le inoltra (sono nella whitelist). Nel turno utente resta solo il pasto e il formato.
+ var prompt='Pasto descritto a testo da Simone: "'+description+'"\n'
+  +"Non hai la foto: le grammature le deduci solo dal testo. Se la descrizione non dice la "
+  +"quantita', assumi una porzione NORMALE da uomo adulto — ne' minima ne' abbondante — e metti "
+  +"confidence \"bassa\" o \"media\", mai \"alta\".\n\n"
   +MEAL_JSON;
  // Sonnet, non Haiku (25/07): stimare un pasto da testo richiede conoscenza del cibo — Haiku
- // sottostimava sistematicamente. max_tokens 2000: sotto ~1200 il JSON tronca su sonnet-5
- // (il thinking e' incluso nel budget, l'output reale e' 760-920 tok).
+ // sottostimava sistematicamente. Resta Sonnet anche dopo il 04/08 (Opus va al ramo foto, dove
+ // il collo di bottiglia e' la vista): qui il lavoro e' conoscenza del cibo, non percezione.
+ // max_tokens 3000 (era 2000): i componenti allungano l'output e su Sonnet 5 il thinking e'
+ // dentro il budget — sotto ~1200 il JSON troncava gia' prima di aggiungerli.
  var resp=await fetch(AI_PROXY_URL,{
   method:'POST',
   headers:{'content-type':'application/json','x-proxy-token':getApiKey()},
-  body:JSON.stringify({model:'claude-sonnet-5',max_tokens:2000,messages:[{role:'user',content:prompt}]})
+  body:JSON.stringify({model:'claude-sonnet-5',max_tokens:3000,system:MEAL_RULES,messages:[{role:'user',content:prompt}]})
  });
  var data=await resp.json();
  if(!resp.ok)throw new Error('HTTP '+resp.status+(data&&data.error&&data.error.message?' — '+data.error.message:''));
@@ -1989,20 +2052,30 @@ async function fileToJpegBase64(file){
    img.src=url;
   });
  }
- var w=bmp.width,h=bmp.height,max=1280;
+ // 2576 px sul lato lungo (era 1280) dal 04/08: e' il massimo della fascia alta-risoluzione dei
+ // modelli attuali. Su un piatto misto la risoluzione E' l'accuratezza — riconoscere sei
+ // componenti e leggere le porzioni dai riferimenti di scala (posata, bordo del piatto) richiede
+ // pixel, e a 1280 px un mezze o un curry diventano una macchia da indovinare. Costa fino a ~3x i
+ // token immagine (~4784 contro ~1568): e' il prezzo dell'unica leva che sposta davvero la stima.
+ // Nessun upscaling: si scala solo verso il basso, una foto piu' piccola resta com'e'.
+ var w=bmp.width,h=bmp.height,max=2576;
  if(w>max||h>max){var s=Math.min(max/w,max/h);w=Math.round(w*s);h=Math.round(h*s);}
  var cv=document.createElement('canvas');cv.width=w;cv.height=h;
  cv.getContext('2d').drawImage(bmp,0,0,w,h);
- return cv.toDataURL('image/jpeg',0.85).split(',')[1];
+ return cv.toDataURL('image/jpeg',0.9).split(',')[1];
 }
 async function estimateMealFromPhoto(base64,mediaType,noteText){
- var prompt=MEAL_RULES+(noteText?'\nDettagli aggiuntivi da Simone: '+noteText+'\n':'')+'\n'+MEAL_JSON;
- // sonnet-5, max_tokens 2000: stesso budget/motivo di estimateMealFromText (thinking incluso,
- // sotto ~1200 il JSON tronca).
+ var prompt=(noteText?'Dettagli aggiuntivi da Simone: '+noteText+'\n\n':'')+MEAL_JSON;
+ // Opus, non Sonnet (04/08): qui il collo di bottiglia e' la VISTA, non la conoscenza del cibo —
+ // separare sei componenti in un piatto misto, stimare i volumi, vedere l'unto. E' la differenza
+ // fra una stima e un indovinello, e a 3-4 pasti al giorno costa qualche euro al mese.
+ // Se un giorno il costo desse fastidio, tornare a 'claude-sonnet-5' e' un cambio di una parola.
+ // max_tokens 6000 (era 2000): Opus 5 RAGIONA di default e il thinking sta dentro max_tokens —
+ // con 2000 la risposta si troncherebbe a meta' JSON senza errore, sembrando solo "stima fallita".
  var resp=await fetch(AI_PROXY_URL,{
   method:'POST',
   headers:{'content-type':'application/json','x-proxy-token':getApiKey()},
-  body:JSON.stringify({model:'claude-sonnet-5',max_tokens:2000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:prompt}]}]})
+  body:JSON.stringify({model:'claude-opus-5',max_tokens:6000,system:MEAL_RULES,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:prompt}]}]})
  });
  var data=await resp.json();
  if(!resp.ok)throw new Error('HTTP '+resp.status+(data&&data.error&&data.error.message?' — '+data.error.message:''));
@@ -2062,6 +2135,7 @@ function rMealPhoto(){
   +'<div class="card" style="margin:0;text-align:center;padding:8px"><div style="font-size:16px;font-weight:900;color:#ef4444">'+Math.round(ps.estimate.calories)+'</div><div class="lbl" style="font-size:9px">Kcal</div></div>'
   +'</div>'
   +'<div style="font-size:11px;color:#52525b;margin-bottom:10px">Precisione: <span style="color:'+(ps.estimate.confidence==='alta'?'#22c55e':ps.estimate.confidence==='media'?'#f59e0b':'#ef4444')+'">'+ps.estimate.confidence+'</span> · Stima visiva, non una bilancia.</div>'
+  +(ps.estimate.implausibile?'<div style="font-size:11px;color:#f87171;margin:-6px 0 10px">⚠︎ Stima fuori scala: '+ps.estimate.implausibile+'. Controllala prima di salvare.</div>':'')
   +'<button class="btn" style="background:#22c55e;margin-bottom:8px" onclick="confirmMealEstimate()">Salva questo pasto ✓</button>'
   +'<button class="btn-ghost" style="margin:0" onclick="S.mealPhotoState.estimate=null;render()">Riprova</button>'
   +'</div>':'';
