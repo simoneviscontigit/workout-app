@@ -528,16 +528,26 @@ function mergeByKey(dst,src,tsField){ // mappa chiave→record: per chiave vince
  }
  return dst;
 }
-function mergeArrayMap(dst,src,idField){ // mappa data→array: unione dedup per idField
+function mergeArrayMap(dst,src,keyFn){ // mappa data→array: unione dedup per keyFn (funzione o nome campo)
+ var kf=typeof keyFn==='function'?keyFn:function(x){return x?x[keyFn]:null;};
  if(!src||typeof src!=='object')return dst||{};
  dst=dst||{};
  for(var day in src){if(!Object.prototype.hasOwnProperty.call(src,day))continue;
   var have=(dst[day]||[]).slice(),add=src[day]||[],seen={};
-  have.forEach(function(v){if(v&&v[idField]!=null)seen[v[idField]]=1;});
-  add.forEach(function(v){if(v&&v[idField]!=null&&!seen[v[idField]]){have.push(v);seen[v[idField]]=1;}});
+  have.forEach(function(v){var k=kf(v);if(k!=null)seen[k]=1;});
+  add.forEach(function(v){var k=kf(v);if(k!=null&&!seen[k]){have.push(v);seen[k]=1;}});
   dst[day]=have;
  }
  return dst;
+}
+// Chiave di identita' di un pasto nel sync. `mealId` per tutto cio' che nasce da pushMeal;
+// per lo storico che non ce l'ha si ricade su loggedAt+descrizione, perche' `loggedAt` da
+// solo NON identifica un pasto: dentro un batch e' identico per tutti (il forEach gira nello
+// stesso millisecondo) e la dedup ne cancellerebbe due su tre.
+function mealKey(m){
+ if(!m)return null;
+ if(m.mealId)return m.mealId;
+ return (m.loggedAt||'')+'|'+(m.foodDescription||'');
 }
 function unionBy(a,b,keyFn){ // unione di due array, dedup per keyFn (funzione o nome campo)
  var kf=typeof keyFn==='function'?keyFn:function(x){return x?x[keyFn]:x;};
@@ -559,8 +569,8 @@ function mergeDown(dd){
  // LAST-WINS per-data (pesate): stessa forma che scrivono l'app e sumi-workout-inbox
  // ({kg, loggedAt, source}). Senza questa riga una pesata fatta altrove non scendeva mai.
  S.aiDB.weightLog=mergeByKey(S.aiDB.weightLog,r.weightLog,'loggedAt');
- // UNION per-voce (pasti: mappa data→array)
- S.aiDB.mealLog=mergeArrayMap(S.aiDB.mealLog,r.mealLog,'loggedAt');
+ // UNION per-voce (pasti: mappa data→array), identita' per mealKey e non per `loggedAt` nudo
+ S.aiDB.mealLog=mergeArrayMap(S.aiDB.mealLog,r.mealLog,mealKey);
  // UNION log (storico sessioni + chat/feedback)
  S.history=unionBy(S.history,dd.history,'date');
  S.aiDB.chatLog=unionBy(S.aiDB.chatLog,r.chatLog,function(x){return (x&&x.date)+'|'+(x&&x.userMsg);});
@@ -1075,12 +1085,9 @@ async function confirmNutPhotos(){
  });
  var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
  if(!S.trialNutMode){
-  // Salva ogni singola stima nel mealLog
-  if(!S.aiDB.mealLog)S.aiDB.mealLog={};
-  if(!S.aiDB.mealLog[targetDate])S.aiDB.mealLog[targetDate]=[];
-  done.forEach(function(u){
-   S.aiDB.mealLog[targetDate].push(Object.assign({},u.estimate,{loggedAt:new Date().toISOString()}));
-  });
+  // Salva ogni singola stima nel mealLog — via pushMeal, che mette il mealId e scarta il
+  // reinvio dello stesso batch (vedi §doppioni del 03/08 sopra).
+  done.forEach(function(u){pushMeal(targetDate,u.estimate);});
   await sv('ai',S.aiDB);
  }
  // Auto-popola qAns con macro aggregate. Riusa macrosToScoreLevel (1-based, stessa scala
@@ -1898,6 +1905,35 @@ function pickNut(v){S.qAns[NQ[S.qStep].key]=v;S.qStep++;render();}
 function saveNutNote(){var el=document.getElementById('nut-note');if(el)S.qAns.note=el.value;S.qStep++;render();}
 
 // ─── MEAL PHOTO / VISION API ─────────────────────────────────────────────────
+// Unico punto in cui un pasto entra nel mealLog (04/08). Prima i due rami (batch foto e
+// singolo pasto) facevano `push` per conto loro, e ne sono usciti due difetti veri:
+//   (a) il 03/08 lo stesso upload e' finito nel log DUE volte, a 3 minuti di distanza —
+//       5363 kcal invece di 2941. Nessuna guardia di plausibilita' per-pasto poteva
+//       prenderlo: ogni singolo pasto era plausibile, era il conteggio a essere doppio;
+//   (b) dentro un batch tutti i pasti prendevano lo STESSO `loggedAt` (il forEach gira nello
+//       stesso millisecondo), e mergeArrayMap dedupa proprio su quel campo: un device che
+//       scaricasse quel giorno da zero (reinstall, wipe localStorage) ne terrebbe UNO.
+// Da qui `mealId` — unico per pasto, non un timestamp di batch — e la finestra anti-reinvio.
+function newMealId(){
+ return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
+}
+var MEAL_DUP_WINDOW_MS=15*60*1000;
+// true = pasto aggiunto, false = scartato perche' e' il reinvio della stessa cosa. Il
+// confronto e' sulla descrizione (la stima puo' variare di qualche kcal fra due chiamate,
+// il piatto no) dentro una finestra: due piatti identici a distanza di ore restano due pasti.
+function pushMeal(date,estimate){
+ if(!S.aiDB.mealLog)S.aiDB.mealLog={};
+ if(!S.aiDB.mealLog[date])S.aiDB.mealLog[date]=[];
+ var now=Date.now(),desc=(estimate&&estimate.foodDescription)||'';
+ var dup=S.aiDB.mealLog[date].some(function(m){
+  if(!m||m.foodDescription!==desc||!desc)return false;
+  var t=Date.parse(m.loggedAt);
+  return isFinite(t)&&(now-t)<MEAL_DUP_WINDOW_MS;
+ });
+ if(dup)return false;
+ S.aiDB.mealLog[date].push(Object.assign({},estimate,{loggedAt:new Date().toISOString(),mealId:newMealId()}));
+ return true;
+}
 function calcDailyMacrosFromPhotos(date){
  var meals=(S.aiDB.mealLog&&S.aiDB.mealLog[date])||[];
  if(!meals.length)return null;
@@ -2084,9 +2120,7 @@ async function estimateMealFromPhoto(base64,mediaType,noteText){
  return reconcileMealKcal(JSON.parse(block.text.replace(/```json|```/g,'').trim()));
 }
 async function saveMealToLog(date,estimate){
- if(!S.aiDB.mealLog)S.aiDB.mealLog={};
- if(!S.aiDB.mealLog[date])S.aiDB.mealLog[date]=[];
- S.aiDB.mealLog[date].push(Object.assign({},estimate,{loggedAt:new Date().toISOString()}));
+ pushMeal(date,estimate);
  // Se il giorno ha gia' la survey compilata, un pasto aggiunto dopo deve entrare SUBITO nel
  // totale — stessa logica foto->qty di saveNutrition/rNutSummary (calcDailyMacrosFromPhotos +
  // 400kcal se giorno allenato), riusata qui e non duplicata.
