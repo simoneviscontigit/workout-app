@@ -1610,29 +1610,35 @@ function profileEta(p){
  var e=etaDaNascita(p.nascita);
  return e!=null?e:(p.eta||30);
 }
-function calcDayCalTarget(date){
- var p=S.aiDB.profile||{};
- var peso=p.peso||74, alt=p.altezza||182, eta=profileEta(p);
- var bmr=Math.round(10*peso+6.25*alt-5*eta+5); // Mifflin-St Jeor uomo
- var tdee=Math.round(bmr*1.375); // moderatamente attivo
- var goal=p.obiettivo||'massa';
- var goalAdj=goal==='massa'?300:goal==='definizione'?-400:goal==='ricomposizione'?100:0;
- var base=tdee+goalAdj;
- // Somma TUTTE le sessioni del giorno (allenamento + eventuale EXTRA), non solo la prima
- var sessions=(S.history||[]).filter(function(h){return h.date&&h.date.split('T')[0]===date;});
- var burned=0;
- sessions.forEach(function(s){
-  var sid=(s.split&&s.split.id)||'';
-  var rate=sid==='legs'?8:sid==='full'?7.5:sid==='extra'?7:7;
-  burned+=Math.round((s.duration||45)*rate);
- });
- var r={bmr:bmr,tdee:tdee,goalAdj:goalAdj,base:base,burned:burned,target:base+burned,goal:goal,session:sessions[0]||null,sessions:sessions,maintSource:'formula'};
- // FONTE UNICA (Sumi): se il server ha pubblicato il mantenimento del giorno in
- // aiDB.metrics.maintenance (misurato Oura sui giorni completi, formula altrove),
- // quel numero vince: app e dashboard mostrano lo stesso valore. Formula = fallback.
- var mm=S.aiDB.metrics&&S.aiDB.metrics.maintenance;
- if(mm&&typeof mm[date]==='number'&&mm[date]>0){r.target=mm[date];r.maintSource='sumi';}
- return r;
+// RISCRITTA 06/08/2026 — l'app NON calcola piu' il target: lo LEGGE.
+// Qui c'erano un Mifflin locale, un fattore attivita' 1,375, un offset fisso per obiettivo
+// (+300/-400/+100) e un burn a 7 kcal/min: il modello VECCHIO, mentre server e dashboard
+// erano passati alle percentuali (GOAL_PCT: ricomposizione +4%) il 02/08. Peggio, quando
+// Sumi pubblicava il mantenimento del giorno l'app faceva `target = mantenimento`, cioe'
+// chiamava target il MANTENIMENTO — lo stesso conflate che il 02/08 era stato separato
+// apposta (mantenimento = quante ne bruci, target = quante ne devi mangiare).
+// Il precedente e' mod-workout.js, ripulito allo stesso modo il 02/08: nessun mirror,
+// solo valori pubblicati, e se un giorno manca dalla serie un TRATTINO — non una stima.
+// Regola: se all'app serve un numero che nasce in workout_targets.py, si espone nel feed.
+// Ritorna null quando il giorno non e' ancora nella serie pubblicata (Sumi gira di notte):
+// chi chiama deve mostrare "—", mai ricostruirsi il numero.
+function dayCal(date){
+ var m=S.aiDB.metrics||{};
+ var serie=m.kcalSeries||[];
+ for(var i=serie.length-1;i>=0;i--){   // dal fondo: i giorni chiesti sono quasi sempre recenti
+  var r=serie[i];
+  if(!r||r.date!==date)continue;
+  if(typeof r.target!=='number'||!(r.target>0))return null;   // riga senza target = niente da mostrare
+  var prof=m.profile||{};
+  return {target:r.target,
+          maintenance:(typeof r.maintenance==='number'?r.maintenance:null),
+          maintSource:r.maintSource||null,          // 'oura' = misurato · 'formula' = stimato da Sumi
+          trainKcal:(typeof r.trainKcal==='number'?r.trainKcal:0),
+          goal:prof.obiettivo||null,
+          goalPctLabel:prof.goalPctLabel||null,
+          tol:(typeof prof.verdictTol==='number'?prof.verdictTol:100)};
+ }
+ return null;
 }
 function rProfile(){
  var p=S.aiDB.profile||{};
@@ -1797,7 +1803,7 @@ function rNutSummary(){
  if(a.sleep&&!S.nutQty.sleep_h)S.nutQty.sleep_h=scoreToQty('sleep_h',a.sleep)||0; // solo storico: la domanda sonno non esiste piu'
  // RIMOSSO 06/08/2026 — qui c'era un `+400 kcal se giorno allenato` sull'INGERITO. Sommava il
  // CONSUMO dell'allenamento al cibo: lato sbagliato, e per giunta doppio, perche' il workout sta
- // gia' nel TARGET (calcDayCalTarget, 7 kcal/min). Colpiva anche le stime esatte da foto e non
+ // gia' nel mantenimento del giorno (che oggi l'app legge da Sumi, vedi dayCal). Colpiva anche le stime esatte da foto e non
  // toccava punteggi ne' consigli, quindi mentiva solo sul numero mostrato/salvato/sincronizzato.
  // Peggio: rNutSummary e' render CHE MUTA LO STATO, quindi sul percorso manuale ogni ri-render
  // aggiungeva altri 400. 24 giorni salvati sono gonfiati di 400 (9.600 kcal fantasma).
@@ -1846,28 +1852,40 @@ function rNutSummary(){
   +(a.stress?mbar('Stress/Recovery',a.stress,4,'#22c55e',L4s):'')
   +'</div>'
   +(function(){
-   var dt=calcDayCalTarget(targetDate);
+   var dc=dayCal(targetDate);
    var actual=q.calories_kcal||0;
-   var delta=actual>0?actual-dt.target:null;
-   var dColor=delta===null?'#52525b':Math.abs(delta)<=150?'#22c55e':Math.abs(delta)<=350?'#f59e0b':'#ef4444';
-   var dLabel=delta===null?'—':Math.abs(delta)<=150?'✓ In linea':delta>0?'↑ Surplus':'↓ Deficit';
    function riga(label,val,col,pre){return '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">'+label+'</span><span style="color:'+(col||'#d4d4d8')+'">'+(pre||'')+val+' kcal</span></div>';}
-   // Le righe devono SOMMARE al target, sempre. Quando Sumi pubblica il mantenimento misurato del
-   // giorno (metrics.maintenance) quel numero SOSTITUISCE tutto il calcolo: dentro c'e' gia' il
-   // movimento reale, allenamento compreso, quindi TDEE/obiettivo/allenamento non sono piu' i suoi
-   // addendi. Stamparli lo stesso (com'era fino al 06/08/2026) faceva leggere un target che non
-   // era la somma di cio' che aveva sopra. Il valore NON si tocca: e' lo stesso che vede la
-   // dashboard, ed e' il punto di tutta la fonte-unica.
-   var righe=dt.maintSource==='sumi'
-    ?riga('Mantenimento misurato (Oura)',dt.target)
-     +'<div style="font-size:10px;color:#52525b;margin:-1px 0 7px;line-height:1.4">Misurato sul giorno: comprende gia\' allenamento e movimento. Sostituisce TDEE + obiettivo + workout.</div>'
-    :riga('TDEE base',dt.tdee)
-     +(dt.goalAdj!==0?riga('Obiettivo ('+dt.goal+')',dt.goalAdj,dt.goalAdj>0?'#22c55e':'#ef4444',dt.goalAdj>0?'+':''):'')
-     +((dt.sessions||[]).map(function(s){var sid=(s.split&&s.split.id)||'';var rate=sid==='legs'?8:sid==='full'?7.5:sid==='extra'?7:7;var b=Math.round((s.duration||45)*rate);var nm=(s.split&&s.split.name)||'Workout';return riga((sid==='extra'?'Extra':'Allenamento')+' '+nm+' ('+(s.duration||'?')+'min)',b,'#f97316','+');}).join(''));
-   return '<div class="card" style="margin-bottom:10px;background:#12121a;border-color:#3f3f6660">'
-    +'<div class="lbl" style="color:#818cf8;margin-bottom:10px">BILANCIO CALORICO</div>'
+   var head='<div class="card" style="margin-bottom:10px;background:#12121a;border-color:#3f3f6660">'
+    +'<div class="lbl" style="color:#818cf8;margin-bottom:10px">BILANCIO CALORICO</div>';
+   // Giorno non ancora nella serie pubblicata (Sumi pubblica di notte): TRATTINO, non una
+   // stima locale. E' la stessa scelta fatta il 02/08 in mod-workout.js, ed e' il motivo per
+   // cui l'app non ha piu' un suo Mifflin: un target inventato qui e' un target che litiga
+   // con la dashboard senza che nessuno se ne accorga.
+   if(!dc){
+    return head
+     +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;padding-bottom:8px"><span style="color:#fafafa">Target</span><span style="color:#52525b">—</span></div>'
+     +(actual>0?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:#a1a1aa">Ingerito'+(fromPhoto?'':' (stima~)')+'</span><span style="color:#d4d4d8">'+actual+' kcal</span></div>':'')
+     +'<div style="color:#52525b;font-size:12px;line-height:1.5">Sumi non ha ancora pubblicato il target di questo giorno: arriva col sync notturno.<br>Meglio un trattino che un numero calcolato qui, diverso da quello della dashboard.</div>'
+     +'</div>';
+   }
+   var tol=dc.tol, delta=actual>0?actual-dc.target:null;
+   var dColor=delta===null?'#52525b':Math.abs(delta)<=tol?'#22c55e':Math.abs(delta)<=tol*4?'#f59e0b':'#ef4444';
+   var dLabel=delta===null?'—':Math.abs(delta)<=tol?'✓ In linea':delta>0?'↑ Surplus':'↓ Deficit';
+   // Le righe devono SOMMARE al target, sempre: mantenimento + offset obiettivo = target.
+   // Il mantenimento e' quante ne BRUCI (Oura se misurato, formula di Sumi altrimenti), il
+   // target quante ne DEVI MANGIARE = mantenimento x (1 + %). Sono due numeri diversi, e
+   // fino al 06/08 questa schermata li chiamava tutti e due "target".
+   var offset=dc.target-dc.maintenance;
+   var misurato=dc.maintSource==='oura';
+   var righe=riga('Mantenimento '+(misurato?'misurato (Oura)':'stimato (Sumi)'),dc.maintenance)
+    +'<div style="font-size:10px;color:#52525b;margin:-1px 0 7px;line-height:1.4">'
+    +(misurato?'Misurato sul giorno: comprende gia\' allenamento e movimento.'
+              :'Stima di Sumi: mantenimento a riposo'+(dc.trainKcal>0?' + allenamento '+dc.trainKcal+' kcal':'')+'. Diventa misurato quando arriva il dato Oura del giorno.')
+    +'</div>'
+    +(offset!==0?riga('Obiettivo ('+(dc.goal||'—')+(dc.goalPctLabel?' '+dc.goalPctLabel:'')+')',Math.abs(offset),offset>0?'#22c55e':'#ef4444',offset>0?'+':'−'):'');
+   return head
     +righe
-    +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;border-top:1px solid #27272a;padding-top:8px;margin:6px 0 10px"><span style="color:#fafafa">Target oggi</span><span style="color:#fafafa">'+dt.target+' kcal</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;border-top:1px solid #27272a;padding-top:8px;margin:6px 0 10px"><span style="color:#fafafa">Target</span><span style="color:#fafafa">'+dc.target+' kcal</span></div>'
     +(actual>0
      ?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#a1a1aa">Ingerito'+(fromPhoto?'':' (stima~)')+'</span><span style="color:#d4d4d8">'+actual+' kcal</span></div>'
       +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span style="color:'+dColor+'">'+dLabel+'</span><span style="color:'+dColor+'">'+(delta!==null?Math.abs(delta)+' kcal':'')+'</span></div>'
@@ -2482,10 +2500,19 @@ function rHist(){
   var kcal=(st==='compilato'&&v.calories_kcal)?v.calories_kcal:null;
   var kcalHtml='';
   if(kcal){
-   var dt=calcDayCalTarget(ds),delta=kcal-dt.target;
-   var lab=Math.abs(delta)<=150?'Mantenimento':delta>400?'Surplus alto':delta>0?'Surplus':delta>-400?'Deficit lieve':'Deficit';
-   var lc=Math.abs(delta)<=150?'#22c55e':delta>400?'#ef4444':delta>0?'#f97316':'#818cf8';
-   kcalHtml='<div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:#d4d4d8">'+kcal+' kcal</div><div style="font-size:10px;font-weight:700;color:'+lc+'">'+lab+'</div></div>';
+   // Verdetto solo se il target del giorno E' PUBBLICATO (dayCal): niente etichetta se manca,
+   // perche' l'unico modo di averla sarebbe ricalcolarsi il target qui. La soglia (`tol`) la
+   // decide workout_targets.py e viaggia nel feed: prima erano 150 qui e 100 sul server, cioe'
+   // due giudizi diversi sulla stessa giornata.
+   var dc=dayCal(ds);
+   if(dc){
+    var delta=kcal-dc.target,tol=dc.tol;
+    var lab=Math.abs(delta)<=tol?'Mantenimento':delta>tol*4?'Surplus alto':delta>0?'Surplus':delta>-tol*4?'Deficit lieve':'Deficit';
+    var lc=Math.abs(delta)<=tol?'#22c55e':delta>tol*4?'#ef4444':delta>0?'#f97316':'#818cf8';
+    kcalHtml='<div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:#d4d4d8">'+kcal+' kcal</div><div style="font-size:10px;font-weight:700;color:'+lc+'">'+lab+'</div></div>';
+   } else {
+    kcalHtml='<div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:#d4d4d8">'+kcal+' kcal</div><div style="font-size:10px;font-weight:700;color:#52525b">—</div></div>';
+   }
   }
   var dateStr=new Date(ds+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
   if(ds===todayStr)dateStr='Oggi · '+dateStr;
