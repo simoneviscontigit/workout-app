@@ -1728,39 +1728,78 @@ function lastWeighIn(){
  }
  return null;
 }
+// GIROVITA (06/08/2026). Senza una misura corporea il mantenimento non e' tarabile: l'app dice
+// -640 kcal/giorno da 40 giorni (oltre 3 kg) e il corpo dice peso fermo. Senza un dato che si
+// muove nel tempo non si distingue quale dei tre sospettati sbaglia (stima dei pasti, basale Oura,
+// peso dichiarato) — e la tentazione di appiccicare un coefficiente e' esattamente il peccato che
+// ha prodotto il +400. A Bali non c'e' una bilancia, quindi la misura e' il girovita: metro da
+// sarto all'ombelico, 1x a settimana, mattina a digiuno. Vive nella STESSA voce di weightLog:
+// stesso giorno-chiave, stesso merge cross-device, e chi legge il peso non si accorge di niente.
+function lastWaist(){
+ var wl=(S.aiDB&&S.aiDB.weightLog)||{};
+ var giorni=Object.keys(wl).sort();
+ for(var i=giorni.length-1;i>=0;i--){
+  var v=wl[giorni[i]];var cm=(v&&typeof v==='object')?v.vita_cm:null;
+  if(typeof cm==='number'&&cm>0)return {date:giorni[i],cm:cm};
+ }
+ return null;
+}
 function weighInCard(ultima){
  var oggi=new Date().toISOString().split('T')[0];
- var giaOggi=ultima&&ultima.date===oggi;
+ var vita=lastWaist();
+ var giaOggi=(ultima&&ultima.date===oggi)||(vita&&vita.date===oggi);
+ function dmy(d){return new Date(d+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'});}
  var sub=ultima
-  ?'Ultima: <b style="color:#d4d4d8">'+ultima.kg+' kg</b> · '+new Date(ultima.date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})
+  ?'Ultima pesata: <b style="color:#d4d4d8">'+ultima.kg+' kg</b> · '+dmy(ultima.date)
   :'Nessuna pesata ancora: il grafico peso resta vuoto e il mantenimento gira sul peso dichiarato.';
+ sub+='<br>'+(vita
+  ?'Ultimo girovita: <b style="color:#d4d4d8">'+vita.cm+' cm</b> · '+dmy(vita.date)
+  :'Nessun girovita ancora: e\' la misura che serve per tarare il mantenimento.');
+ function inp(id,ph,step,min,max){
+  return '<input type="number" id="'+id+'" step="'+step+'" min="'+min+'" max="'+max+'" placeholder="'+ph+'"'
+   +' style="flex:1;min-width:0;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:18px;font-weight:700;padding:12px;outline:none;text-align:center">';
+ }
  return '<div class="card" style="background:#0f1420;border-color:#334155">'
-  +'<div class="lbl" style="color:#818cf8;margin-bottom:8px">PESATA'+(giaOggi?' · oggi fatta':'')+'</div>'
-  +'<div style="display:flex;align-items:center;gap:8px">'
-  +'<input type="number" id="pf-pesata" step="0.1" min="40" max="150" placeholder="'+(ultima?ultima.kg:'—')+'"'
-  +' style="flex:1;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:18px;font-weight:700;padding:12px;outline:none;text-align:center">'
+  +'<div class="lbl" style="color:#818cf8;margin-bottom:8px">PESATA E GIROVITA'+(giaOggi?' · oggi fatta':'')+'</div>'
+  +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+  +inp('pf-pesata',(ultima?ultima.kg+' kg':'— kg'),'0.1',40,150)
+  +inp('pf-vita',(vita?vita.cm+' cm':'— cm'),'0.5',50,150)
   +'<button class="btn" style="width:auto;margin:0;padding:12px 16px;font-size:13px;background:#818cf8" onclick="saveWeighIn()">Registra</button>'
   +'</div>'
+  +'<div style="font-size:10px;color:#52525b;line-height:1.45">Girovita: metro da sarto all\'ombelico, 1x a settimana, mattina a digiuno, prima di bere. Basta compilarne uno dei due.</div>'
   +'<div style="font-size:11px;color:#52525b;margin-top:8px;line-height:1.45">'+sub+'</div>'
   +'</div>';
 }
 async function saveWeighIn(){
- var el=document.getElementById('pf-pesata');
- var kg=el?parseFloat(el.value):NaN;
- if(!(kg>0)){alert('Scrivi il peso in kg.');return;}
- if(kg<40||kg>150){alert('Peso fuori range (40-150 kg).');return;}
+ var elK=document.getElementById('pf-pesata'),elV=document.getElementById('pf-vita');
+ var kg=elK&&elK.value!==''?parseFloat(elK.value):NaN;
+ var cm=elV&&elV.value!==''?parseFloat(elV.value):NaN;
+ var hasKg=isFinite(kg),hasCm=isFinite(cm);
+ if(!hasKg&&!hasCm){alert('Scrivi il peso in kg o il girovita in cm.');return;}
+ if(hasKg&&(kg<40||kg>150)){alert('Peso fuori range (40-150 kg).');return;}
+ if(hasCm&&(cm<50||cm>150)){alert('Girovita fuori range (50-150 cm).');return;}
  var oggi=new Date().toISOString().split('T')[0]; // stessa chiave-giorno del resto del blob
  if(!S.aiDB.weightLog||typeof S.aiDB.weightLog!=='object')S.aiDB.weightLog={};
- S.aiDB.weightLog[oggi]={kg:kg,loggedAt:new Date().toISOString(),source:'app'};
+ // MERGE, non sostituzione: peso e girovita si registrano spesso in due momenti diversi dello
+ // stesso giorno. Un `=` secco cancellerebbe in silenzio quello scritto per primo.
+ var pre=S.aiDB.weightLog[oggi];
+ var voce=(pre&&typeof pre==='object')?Object.assign({},pre):(typeof pre==='number'&&pre>0?{kg:pre}:{});
+ if(hasKg)voce.kg=kg;
+ if(hasCm)voce.vita_cm=cm;
+ voce.loggedAt=new Date().toISOString();voce.source='app';
+ S.aiDB.weightLog[oggi]=voce;
  await sv('ai',S.aiDB);syncToDrive();
  render();
 }
+// I bucket di MACRO e CALORIE sono stati tolti il 06/08/2026. Trasformavano una risposta
+// CATEGORICA ("ho mangiato tanto") in grammi e kcal precisi, che poi finivano nel blob, nel foglio
+// e nel coach indistinguibili da un giorno misurato davvero sulle foto: 10 giorni ripetono
+// 1800/2200/2500 identici. Principio di Simone: "se compilo, compilo giusto — quindi o zero o e'
+// giusto". Dove non c'e' una foto, la quantita' resta VUOTA (assente, non 0: uno 0 nel foglio si
+// legge "non ha mangiato"). Lo score categorico resta e continua a alimentare calcNutScore.
+// Restano water_l e sleep_h: sono la risposta stessa, non una stima derivata di un totale.
 function scoreToQty(key,score){
  var maps={
-  protein_g:   [50,90,130,160,185],
-  carbs_g:     [80,140,200,270,350],
-  fats_g:      [30,50,70,90,110],
-  calories_kcal:[1800,2200,2500,2800],
   water_l:     [1.0,1.5,2.0,2.5],
   sleep_h:     [5,6,7,8]
  };
@@ -1781,17 +1820,21 @@ function rNutSummary(){
   S.nutQty.fats_g=Math.round(photoMacros.fats_g)||0;
   S.nutQty.calories_kcal=Math.round(photoMacros.calories)||0;
  } else {
-  if(!S.nutQty.protein_g)S.nutQty.protein_g=scoreToQty('protein_g',a.protein)||0;
-  if(!S.nutQty.carbs_g)S.nutQty.carbs_g=scoreToQty('carbs_g',a.carbs)||0;
-  if(!S.nutQty.fats_g)S.nutQty.fats_g=scoreToQty('fats_g',a.fats)||0;
-  if(!S.nutQty.calories_kcal)S.nutQty.calories_kcal=scoreToQty('calories_kcal',a.calories)||0;
+  // Nessuna foto -> nessuna quantita' inventata (vedi scoreToQty). Le chiavi restano ASSENTI,
+  // cosi' saveNutrition non le scrive e la colonna del foglio resta vuota invece che a zero.
+  ['protein_g','carbs_g','fats_g','calories_kcal'].forEach(function(k){delete S.nutQty[k];});
  }
  if(!S.nutQty.water_l)S.nutQty.water_l=scoreToQty('water_l',a.water)||0;
  if(a.sleep&&!S.nutQty.sleep_h)S.nutQty.sleep_h=scoreToQty('sleep_h',a.sleep)||0; // solo storico: la domanda sonno non esiste piu'
- // Giorno di allenamento: aggiusta calorie verso l'alto (+300-500kcal stima consumo)
- if(hadWorkoutOn(targetDate)&&S.nutQty.calories_kcal){
-  S.nutQty.calories_kcal=Math.round(S.nutQty.calories_kcal+400);
- }
+ // RIMOSSO 06/08/2026 — qui c'era un `+400 kcal se giorno allenato` sull'INGERITO. Sommava il
+ // CONSUMO dell'allenamento al cibo: lato sbagliato, e per giunta doppio, perche' il workout sta
+ // gia' nel TARGET (calcDayCalTarget, 7 kcal/min). Colpiva anche le stime esatte da foto e non
+ // toccava punteggi ne' consigli, quindi mentiva solo sul numero mostrato/salvato/sincronizzato.
+ // Peggio: rNutSummary e' render CHE MUTA LO STATO, quindi sul percorso manuale ogni ri-render
+ // aggiungeva altri 400. 24 giorni salvati sono gonfiati di 400 (9.600 kcal fantasma).
+ // Il gemello in saveMealToLog e' stato rimosso insieme a questo: uno solo dei due lasciava il bug
+ // vivo sul percorso "pasto aggiunto dopo la survey". Se le kcal sembrano basse la risposta NON e'
+ // una costante appiccicata al risultato: si trova perche' (stima dei pasti, basale Oura, peso).
  var q=S.nutQty;
  var score=calcNutScore(a);
  var col=score>=75?'#22c55e':score>=50?'#f59e0b':'#ef4444';
@@ -1839,16 +1882,27 @@ function rNutSummary(){
    var delta=actual>0?actual-dt.target:null;
    var dColor=delta===null?'#52525b':Math.abs(delta)<=150?'#22c55e':Math.abs(delta)<=350?'#f59e0b':'#ef4444';
    var dLabel=delta===null?'—':Math.abs(delta)<=150?'✓ In linea':delta>0?'↑ Surplus':'↓ Deficit';
+   function riga(label,val,col,pre){return '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">'+label+'</span><span style="color:'+(col||'#d4d4d8')+'">'+(pre||'')+val+' kcal</span></div>';}
+   // Le righe devono SOMMARE al target, sempre. Quando Sumi pubblica il mantenimento misurato del
+   // giorno (metrics.maintenance) quel numero SOSTITUISCE tutto il calcolo: dentro c'e' gia' il
+   // movimento reale, allenamento compreso, quindi TDEE/obiettivo/allenamento non sono piu' i suoi
+   // addendi. Stamparli lo stesso (com'era fino al 06/08/2026) faceva leggere un target che non
+   // era la somma di cio' che aveva sopra. Il valore NON si tocca: e' lo stesso che vede la
+   // dashboard, ed e' il punto di tutta la fonte-unica.
+   var righe=dt.maintSource==='sumi'
+    ?riga('Mantenimento misurato (Oura)',dt.target)
+     +'<div style="font-size:10px;color:#52525b;margin:-1px 0 7px;line-height:1.4">Misurato sul giorno: comprende gia\' allenamento e movimento. Sostituisce TDEE + obiettivo + workout.</div>'
+    :riga('TDEE base',dt.tdee)
+     +(dt.goalAdj!==0?riga('Obiettivo ('+dt.goal+')',dt.goalAdj,dt.goalAdj>0?'#22c55e':'#ef4444',dt.goalAdj>0?'+':''):'')
+     +((dt.sessions||[]).map(function(s){var sid=(s.split&&s.split.id)||'';var rate=sid==='legs'?8:sid==='full'?7.5:sid==='extra'?7:7;var b=Math.round((s.duration||45)*rate);var nm=(s.split&&s.split.name)||'Workout';return riga((sid==='extra'?'Extra':'Allenamento')+' '+nm+' ('+(s.duration||'?')+'min)',b,'#f97316','+');}).join(''));
    return '<div class="card" style="margin-bottom:10px;background:#12121a;border-color:#3f3f6660">'
     +'<div class="lbl" style="color:#818cf8;margin-bottom:10px">BILANCIO CALORICO</div>'
-    +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">TDEE base</span><span style="color:#d4d4d8">'+dt.tdee+' kcal</span></div>'
-    +(dt.goalAdj!==0?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">Obiettivo ('+dt.goal+')</span><span style="color:'+(dt.goalAdj>0?'#22c55e':'#ef4444')+'">'+(dt.goalAdj>0?'+':'')+dt.goalAdj+' kcal</span></div>':'')
-    +((dt.sessions||[]).map(function(s){var sid=(s.split&&s.split.id)||'';var rate=sid==='legs'?8:sid==='full'?7.5:sid==='extra'?7:7;var b=Math.round((s.duration||45)*rate);var nm=(s.split&&s.split.name)||'Workout';return '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#a1a1aa">'+(sid==='extra'?'Extra':'Allenamento')+' '+nm+' ('+(s.duration||'?')+'min)</span><span style="color:#f97316">+'+b+' kcal</span></div>';}).join(''))
+    +righe
     +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;border-top:1px solid #27272a;padding-top:8px;margin:6px 0 10px"><span style="color:#fafafa">Target oggi</span><span style="color:#fafafa">'+dt.target+' kcal</span></div>'
     +(actual>0
      ?'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#a1a1aa">Ingerito'+(fromPhoto?'':' (stima~)')+'</span><span style="color:#d4d4d8">'+actual+' kcal</span></div>'
       +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span style="color:'+dColor+'">'+dLabel+'</span><span style="color:'+dColor+'">'+(delta!==null?Math.abs(delta)+' kcal':'')+'</span></div>'
-     :'<div style="color:#52525b;font-size:12px">Nessun dato ingestione disponibile</div>')
+     :'<div style="color:#52525b;font-size:12px;line-height:1.5">Nessuna foto per questo giorno: le kcal ingerite restano vuote.<br>Meglio niente che un numero inventato — il bilancio torna appena fotografi i pasti.</div>')
     +'</div>';
   })()
   +'<div style="background:#1c2a1c;border:1px solid #22c55e20;border-radius:14px;padding:14px;margin-bottom:12px">'
@@ -1964,9 +2018,18 @@ var MEAL_RULES=
  "Lavori in tre passi: SCOMPONI, poi assegna i macro, poi somma e verifica. Non partire dal totale.\n"+
  "\nPASSO 1 — componenti.\n"+
  "Elenca ogni componente, visibile o implicito, con i grammi che assumi (peso COTTO, come servito).\n"+
- "I grassi INVISIBILI sono un componente a se' e vanno sempre messi: olio di cottura, frittura, "+
- "burro, ghee, panna, salse, maionese, dressing, mantecature. Un saltato in padella o un fritto "+
- "porta 15-30 g di olio che nella foto non si vedono; un curry o un piatto mantecato spesso 20-40 g.\n"+
+ "I grassi INVISIBILI (olio di cottura, frittura, burro, ghee, panna, salse, maionese, dressing, "+
+ "mantecature) si mettono SOLO se il metodo di cottura li implica. La cottura la deduci dalla foto "+
+ "o dal testo, mai per abitudine:\n"+
+ "- fritto, saltato in padella, mantecato, gratinato, salsato o condito: SI'. Un saltato o un "+
+ "fritto porta 15-30 g di olio che nella foto non si vedono; un curry o un piatto mantecato "+
+ "spesso 20-40 g.\n"+
+ "- bollito, in camicia, al vapore, alla griglia o al forno senza condimento visibile, crudo: "+
+ "ZERO grassi aggiunti. Metti solo il grasso PROPRIO dell'alimento (il tuorlo di un uovo, il "+
+ "grasso della carne, la polpa dell'avocado): quello c'e' comunque.\n"+
+ "- cottura non deducibile: non inventarla. Niente grasso aggiunto e confidence \"bassa\".\n"+
+ "Simone cuoce quasi sempre senza condimento (uova bollite o in camicia, verdure al vapore): non "+
+ "presumere un filo d'olio o del burro se non lo vedi.\n"+
  "\nPASSO 2 — macro per componente. Densita' di riferimento, per 100 g di prodotto COTTO:\n"+
  "- carne o pesce: 25-30 g proteine, 0 carbo, 3-20 g grassi secondo il taglio\n"+
  "- uovo intero medio (50 g): 6 g proteine, 5 g grassi\n"+
@@ -1980,6 +2043,9 @@ var MEAL_RULES=
  "- una porzione singola di carne o pesce al ristorante raramente supera 250 g cotti, cioe' ~70 g "+
  "di proteine. Un pasto intero, anche abbondante e con piu' piatti, raramente supera 90 g di "+
  "proteine. Se il tuo totale li supera hai sovrastimato una grammatura: torna al passo 1 e correggila.\n"+
+ "- i grassi di un pasto stanno di norma sotto 60 g. Oltre 80 g in un solo pasto e' quasi sempre "+
+ "una grammatura di olio, formaggio o frutta secca sbagliata: torna al passo 1 e correggila. I "+
+ "grassi moltiplicano per 9, quindi un errore li' costa il doppio dello stesso errore sui carbo.\n"+
  "- un pasto sta di norma su 600-1000 kcal (la fascia alta e' quella dei piatti da ristorante "+
  "asiatici o mediorientali: pad thai, fried rice, curry, kao soi, mezze, shawarma). Sopra 1200 kcal "+
  "solo se e' davvero abbondante o sono piu' piatti insieme; sopra 1800 kcal quasi mai.\n"+
@@ -2004,7 +2070,11 @@ var MEAL_JSON=
  '"foodDescription":"descrizione discorsiva + grammi per componente","confidence":"alta|media|bassa"}';
 // Tetti di plausibilita' per UN pasto. Non sono limiti fisici, sono la soglia oltre la quale la
 // stima non e' piu' affidabile e non deve entrare nelle medie senza che qualcuno la guardi.
-var MEAL_MAX_PROT=90,MEAL_MAX_KCAL=1800;
+// MEAL_MAX_FAT aggiunto il 06/08/2026: era l'unico macro senza sorveglianza. Il commento del 04/08
+// diceva di aver chiuso il buco ("c'era un tetto sulle kcal ma NESSUNO sui macro") ma aveva aggiunto
+// solo quello proteico. 80 g sta sopra il pasto grasso vero (bowl con tahini, fritto da ristorante:
+// 60-75 g) e sotto l'errore di grammatura tipico. x9: un errore qui pesa il doppio di uno sui carbo.
+var MEAL_MAX_PROT=90,MEAL_MAX_KCAL=1800,MEAL_MAX_FAT=80;
 // Guardia in tre passi (04/08). L'ordine NON e' invertibile.
 // La vecchia versione faceva solo il passo 3 (coerenza 4/4/9) e quindi, davanti a macro gonfiati,
 // RIALZAVA le calorie per farle tornare: si fidava dei macro e correggeva il totale, mentre il
@@ -2031,6 +2101,7 @@ function reconcileMealKcal(est){
  //    travaso puo' escludere il giorno dalle medie invece di ereditare il gonfiaggio.
  var warn=[];
  if(n(est.protein_g)>MEAL_MAX_PROT)warn.push(Math.round(n(est.protein_g))+' g di proteine in un solo pasto');
+ if(n(est.fats_g)>MEAL_MAX_FAT)warn.push(Math.round(n(est.fats_g))+' g di grassi in un solo pasto');
  if(n(est.calories)>MEAL_MAX_KCAL)warn.push(Math.round(n(est.calories))+' kcal in un solo pasto');
  if(warn.length){est.implausibile=warn.join(' · ');est.confidence='bassa';}
  return est;
@@ -2122,13 +2193,13 @@ async function estimateMealFromPhoto(base64,mediaType,noteText){
 async function saveMealToLog(date,estimate){
  pushMeal(date,estimate);
  // Se il giorno ha gia' la survey compilata, un pasto aggiunto dopo deve entrare SUBITO nel
- // totale — stessa logica foto->qty di saveNutrition/rNutSummary (calcDailyMacrosFromPhotos +
- // 400kcal se giorno allenato), riusata qui e non duplicata.
+ // totale — stessa logica foto->qty di saveNutrition/rNutSummary (calcDailyMacrosFromPhotos),
+ // riusata qui e non duplicata. Il `+400 kcal se giorno allenato` che stava anche qui e' stato
+ // rimosso il 06/08/2026 insieme al gemello in rNutSummary: vedi li' il perche'.
  if(S.aiDB.nutritionLog&&S.aiDB.nutritionLog[date]&&!S.aiDB.nutritionLog[date].skipped){
   var photoMacros=calcDailyMacrosFromPhotos(date);
   if(photoMacros){
    var kcal=Math.round(photoMacros.calories)||0;
-   if(hadWorkoutOn(date))kcal=Math.round(kcal+400);
    Object.assign(S.aiDB.nutritionLog[date],{
     protein_g:Math.round(photoMacros.protein_g)||0,
     carbs_g:Math.round(photoMacros.carbs_g)||0,
