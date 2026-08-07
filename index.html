@@ -95,7 +95,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-06 · target letto dal feed'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-07 · stima pasto da testo, fix troncamento'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -2104,15 +2104,21 @@ async function estimateMealFromText(description){
  // Sonnet, non Haiku (25/07): stimare un pasto da testo richiede conoscenza del cibo — Haiku
  // sottostimava sistematicamente. Resta Sonnet anche dopo il 04/08 (Opus va al ramo foto, dove
  // il collo di bottiglia e' la vista): qui il lavoro e' conoscenza del cibo, non percezione.
- // max_tokens 3000 (era 2000): i componenti allungano l'output e su Sonnet 5 il thinking e'
- // dentro il budget — sotto ~1200 il JSON troncava gia' prima di aggiungerli.
+ // max_tokens 8000 (era 3000, prima 2000): su Sonnet 5 il thinking sta DENTRO il budget, e dal
+ // 06/08 le regole cottura lo fanno ragionare di piu' prima di scrivere (dedurre bollito/griglia/
+ // crudo per decidere i grassi aggiunti). A 3000 il JSON usciva tagliato a meta' — sintomo
+ // "JSON Parse error: Unterminated string", che sembra un errore di formato e invece e' un
+ // troncamento. Si paga l'output davvero generato, quindi alzare il tetto non costa se non serve.
  var resp=await fetch(AI_PROXY_URL,{
   method:'POST',
   headers:{'content-type':'application/json','x-proxy-token':getApiKey()},
-  body:JSON.stringify({model:'claude-sonnet-5',max_tokens:3000,system:MEAL_RULES,messages:[{role:'user',content:prompt}]})
+  body:JSON.stringify({model:'claude-sonnet-5',max_tokens:8000,system:MEAL_RULES,messages:[{role:'user',content:prompt}]})
  });
  var data=await resp.json();
  if(!resp.ok)throw new Error('HTTP '+resp.status+(data&&data.error&&data.error.message?' — '+data.error.message:''));
+ // Il troncamento va DETTO, non lasciato arrivare come errore di parsing: sono due diagnosi
+ // diverse (alzare il tetto vs il modello ha scritto male) e la seconda manda fuori strada.
+ if(data.stop_reason==='max_tokens')throw new Error('Risposta troncata (max_tokens): riprova o descrivi il pasto in modo piu breve');
  var block=data.content&&data.content.find(function(b){return b.type==='text';});
  if(!block)throw new Error('Nessuna risposta');
  return reconcileMealKcal(JSON.parse(block.text.replace(/```json|```/g,'').trim()));
@@ -2173,6 +2179,7 @@ async function estimateMealFromPhoto(base64,mediaType,noteText){
  });
  var data=await resp.json();
  if(!resp.ok)throw new Error('HTTP '+resp.status+(data&&data.error&&data.error.message?' — '+data.error.message:''));
+ if(data.stop_reason==='max_tokens')throw new Error('Risposta troncata (max_tokens): riprova con una foto sola per volta');
  var block=data.content&&data.content.find(function(b){return b.type==='text';});
  if(!block)throw new Error('Nessuna risposta');
  return reconcileMealKcal(JSON.parse(block.text.replace(/```json|```/g,'').trim()));
