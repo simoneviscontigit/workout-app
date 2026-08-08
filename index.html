@@ -1959,18 +1959,62 @@ function newMealId(){
  return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
 }
 var MEAL_DUP_WINDOW_MS=15*60*1000;
+// Sopra questa somiglianza (Jaccard sulle parole di contenuto) due pasti dello stesso
+// giorno sono sospetti. Tarata sui 42 giorni di storico reale: isola le due coppie vere
+// del 04/08 senza toccare nient'altro. Mirror di `pasti_check.SOGLIA` lato Sumi.
+var MEAL_SIM_THRESHOLD=0.30;
 // true = pasto aggiunto, false = scartato perche' e' il reinvio della stessa cosa. Il
 // confronto e' sulla descrizione (la stima puo' variare di qualche kcal fra due chiamate,
 // il piatto no) dentro una finestra: due piatti identici a distanza di ore restano due pasti.
+// Somiglianza fra due descrizioni come INSIEMI DI PAROLE, non come stringhe. Gemello di
+// `pasti_check.somiglianza()` lato Sumi (workout-coach/pasti_check.py): se cambia la
+// soglia qui va cambiata anche là, sennò l'app accetta un pasto che il recap segnala.
+var MEAL_SIM_STOP=(' di a da in con su per tra fra il lo la i gli le un uno una del della dei delle'
+ +' al alla ai alle dal dalla nel nella sul sulla e o ed che non come tipo circa totali totale'
+ +' cotto cotta cotti cotte grammi porzione piatto servito servita stima stimato stimata sono'
+ +' anche molto poco piu meno').trim().split(/\s+/);
+function mealWords(s){
+ var out={},w=(s||'').toLowerCase().replace(/[^a-zàèéìòùáíóú ]/g,' ').split(/\s+/);
+ for(var i=0;i<w.length;i++)if(w[i].length>3&&MEAL_SIM_STOP.indexOf(w[i])<0)out[w[i]]=1;
+ return Object.keys(out);
+}
+function mealSimilarity(a,b){
+ var A=mealWords(a),B=mealWords(b);
+ if(!A.length||!B.length)return 0;
+ var setB={},inter=0,i;
+ for(i=0;i<B.length;i++)setB[B[i]]=1;
+ for(i=0;i<A.length;i++)if(setB[A[i]])inter++;
+ return inter/(A.length+B.length-inter);
+}
 function pushMeal(date,estimate){
  if(!S.aiDB.mealLog)S.aiDB.mealLog={};
  if(!S.aiDB.mealLog[date])S.aiDB.mealLog[date]=[];
  var now=Date.now(),desc=(estimate&&estimate.foodDescription)||'';
- var dup=S.aiDB.mealLog[date].some(function(m){
-  if(!m||m.foodDescription!==desc||!desc)return false;
+ // 08/08/2026 — qui il confronto era `m.foodDescription!==desc`, cioè MATCH ESATTO del
+ // testo, e per costruzione non poteva vedere il doppione vero: la stessa foto stimata
+ // due volte produce due descrizioni DIVERSE ("crema al pesto" / "crema di zucchine e
+ // basilico", base 250g / 240g). Il 04/08 sono così entrate due pizze per una mangiata,
+ // il giorno è finito a 3883 kcal invece di ~1980 e il verdetto della settimana si è
+ // ribaltato da "deficit" a "mantenimento". Ora il confronto è semantico: se il piatto
+ // somiglia a uno già registrato di recente, NON si salva in silenzio — si CHIEDE.
+ var simile=null;
+ S.aiDB.mealLog[date].forEach(function(m){
+  if(!m||!desc||simile)return;
   var t=Date.parse(m.loggedAt);
-  return isFinite(t)&&(now-t)<MEAL_DUP_WINDOW_MS;
+  if(!isFinite(t)||(now-t)>=MEAL_DUP_WINDOW_MS)return;
+  if(m.foodDescription===desc||mealSimilarity(m.foodDescription,desc)>=MEAL_SIM_THRESHOLD)simile=m;
  });
+ // Doppione esatto: era già scartato muto e resta così (è il doppio tap sullo stesso
+ // preventivo, non c'è niente da chiedere). Doppione SOMIGLIANTE: la domanda è d'obbligo,
+ // perché due piatti uguali davvero esistono — Simone cucina la stessa cosa a pranzo e a
+ // cena. Scartarlo da solo perderebbe un pasto vero, tenerlo raddoppia la giornata.
+ var dup=simile&&simile.foodDescription===desc;
+ if(!dup&&simile){
+  var quando=new Date(simile.loggedAt).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  if(!confirm('Alle '+quando+' hai già registrato un pasto molto simile:\n\n"'
+   +(simile.foodDescription||'').slice(0,140)+'"\n\nÈ un SECONDO piatto?\n\n'
+   +'OK = sì, aggiungilo · Annulla = era lo stesso, non registrarlo'))return false;
+ }
  if(dup)return false;
  S.aiDB.mealLog[date].push(Object.assign({},estimate,{loggedAt:new Date().toISOString(),mealId:newMealId()}));
  return true;
