@@ -95,7 +95,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-07 · stima pasto da testo, fix troncamento'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-09 · skip a scadenza, copertura + cardio'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -114,6 +114,12 @@ const DB={
   {id:'p5',cat:'push',name:'Elevated Pike Push-up',video:'Pike push-up su rialzo.mp4',
    desc:'Piedi su sedia, corpo a V stretta, fianchi alti. Scendi con la testa verso il suolo tra le mani. Movimento verticale puro — spalle, non petto.',
    muscles:'Spalle ant., Tricipiti',reps:8,repsMax:11,sets:4,restSec:90},
+  {id:'p6',cat:'push',name:'Band Chest Fly',
+   desc:'Elastico ancorato DIETRO a altezza petto (o passato dietro la schiena). Braccia quasi tese, gomiti morbidi e fissi. Chiudi le mani davanti al petto in arco ampio, stringi 1s. Riapri lento 3s sentendo lo stretch. È adduzione: le braccia non spingono, si chiudono.',
+   muscles:'Petto (adduzione)',reps:12,repsMax:16,sets:3,band:'15-25kg',restSec:60},
+  {id:'p7',cat:'push',name:'Band Incline Press',
+   desc:'Elastico sotto i piedi, maniglie all\'altezza delle spalle. Spingi in diagonale alto-avanti a circa 45°, non dritto sopra la testa. Chiudi in alto 1s, abbassa 3s. Colpisce il petto alto, la zona che le flessioni non prendono.',
+   muscles:'Petto alto, Spalle ant.',reps:10,repsMax:14,sets:4,band:'20-30kg',restSec:90},
  ],
  pull:[
   {id:'r1',cat:'pull',name:'Band Bent-over Row',video:'Band bent-over row .mp4',
@@ -132,7 +138,7 @@ const DB={
    desc:'Elastico ancorato basso. Braccio sopra la testa, gomito fisso. Estendi verso l\'alto. Il lungo capo del tricipite è massimamente allungato in questa posizione.',
    muscles:'Tricipiti (lungo capo)',reps:12,repsMax:16,sets:3,band:'15-20kg',restSec:60},
   {id:'r6',cat:'pull',name:'Band Lat Pulldown',video:'Band lat pulldown.mp4',
-   desc:'Elastico ancorato in alto. Ginocchia leggermente piegate, busto stabile. Tira le maniglie verso il petto portando i gomiti giù e indietro. Contrai i dorsali in fondo 1s, risali lento.',
+   desc:'⚠️ ELASTICO DOPPIATO — ancoralo in alto e passa l\'elastico due volte (o legalo corto): a lunghezza piena non c\'è tensione in cima e il carico nominale non conta. In ginocchio o seduto, busto stabile. Tira le maniglie verso il petto portando i gomiti giù e indietro. Contrai i dorsali in fondo 1s, risali lento 3s. Se anche doppiato è leggero, dimmelo: ricalibriamo i kg.',
    muscles:'Dorsali, Bicipiti',reps:12,repsMax:16,sets:4,band:'20-30kg',restSec:90},
  ],
  shoulders:[
@@ -145,6 +151,9 @@ const DB={
   {id:'s3',cat:'shoulders',name:'Face Pull',video:'Face pull con elastico.mp4',
    desc:'Elastico ancorato al viso. Tira verso il naso dividendo le mani verso le orecchie. Gomiti SOPRA le spalle. Salute spalle + deltoide posteriore.',
    muscles:'Deltoide post., Rotatori',reps:15,repsMax:20,sets:3,band:'15-20kg',restSec:60},
+  {id:'s4',cat:'shoulders',name:'Band Rear Delt Fly',
+   desc:'Elastico teso DAVANTI a te ad altezza spalle, braccia tese incrociate. Apri le braccia di lato fino ad allineare le scapole, gomiti quasi dritti. Stringi 1s, torna lento 3s. Niente busto: se ti inclini stai barando col dorso.',
+   muscles:'Deltoide post., Romboidi',reps:15,repsMax:20,sets:3,band:'10-20kg',restSec:60},
  ],
  legs:[
   {id:'l1',cat:'legs',name:'Pistol Squat',video:'Pistol squat.mp4',
@@ -154,17 +163,14 @@ const DB={
    desc:'Piede posteriore su sedia. Scendi col ginocchio anteriore a 90°. Elastico sulle spalle per overload. Busto eretto, spingi col tallone avanti.',
    muscles:'Quadricipiti, Glutei',reps:10,repsMax:14,sets:4,band:'25kg',restSec:120},
   {id:'l3',cat:'legs',name:'Band Squat',video:'Band Squat.mp4',
-   desc:'Elastico sulle spalle. Squat profondo, cosce parallele al suolo. Talloni a terra, ginocchia sui piedi. Variante bilaterale con carico progressivo.',
+   desc:'Elastico sulle spalle. Squat profondo, cosce parallele al suolo. Talloni a terra, ginocchia sui piedi. Variante bilaterale con carico progressivo. POLPACCI: a fine di ogni serie resta in piedi e sali sulle punte più in alto che puoi per 10 ripetizioni — l\'elastico è già sulle spalle, il calf non ha bisogno di un esercizio suo.',
    muscles:'Quadricipiti, Glutei',reps:15,repsMax:20,sets:4,band:'25-35kg',restSec:120},
   {id:'l4',cat:'legs',name:'Band Leg Curl',video:'Band leg curl .mp4',
    desc:'A pancia in giù, elastico ancorato davanti alla caviglia. Curla il tallone verso il gluteo. Contrai il femorale in cima 1s. Abbassa lento 3s.',
    muscles:'Femorali',reps:12,repsMax:16,sets:4,band:'15-25kg',restSec:60},
   {id:'l5',cat:'legs',name:'RDL con Elastico',
-   desc:'Piedi sull\'elastico, presa neutra. Spingi i fianchi indietro mantenendo la schiena piatta e le ginocchia morbide, scendi finché senti lo stretch dei femorali. Risali contraendo i glutei.',
-   muscles:'Femorali, Glutei',reps:12,repsMax:16,sets:3,band:'20-30kg',restSec:90},
-  {id:'l6',cat:'legs',name:'Calf Raise',
-   desc:'In piedi, punte su un rialzo (o piatte). Sali sulle punte il più in alto possibile, pausa 1s in cima, scendi lento sotto il livello del tallone. Elastico sulle spalle per overload se serve.',
-   muscles:'Polpacci',reps:15,repsMax:20,sets:3,restSec:60},
+   desc:'Piedi sull\'elastico, presa neutra. Spingi i fianchi indietro mantenendo la schiena piatta e le ginocchia morbide, scendi finché senti lo stretch dei femorali. Risali contraendo i glutei. POLPACCI: chiudi ogni serie salendo sulle punte per 10 ripetizioni, elastico ancora sotto i piedi.',
+   muscles:'Femorali, Glutei, Polpacci',reps:12,repsMax:16,sets:3,band:'20-30kg',restSec:90},
  ],
  core:[
   {id:'c1', cat:'core',name:'Hollow Body Hold',    video:'core-hollow-body-hold.mp4',    time:30, desc:'Schiena piatta, lombare incollata. Braccia tese sopra la testa, gambe a 30cm. Spalle alzate. Nessun cedimento.',muscles:'Core completo'},
@@ -179,9 +185,9 @@ const DB={
   {id:'c11',cat:'core',name:'Cross Crunch',        video:'core-cross-crunch.mp4',        time:35, desc:'Mani alla nuca. Gomito dx verso ginocchio sn alzando il busto, poi inverti. Lento e controllato — non rimbalzare.',muscles:'Obliqui, Retto'},
   {id:'c12',cat:'core',name:'Mountain Climber',    video:'core-mountain-climber.mp4',    time:35, desc:'Plank braccia tese. Porta il ginocchio al petto alternando, ritmo sostenuto. Bacino stabile — non alzarlo.',muscles:'Core, Cardio'},
   {id:'c13',cat:'core',name:'Twist Plank',         time:40, desc:'Plank su avambracci. Ruota il bacino verso dx quasi a sfiorare il suolo, poi sn. Il core frena il movimento.',muscles:'Obliqui, Core'},
-  {id:'c14',cat:'core',name:'Alternating Side Crunch',video:'core-alternating-side-crunch.mp4',time:35,desc:'Gambe piegate verso dx. Alza il busto verso il ginocchio alto per metà tempo, poi cambia lato. Solo l\'obliquo lavora.',muscles:'Obliqui'},
+  {id:'c14',cat:'core',name:'Side Crunch',video:'core-alternating-side-crunch.mp4',time:35,perSide:true,desc:'Gambe piegate su un lato. Alza il busto verso il ginocchio alto. Solo l\'obliquo lavora — niente slancio di braccia.',muscles:'Obliqui'},
   {id:'c16',cat:'core',name:'Alternating Toe Touch',video:'core-alternating-toe-touch.mp4',time:40, desc:'Sdraiato, gambe tese verso il soffitto. Alza il busto e tocca la punta del piede dx con la mano sn, poi inverti. Torna giù lento.',muscles:'Retto, Obliqui'},
-  {id:'c17',cat:'core',name:'Side Plank',           video:'core-side-plank.mp4',          time:40, desc:'Appoggiati su un avambraccio, corpo in linea retta. Reggi per metà tempo su ogni lato. Fianchi alti, non cedere.',muscles:'Obliqui, Core'},
+  {id:'c17',cat:'core',name:'Side Plank',           video:'core-side-plank.mp4',          time:40, perSide:true, desc:'Appoggiati su un avambraccio, corpo in linea retta. Fianchi alti, non cedere. Spalla impilata sul gomito.',muscles:'Obliqui, Core'},
   {id:'c19',cat:'core',name:'Leg Raise',            video:'core-leg-raise.mp4',           time:40, desc:'Sdraiato, mani sotto i glutei. Tieni le gambe tese e alzale a 90°, abbassa lento fermandoti a 15cm da terra. Lombare incollata.',muscles:'Addominali bassi'},
   {id:'c20',cat:'core',name:'Double Crunch',        video:'core-double-crunch.mp4',       time:35, desc:'Soleva contemporaneamente spalle e ginocchia verso il centro. Le due metà del corpo si avvicinano — contrai forte in cima prima di abbassare.',muscles:'Retto completo'},
   {id:'c22',cat:'core',name:'Plank Jack',           video:'core-plank-jack.mp4',          time:35, desc:'Posizione plank braccia tese. Salta aprendo e chiudendo i piedi (jumping jack). Core stabile, bacino fermo, non oscillare.',muscles:'Core, Cardio'},
@@ -190,6 +196,16 @@ const DB={
   {id:'c25',cat:'core',name:'V-sit',                time:30, desc:'Seduto, gambe a 45° e busto inclinato indietro — forma a V. Braccia tese parallele alle gambe. Tieni la posizione. Il core regge tutto.',muscles:'Core completo, Flessori anca'},
   {id:'c26',cat:'core',name:'Flutter Kick',         video:'core-flutter-kick.mp4',        time:40, desc:'Sdraiato, gambe a 45°. Scalcia alternando in ritmo (flutter kick) portando le braccia verso la coscia che scende. Ritmo cadenzato.',muscles:'Addominali bassi, Obliqui'},
   {id:'c28',cat:'core',name:'Vertical Scissors',    video:'core-vertical-scissors.mp4',   time:40, desc:'Sdraiato, gambe tese al soffitto. Abbassa una gamba quasi a terra mentre l\'altra resta su. Alterna il movimento in forbice verticale.',muscles:'Addominali bassi, Flessori'},
+ ],
+ // ─ Finisher cardio: un blocco corto a fine seduta, ruota per giorno (09/08/2026).
+ //   Volutamente breve (3×30s): con recupero percepito basso il cardio serve come spesa,
+ //   non come seconda seduta. Se il recupero risale si alzano i round, non l'intensità.
+ cardio:[
+  {id:'k1',cat:'cardio',name:'Burpee',            time:30, desc:'Squat, mani a terra, gambe indietro in plank, flessione (o solo petto a terra), torna in squat e salta con le braccia sopra. Ritmo costante — meglio continuo e controllato che veloce e a strappi.',muscles:'Full body, Cardio'},
+  {id:'k2',cat:'cardio',name:'Jump Squat',        time:30, desc:'Squat fino a coscia parallela e salta in alto. Atterra morbido sulle punte scendendo subito nello squat successivo. Ginocchia allineate ai piedi.',muscles:'Gambe, Cardio'},
+  {id:'k3',cat:'cardio',name:'High Knees',        time:30, desc:'Corsa sul posto portando le ginocchia sopra il bacino. Busto eretto, appoggio sull\'avampiede, braccia che accompagnano. Frequenza alta.',muscles:'Cardio, Flessori anca'},
+  {id:'k4',cat:'cardio',name:'Skater Jump',       time:30, desc:'Balzo laterale da un piede all\'altro, la gamba libera incrocia dietro. Atterra e assorbi in equilibrio prima di ripartire. Lavora anche i glutei medi.',muscles:'Cardio, Glutei medi'},
+  {id:'k5',cat:'cardio',name:'Shadow Box',        time:30, desc:'In guardia, gambe attive. Combinazioni di diretti e ganci a ritmo costante, ruotando il busto. Opzione a basso impatto — usala se le articolazioni sono cariche.',muscles:'Cardio, Spalle, Core'},
  ],
  // ─ Circuiti predefiniti: seq = IDs degli esercizi, 'B' = pausa 30s
  coreCircuits:[
@@ -208,6 +224,23 @@ const DB={
  ]
 };
 
+// Famiglie di movimento del core: dentro UN circuito ne passa una sola per famiglia.
+// Serve perché i circuiti scritti a mano ripetevano lo stesso movimento con nomi diversi
+// (cc3: Leg Raise + Vertical Scissors + Horizontal Scissors = tre volte la stessa cosa).
+const CORE_FAM={
+ c19:'legraise', c28:'legraise', c26:'legraise', c10:'legraise',
+ c20:'tuck',     c9:'tuck',
+ c2:'vup',       c16:'vup',
+ c4:'diagonal',  c11:'diagonal', c24:'diagonal',
+};
+// Rimpiazzi pescati quando un doppione viene scartato: esercizi validi che nessun
+// circuito usava (c9/c24/c26 erano nel DB e non uscivano mai).
+const CORE_SPARE=['c9','c24','c26','c5','c7','c17','c23','c25'];
+
+// Round del finisher cardio (30s lavoro + 30s pausa). Tenuto basso di proposito:
+// con recupero percepito in calo il cardio deve aggiungere spesa, non fatica da smaltire.
+const CARDIO_ROUNDS=3;
+
 // Varianti chiaro/scuro per colore giorno (split color → palette)
 const COLOR_VARIANTS={
  '#ef4444':{light:'#fca5a5',dark:'#991b1b'}, // PUSH — rosso
@@ -217,12 +250,16 @@ const COLOR_VARIANTS={
  '#f59e0b':{light:'#fde68a',dark:'#b45309'}, // CORE — ambra
 };
 const PLAN=[
- {id:'push', name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:1},must:['p4'],   desc:'Petto · Tricipiti · Spalle'},
- {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4},            must:['r3','r6'],desc:'Dorsali · Bicipiti (curl) · Braccia'},
- {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:4},            must:['l4','l6'],desc:'Quadricipiti · Glutei · Femorali'},
- {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:1},must:['p1'],   desc:'Petto · Tricipiti · Spalle'},
- {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:3,shoulders:1},must:['r4'],desc:'Dorsali · Bicipiti (hammer) + Spalle'},
- {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:1,legs:1,shoulders:1},must:['l4'],desc:'Corpo completo · Mix intelligente'},
+ // Slot allargati il 09/08/2026: il DB ha ora 7 push / 6 pull / 4 spalle / 5 gambe e le sedute
+ // possono durare di più purché tocchino muscoli diversi. I `must` garantiscono ciò che prima
+ // usciva per caso o non usciva mai: spinta orizzontale + inclinata, tirata verticale, deltoide
+ // posteriore. Ogni seduta chiude con circuito core + finisher cardio.
+ {id:'push', name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:4,shoulders:1},must:['p4','p7','s3'],desc:'Petto (piano + inclinato) · Tricipiti · Delt. post.'},
+ {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:5},            must:['r6','r3'],    desc:'Dorsali (verticale + orizzontale) · Bicipiti'},
+ {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:4},            must:['l3','l4'],    desc:'Quadricipiti · Glutei · Femorali · Polpacci'},
+ {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:2},must:['p1','p6','s1'],desc:'Petto (adduzione) · Tricipiti · Spalle'},
+ {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4,shoulders:1},must:['r4','s4'],    desc:'Dorsali · Bicipiti (hammer) · Delt. post.'},
+ {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:2,legs:1,shoulders:1},must:['l3'],desc:'Corpo completo · Mix intelligente'},
 ];
 
 // ─── MODALITÀ RECUPERO (post-intervento) ─────────────────────────────────────
@@ -237,7 +274,7 @@ const RECOVERY_PHASES=[
  {ph:3,fromDay:20,toDay:29,mult:0.9, setsAdj:0, maxMin:3,label:'Costruzione',  note:'Selezione esercizi verso normale · risali al carico pieno'},
 ];
 // Fase minima ammessa per esercizio (1=sicuro da g10, 2=da g15, 3=da g20). Default 1.
-const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3, r1:3,r2:2,r3:1,r4:1,r5:2,r6:2, s1:3,s2:1,s3:2, l1:3,l2:2,l3:2,l4:2,l5:3,l6:1};
+const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2, r1:3,r2:2,r3:1,r4:1,r5:2,r6:2, s1:3,s2:1,s3:2,s4:1, l1:3,l2:2,l3:2,l4:2,l5:3, k1:9,k2:9,k3:9,k4:9,k5:3};
 function recoveryDayN(){return Math.floor((Date.now()-new Date(RECOVERY_OP_DATE+'T00:00:00'))/86400000);}
 function recoveryActive(){var rm=S.aiDB&&S.aiDB.recoveryMode;return !!(rm&&rm.active);}
 // Fase corrente {ph,mult,setsAdj,maxMin,label,note,dayN,waiting} o null se non attiva / ciclo finito.
@@ -315,7 +352,7 @@ function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 
 // ─── MEDIA ───────────────────────────────────────────────────────────────────
 function imgFb(ex){
- var cc={push:'#ef4444',pull:'#8b5cf6',shoulders:'#818cf8',legs:'#14b8a6',core:'#f59e0b'};
+ var cc={push:'#ef4444',pull:'#8b5cf6',shoulders:'#818cf8',legs:'#14b8a6',core:'#f59e0b',cardio:'#22c55e'};
  var col=cc[ex.cat]||'#52525b';
  var icon=ex.isCore?'':'';
  return '<div class="img-fb" style="display:flex;background:'+col+'15;border:1px solid '+col+'30"><span style="font-size:40px">'+icon+'</span><span style="color:'+col+';font-size:12px;font-weight:700">'+ex.muscles+'</span></div>';
@@ -428,7 +465,30 @@ function computeProgression(session){
   sv('ai',S.aiDB);
  }catch(e){console.error('computeProgression:',e);}
 }
+// Uno skip dura SKIP_DAYS giorni, poi l'esercizio rientra da solo.
+// Prima del 09/08/2026 `skipped` era un array di id senza scadenza: un "salta" per un
+// fastidio di giornata bandiva l'esercizio per sempre e non c'era modo di rimetterlo.
+// Il risultato misurato: 14 esercizi su 20 fuori dal generatore (tutte le gambe, tutte
+// le spalle, il petto con elastico), il giorno LEGS che non aveva più niente da proporre.
+// `skipLog` è la scadenza per id; un id senza scadenza è un residuo legacy e viene liberato.
+const SKIP_DAYS=14;
+function pruneSkips(){
+ var log=S.aiDB.skipLog||{},now=Date.now(),keep=[],freed=[];
+ (S.skipped||[]).forEach(function(id){
+  var until=log[id];
+  if(until&&Date.parse(until)>now)keep.push(id);else freed.push(id);
+ });
+ Object.keys(log).forEach(function(id){if(!(Date.parse(log[id])>now))delete log[id];});
+ if(freed.length){
+  console.log('[skip] rientrati nel pool:',freed.join(', '));
+  S.skipped=keep;S.aiDB.skipped=keep;S.aiDB.skipLog=log;
+  S.aiDB.skippedUpdatedAt=new Date().toISOString(); // timbro fresco: vince sul vecchio array su Drive
+  sv('sk',keep);sv('ai',S.aiDB);
+ }
+ return keep;
+}
 function genWorkout(splitIdx,skipped){
+ skipped=pruneSkips();
  var split=PLAN[splitIdx%6];
  var adapt=S.aiDB.adaptation||{};
  var avoid=adapt.avoidExercises||[];
@@ -453,14 +513,48 @@ function genWorkout(splitIdx,skipped){
  // Scegli un circuito core casuale e costruisci la sequenza
  var circuit=DB.coreCircuits[splitIdx%DB.coreCircuits.length]; // ruota per giorno → varietà settimanale
  var coreById={};DB.core.forEach(function(e){coreById[e.id]=e;});
- var core=circuit.seq.map(function(id,idx){
-  if(id==='B') return {id:'brk'+idx,cat:'core',name:'RIPOSO',desc:'Respira. Prossimo blocco tra poco.',muscles:'',isBreak:true,isCore:true,isTime:true,time:30,sets:1};
-  var e=coreById[id];
-  if(!e)return null;
-  var adapted=applyAdaptation(Object.assign({},e,{isCore:true,isTime:true,sets:1}));
-  return adapted;
+ // 1) dedup per famiglia di movimento: la seconda variante della stessa famiglia
+ //    viene sostituita da un esercizio di riserva mai usato dal circuito
+ var famSeen={},seqUsed={},seq=circuit.seq.map(function(id){
+  if(id==='B')return id;
+  var fam=CORE_FAM[id];
+  if(fam&&famSeen[fam]){
+   var sub=CORE_SPARE.find(function(s){
+    return coreById[s]&&!seqUsed[s]&&circuit.seq.indexOf(s)<0&&!(CORE_FAM[s]&&famSeen[CORE_FAM[s]]);
+   });
+   if(sub){id=sub;fam=CORE_FAM[sub];}
+   else return null; // nessun rimpiazzo pulito: meglio un esercizio in meno di un doppione
+  }
+  if(fam)famSeen[fam]=1;
+  seqUsed[id]=1;
+  return id;
  }).filter(Boolean);
- return{split:split,all:exercises.concat(core),circuit:circuit};
+ // 2) espansione: gli unilaterali diventano DUE blocchi, metà tempo ciascuno,
+ //    così il secondo lato non dipende dal fatto che l'atleta se lo ricordi
+ var core=[];
+ seq.forEach(function(id,idx){
+  if(id==='B'){core.push({id:'brk'+idx,cat:'core',name:'RIPOSO',desc:'Respira. Prossimo blocco tra poco.',muscles:'',isBreak:true,isCore:true,isTime:true,time:30,sets:1});return;}
+  var e=coreById[id];
+  if(!e)return;
+  var base=applyAdaptation(Object.assign({},e,{isCore:true,isTime:true,sets:1}));
+  if(!e.perSide){core.push(base);return;}
+  var half=Math.max(15,Math.round((base.time||40)/2));
+  core.push(Object.assign({},base,{id:e.id+'-L1',name:e.name+' · 1° lato',time:half,perSide:true}));
+  core.push(Object.assign({},base,{id:e.id+'-L2',name:e.name+' · 2° lato',time:half,perSide:true,desc:'CAMBIA LATO. '+base.desc}));
+ });
+ // 3) finisher cardio: blocco corto in coda, ruota per giorno
+ var nk=DB.cardio.length,cardioEx=null,cardio=[];
+ for(var ki=0;ki<nk&&!cardioEx;ki++){
+  var cand=DB.cardio[(splitIdx+ki)%nk];
+  if(cand&&!skipped.includes(cand.id)&&!avoid.includes(cand.id)&&recoveryAllows(cand))cardioEx=cand;
+ }
+ if(cardioEx){
+  for(var cr=0;cr<CARDIO_ROUNDS;cr++){
+   cardio.push(Object.assign({},cardioEx,{isCore:true,isTime:true,isCardio:true,sets:1,time:cardioEx.time||30}));
+   if(cr<CARDIO_ROUNDS-1)cardio.push({id:'kbrk'+cr,cat:'cardio',name:'RIPOSO',desc:'Respira. Prossimo round tra poco.',muscles:'',isBreak:true,isCore:true,isTime:true,isCardio:true,time:30,sets:1});
+  }
+ }
+ return{split:split,all:exercises.concat(core).concat(cardio),circuit:circuit};
 }
 function buildSteps(all){
  var s=[];
@@ -578,6 +672,10 @@ function mergeDown(dd){
  S.aiDB.loads=mergeByKey(S.aiDB.loads,r.loads,'updatedAt');
  // LAST-WINS scalari timbrati (esercizi saltati, indice rotazione split)
  if(Array.isArray(r.skipped)&&newer(r.skippedUpdatedAt,S.aiDB.skippedUpdatedAt)){S.skipped=r.skipped;S.aiDB.skipped=r.skipped;S.aiDB.skippedUpdatedAt=r.skippedUpdatedAt;}
+ // UNION delle scadenze skip: uno skip messo su un altro device non deve sparire, ma un id
+ // senza scadenza resta legacy e `pruneSkips` lo libera comunque.
+ if(r.skipLog&&typeof r.skipLog==='object'){var sl=S.aiDB.skipLog||{};for(var _k in r.skipLog){if(!sl[_k]||_ts(r.skipLog[_k])>_ts(sl[_k]))sl[_k]=r.skipLog[_k];}S.aiDB.skipLog=sl;}
+ if(typeof pruneSkips==='function')pruneSkips();
  if(typeof r.splitIdx==='number'&&newer(r.splitIdxUpdatedAt,S.aiDB.splitIdxUpdatedAt)){S.splitIdx=r.splitIdx;S.aiDB.splitIdx=r.splitIdx;S.aiDB.splitIdxUpdatedAt=r.splitIdxUpdatedAt;}
  // LAST-WINS timbrato (modalità recupero): vince il device che ha timbrato updatedAt per ultimo
  if(r.recoveryMode&&newer(r.recoveryMode.updatedAt,S.aiDB.recoveryMode&&S.aiDB.recoveryMode.updatedAt))S.aiDB.recoveryMode=r.recoveryMode;
@@ -598,6 +696,7 @@ async function loadData(){
   v=localStorage.getItem('ai');if(v){var _ai=JSON.parse(v);S.aiDB=Object.assign({sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},_ai);if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};if(!S.aiDB.nutritionAdvice)S.aiDB.nutritionAdvice='';if(!S.aiDB.mealLog)S.aiDB.mealLog={};}
   if(!S.aiDB.profile)S.aiDB.profile={peso:74,altezza:182,eta:30,obiettivo:'massa'};
   if(typeof recoveryInit==='function')recoveryInit(); // modalità recupero: init una-tantum + auto-uscita g30
+  if(typeof pruneSkips==='function')pruneSkips(); // libera gli skip scaduti e i ban legacy senza scadenza
   // Migrazione: ripristina da array nutrition legacy (preferisci dati reali su skipped)
   if(S.aiDB.nutrition&&S.aiDB.nutrition.length){
    S.aiDB.nutrition.forEach(function(n){
@@ -1345,6 +1444,9 @@ function wBack(){
 function skipExercise(){
  clearInterval(TI);var step=S.wSteps[S.wStepIdx];if(step.type!=='work')return;
  var ex=step.ex;var ns=S.skipped.concat([ex.id]);S.skipped=ns;sv('sk',ns);
+ var log=S.aiDB.skipLog||{};
+ log[ex.id]=new Date(Date.now()+SKIP_DAYS*864e5).toISOString(); // scade: niente ban a vita
+ S.aiDB.skipLog=log;
  S.aiDB.skipped=ns;S.aiDB.skippedUpdatedAt=new Date().toISOString();sv('ai',S.aiDB); // timbro edit reale (last-wins cross-device)
  var pool=(DB[ex.cat]||[]).filter(function(e){return !ns.includes(e.id)&&!S.wEx.find(function(x){return x.id===e.id;});});
  var rep=shuf(pool)[0];
