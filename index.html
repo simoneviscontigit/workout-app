@@ -237,9 +237,12 @@ const CORE_FAM={
 // circuito usava (c9/c24/c26 erano nel DB e non uscivano mai).
 const CORE_SPARE=['c9','c24','c26','c5','c7','c17','c23','c25'];
 
-// Round del finisher cardio (30s lavoro + 30s pausa). Tenuto basso di proposito:
-// con recupero percepito in calo il cardio deve aggiungere spesa, non fatica da smaltire.
-const CARDIO_ROUNDS=3;
+// Finisher cardio: CARDIO_N esercizi DIVERSI (30s lavoro + 30s pausa), ripetuti CARDIO_ROUNDS
+// volte. La rotazione avanza di CARDIO_N per giorno, così due sedute di fila non si somigliano.
+// Un solo giro di proposito: con recupero percepito in calo il cardio deve aggiungere spesa,
+// non fatica da smaltire. Se il recupero risale si alza CARDIO_ROUNDS, non l'intensità.
+const CARDIO_N=3;
+const CARDIO_ROUNDS=1;
 
 // Varianti chiaro/scuro per colore giorno (split color → palette)
 const COLOR_VARIANTS={
@@ -543,16 +546,17 @@ function genWorkout(splitIdx,skipped){
   core.push(Object.assign({},base,{id:e.id+'-L2',name:e.name+' · 2° lato',time:half,perSide:true,desc:'CAMBIA LATO. '+base.desc}));
  });
  // 3) finisher cardio: blocco corto in coda, ruota per giorno
- var nk=DB.cardio.length,cardioEx=null,cardio=[];
- for(var ki=0;ki<nk&&!cardioEx;ki++){
-  var cand=DB.cardio[(splitIdx+ki)%nk];
-  if(cand&&!skipped.includes(cand.id)&&!avoid.includes(cand.id)&&recoveryAllows(cand))cardioEx=cand;
+ var nk=DB.cardio.length,pickK=[],cardio=[];
+ for(var ki=0;ki<nk&&pickK.length<CARDIO_N;ki++){
+  var cand=DB.cardio[(splitIdx*CARDIO_N+ki)%nk];
+  if(cand&&!skipped.includes(cand.id)&&!avoid.includes(cand.id)&&recoveryAllows(cand)&&pickK.indexOf(cand)<0)pickK.push(cand);
  }
- if(cardioEx){
-  for(var cr=0;cr<CARDIO_ROUNDS;cr++){
-   cardio.push(Object.assign({},cardioEx,{isCore:true,isTime:true,isCardio:true,sets:1,time:cardioEx.time||30}));
-   if(cr<CARDIO_ROUNDS-1)cardio.push({id:'kbrk'+cr,cat:'cardio',name:'RIPOSO',desc:'Respira. Prossimo round tra poco.',muscles:'',isBreak:true,isCore:true,isTime:true,isCardio:true,time:30,sets:1});
-  }
+ for(var cr=0;cr<CARDIO_ROUNDS;cr++){
+  pickK.forEach(function(k,kj){
+   cardio.push(Object.assign({},k,{isCore:true,isTime:true,isCardio:true,sets:1,time:k.time||30}));
+   var last=(cr===CARDIO_ROUNDS-1&&kj===pickK.length-1);
+   if(!last)cardio.push({id:'kbrk'+cr+'-'+kj,cat:'cardio',name:'RIPOSO',desc:'Respira. Prossimo esercizio tra poco.',muscles:'',isBreak:true,isCore:true,isTime:true,isCardio:true,time:30,sets:1});
+  });
  }
  return{split:split,all:exercises.concat(core).concat(cardio),circuit:circuit};
 }
