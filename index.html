@@ -95,7 +95,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-09c · video 9 esercizi + salta giorno + Shadow Box rimosso'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-09d · video: frame visibile anche senza autoplay, tap per far partire'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -363,12 +363,17 @@ function mediaErr(el){
  el.style.display='none';
  var fb=el.nextElementSibling;if(fb)fb.style.display='flex';
 }
+function mediaTap(el){ if(el.paused){el.muted=true;el.play().catch(function(){});} else el.pause(); }
 function mediaHtml(ex){
  var fb=imgFb(ex);
  if(!ex.video&&!ex.img)return fb;
  var fbH=fb.replace('display:flex','display:none');
  if(ex.video)
-  return '<video class="ex-media" src="'+encodeURIComponent(ex.video.trim())+'" autoplay loop muted playsinline onerror="mediaErr(this)"></video>'+fbH;
+  // preload=metadata + poster implicito: se l'autoplay e' bloccato (iOS in Risparmio
+  // energetico, o riproduzione automatica disattivata in Safari) il frame resta
+  // comunque visibile invece di lasciare un rettangolo vuoto. Il tap fa play/pause:
+  // e' il gesto utente che iOS pretende quando nega l'autoplay.
+  return '<video class="ex-media" src="'+encodeURIComponent(ex.video.trim())+'" autoplay loop muted playsinline preload="metadata" onclick="mediaTap(this)" onerror="mediaErr(this)"></video>'+fbH;
  return '<img class="ex-media" src="'+ex.img+'" alt="" onerror="mediaErr(this)">'+fbH;
 }
 
