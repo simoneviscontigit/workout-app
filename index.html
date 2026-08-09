@@ -95,7 +95,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-09b · video 9 esercizi + Shadow Box rimosso'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-09c · video 9 esercizi + salta giorno + Shadow Box rimosso'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -832,6 +832,18 @@ function updateFloatAI(){
  setTimeout(function(){var el=document.getElementById('float-msgs');if(el)el.scrollTop=el.scrollHeight;},50);
 }
 
+// Salta il giorno: avanza SOLO la rotazione. Non registra nessuna seduta e non tocca
+// carichi/progressione (quelli si muovono dalle reps loggate). Stessa persistenza di
+// finishSession: senza splitIdxUpdatedAt il merge da Drive rimetterebbe il giorno vecchio.
+async function skipDay(){
+ var t=PLAN[S.splitIdx%6],nx=PLAN[(S.splitIdx+1)%6];
+ if(!confirm('Salti '+t.name+' e passi a '+nx.name+'?\n\nNessuna seduta viene registrata.'))return;
+ S.splitIdx=(S.splitIdx||0)+1;
+ S.aiDB.splitIdx=S.splitIdx;S.aiDB.splitIdxUpdatedAt=new Date().toISOString();
+ sv('ai',S.aiDB);await sv('si',String(S.splitIdx));
+ syncToDrive();render();
+}
+
 // ─── HOME ─────────────────────────────────────────────────────────────────────
 function rHome(){
  var t=PLAN[S.splitIdx%6];
@@ -851,6 +863,7 @@ function rHome(){
   +'<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #27272a;padding:14px 16px">'
   +'<span class="lbl" style="font-size:12px">COACH // SIMONE</span>'
   +'<button onclick="go(\'profile\')" style="background:none;border:none;color:#F97316;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:Space Grotesk">GIORNO 0'+((S.splitIdx%6)+1)+'/6 · PROFILO ›</button>'
+  +'<button onclick="skipDay()" style="background:none;border:none;color:#71717a;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:Space Grotesk;padding-left:12px">SALTA ›</button>'
   +'</div>'
   +'<div class="marq-wrap"><span class="marq">'+marqTxt+marqTxt+'</span></div>'
   +'<div style="padding:20px 16px">'
