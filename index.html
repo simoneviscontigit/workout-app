@@ -95,7 +95,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-09 · skip a scadenza, copertura + cardio'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-09b · video 9 esercizi + Shadow Box rimosso'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -114,10 +114,10 @@ const DB={
   {id:'p5',cat:'push',name:'Elevated Pike Push-up',video:'Pike push-up su rialzo.mp4',
    desc:'Piedi su sedia, corpo a V stretta, fianchi alti. Scendi con la testa verso il suolo tra le mani. Movimento verticale puro — spalle, non petto.',
    muscles:'Spalle ant., Tricipiti',reps:8,repsMax:11,sets:4,restSec:90},
-  {id:'p6',cat:'push',name:'Band Chest Fly',
+  {id:'p6',cat:'push',name:'Band Chest Fly',video:'Band Chest Fly.mp4',
    desc:'Elastico ancorato DIETRO a altezza petto (o passato dietro la schiena). Braccia quasi tese, gomiti morbidi e fissi. Chiudi le mani davanti al petto in arco ampio, stringi 1s. Riapri lento 3s sentendo lo stretch. È adduzione: le braccia non spingono, si chiudono.',
    muscles:'Petto (adduzione)',reps:12,repsMax:16,sets:3,band:'15-25kg',restSec:60},
-  {id:'p7',cat:'push',name:'Band Incline Press',
+  {id:'p7',cat:'push',name:'Band Incline Press',video:'Band Incline Press.mp4',
    desc:'Elastico sotto i piedi, maniglie all\'altezza delle spalle. Spingi in diagonale alto-avanti a circa 45°, non dritto sopra la testa. Chiudi in alto 1s, abbassa 3s. Colpisce il petto alto, la zona che le flessioni non prendono.',
    muscles:'Petto alto, Spalle ant.',reps:10,repsMax:14,sets:4,band:'20-30kg',restSec:90},
  ],
@@ -151,7 +151,7 @@ const DB={
   {id:'s3',cat:'shoulders',name:'Face Pull',video:'Face pull con elastico.mp4',
    desc:'Elastico ancorato al viso. Tira verso il naso dividendo le mani verso le orecchie. Gomiti SOPRA le spalle. Salute spalle + deltoide posteriore.',
    muscles:'Deltoide post., Rotatori',reps:15,repsMax:20,sets:3,band:'15-20kg',restSec:60},
-  {id:'s4',cat:'shoulders',name:'Band Rear Delt Fly',
+  {id:'s4',cat:'shoulders',name:'Band Rear Delt Fly',video:'Band Rear Delt Fly.mp4',
    desc:'Elastico teso DAVANTI a te ad altezza spalle, braccia tese incrociate. Apri le braccia di lato fino ad allineare le scapole, gomiti quasi dritti. Stringi 1s, torna lento 3s. Niente busto: se ti inclini stai barando col dorso.',
    muscles:'Deltoide post., Romboidi',reps:15,repsMax:20,sets:3,band:'10-20kg',restSec:60},
  ],
@@ -168,7 +168,7 @@ const DB={
   {id:'l4',cat:'legs',name:'Band Leg Curl',video:'Band leg curl .mp4',
    desc:'A pancia in giù, elastico ancorato davanti alla caviglia. Curla il tallone verso il gluteo. Contrai il femorale in cima 1s. Abbassa lento 3s.',
    muscles:'Femorali',reps:12,repsMax:16,sets:4,band:'15-25kg',restSec:60},
-  {id:'l5',cat:'legs',name:'RDL con Elastico',
+  {id:'l5',cat:'legs',name:'RDL con Elastico',video:'RDL con elastico.mp4',
    desc:'Piedi sull\'elastico, presa neutra. Spingi i fianchi indietro mantenendo la schiena piatta e le ginocchia morbide, scendi finché senti lo stretch dei femorali. Risali contraendo i glutei. POLPACCI: chiudi ogni serie salendo sulle punte per 10 ripetizioni, elastico ancora sotto i piedi.',
    muscles:'Femorali, Glutei, Polpacci',reps:12,repsMax:16,sets:3,band:'20-30kg',restSec:90},
  ],
@@ -184,7 +184,7 @@ const DB={
   {id:'c10',cat:'core',name:'Horizontal Scissors', video:'core-horizontal-scissors.mp4', time:40, desc:'Gambe a 15-20cm. Incrocia le gambe alternando quale sta sopra — forbice orizzontale. Lombare sempre incollata a terra.',muscles:'Addominali bassi'},
   {id:'c11',cat:'core',name:'Cross Crunch',        video:'core-cross-crunch.mp4',        time:35, desc:'Mani alla nuca. Gomito dx verso ginocchio sn alzando il busto, poi inverti. Lento e controllato — non rimbalzare.',muscles:'Obliqui, Retto'},
   {id:'c12',cat:'core',name:'Mountain Climber',    video:'core-mountain-climber.mp4',    time:35, desc:'Plank braccia tese. Porta il ginocchio al petto alternando, ritmo sostenuto. Bacino stabile — non alzarlo.',muscles:'Core, Cardio'},
-  {id:'c13',cat:'core',name:'Twist Plank',         time:40, desc:'Plank su avambracci. Ruota il bacino verso dx quasi a sfiorare il suolo, poi sn. Il core frena il movimento.',muscles:'Obliqui, Core'},
+  {id:'c13',cat:'core',name:'Twist Plank',         video:'core-twist-plank.mp4',      time:40, desc:'Plank su avambracci. Ruota il bacino verso dx quasi a sfiorare il suolo, poi sn. Il core frena il movimento.',muscles:'Obliqui, Core'},
   {id:'c14',cat:'core',name:'Side Crunch',video:'core-alternating-side-crunch.mp4',time:35,perSide:true,desc:'Gambe piegate su un lato. Alza il busto verso il ginocchio alto. Solo l\'obliquo lavora — niente slancio di braccia.',muscles:'Obliqui'},
   {id:'c16',cat:'core',name:'Alternating Toe Touch',video:'core-alternating-toe-touch.mp4',time:40, desc:'Sdraiato, gambe tese verso il soffitto. Alza il busto e tocca la punta del piede dx con la mano sn, poi inverti. Torna giù lento.',muscles:'Retto, Obliqui'},
   {id:'c17',cat:'core',name:'Side Plank',           video:'core-side-plank.mp4',          time:40, perSide:true, desc:'Appoggiati su un avambraccio, corpo in linea retta. Fianchi alti, non cedere. Spalla impilata sul gomito.',muscles:'Obliqui, Core'},
@@ -193,7 +193,7 @@ const DB={
   {id:'c22',cat:'core',name:'Plank Jack',           video:'core-plank-jack.mp4',          time:35, desc:'Posizione plank braccia tese. Salta aprendo e chiudendo i piedi (jumping jack). Core stabile, bacino fermo, non oscillare.',muscles:'Core, Cardio'},
   {id:'c23',cat:'core',name:'Karate Kid',           time:40, desc:'In piedi. Solleva il ginocchio dx verso il petto ruotando il busto a dx, poi sn verso sn. Ritmo costante, core contratto per l\'equilibrio.',muscles:'Obliqui, Core, Equilibrio'},
   {id:'c24',cat:'core',name:'Unicorn Crunch',       time:35, desc:'Sdraiato, una gamba tesa alzata, braccio opposto teso. Crunch diagonale portando il gomito verso il ginocchio alzato. Alterna ogni rep.',muscles:'Obliqui, Retto'},
-  {id:'c25',cat:'core',name:'V-sit',                time:30, desc:'Seduto, gambe a 45° e busto inclinato indietro — forma a V. Braccia tese parallele alle gambe. Tieni la posizione. Il core regge tutto.',muscles:'Core completo, Flessori anca'},
+  {id:'c25',cat:'core',name:'V-sit',                video:'core-v-sit.mp4',            time:30, desc:'Seduto, gambe a 45° e busto inclinato indietro — forma a V. Braccia tese parallele alle gambe. Tieni la posizione. Il core regge tutto.',muscles:'Core completo, Flessori anca'},
   {id:'c26',cat:'core',name:'Flutter Kick',         video:'core-flutter-kick.mp4',        time:40, desc:'Sdraiato, gambe a 45°. Scalcia alternando in ritmo (flutter kick) portando le braccia verso la coscia che scende. Ritmo cadenzato.',muscles:'Addominali bassi, Obliqui'},
   {id:'c28',cat:'core',name:'Vertical Scissors',    video:'core-vertical-scissors.mp4',   time:40, desc:'Sdraiato, gambe tese al soffitto. Abbassa una gamba quasi a terra mentre l\'altra resta su. Alterna il movimento in forbice verticale.',muscles:'Addominali bassi, Flessori'},
  ],
@@ -202,10 +202,9 @@ const DB={
  //   non come seconda seduta. Se il recupero risale si alzano i round, non l'intensità.
  cardio:[
   {id:'k1',cat:'cardio',name:'Burpee',            time:30, desc:'Squat, mani a terra, gambe indietro in plank, flessione (o solo petto a terra), torna in squat e salta con le braccia sopra. Ritmo costante — meglio continuo e controllato che veloce e a strappi.',muscles:'Full body, Cardio'},
-  {id:'k2',cat:'cardio',name:'Jump Squat',        time:30, desc:'Squat fino a coscia parallela e salta in alto. Atterra morbido sulle punte scendendo subito nello squat successivo. Ginocchia allineate ai piedi.',muscles:'Gambe, Cardio'},
-  {id:'k3',cat:'cardio',name:'High Knees',        time:30, desc:'Corsa sul posto portando le ginocchia sopra il bacino. Busto eretto, appoggio sull\'avampiede, braccia che accompagnano. Frequenza alta.',muscles:'Cardio, Flessori anca'},
-  {id:'k4',cat:'cardio',name:'Skater Jump',       time:30, desc:'Balzo laterale da un piede all\'altro, la gamba libera incrocia dietro. Atterra e assorbi in equilibrio prima di ripartire. Lavora anche i glutei medi.',muscles:'Cardio, Glutei medi'},
-  {id:'k5',cat:'cardio',name:'Shadow Box',        time:30, desc:'In guardia, gambe attive. Combinazioni di diretti e ganci a ritmo costante, ruotando il busto. Opzione a basso impatto — usala se le articolazioni sono cariche.',muscles:'Cardio, Spalle, Core'},
+  {id:'k2',cat:'cardio',name:'Jump Squat',        video:'cardio-jump-squat.mp4',   time:30, desc:'Squat fino a coscia parallela e salta in alto. Atterra morbido sulle punte scendendo subito nello squat successivo. Ginocchia allineate ai piedi.',muscles:'Gambe, Cardio'},
+  {id:'k3',cat:'cardio',name:'High Knees',        video:'cardio-high-knees.mp4',   time:30, desc:'Corsa sul posto portando le ginocchia sopra il bacino. Busto eretto, appoggio sull\'avampiede, braccia che accompagnano. Frequenza alta.',muscles:'Cardio, Flessori anca'},
+  {id:'k4',cat:'cardio',name:'Skater Jump',       video:'cardio-skater-jump.mp4',  time:30, desc:'Balzo laterale da un piede all\'altro, la gamba libera incrocia dietro. Atterra e assorbi in equilibrio prima di ripartire. Lavora anche i glutei medi.',muscles:'Cardio, Glutei medi'},
  ],
  // ─ Circuiti predefiniti: seq = IDs degli esercizi, 'B' = pausa 30s
  coreCircuits:[
@@ -277,7 +276,7 @@ const RECOVERY_PHASES=[
  {ph:3,fromDay:20,toDay:29,mult:0.9, setsAdj:0, maxMin:3,label:'Costruzione',  note:'Selezione esercizi verso normale · risali al carico pieno'},
 ];
 // Fase minima ammessa per esercizio (1=sicuro da g10, 2=da g15, 3=da g20). Default 1.
-const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2, r1:3,r2:2,r3:1,r4:1,r5:2,r6:2, s1:3,s2:1,s3:2,s4:1, l1:3,l2:2,l3:2,l4:2,l5:3, k1:9,k2:9,k3:9,k4:9,k5:3};
+const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2, r1:3,r2:2,r3:1,r4:1,r5:2,r6:2, s1:3,s2:1,s3:2,s4:1, l1:3,l2:2,l3:2,l4:2,l5:3, k1:9,k2:9,k3:9,k4:9};
 function recoveryDayN(){return Math.floor((Date.now()-new Date(RECOVERY_OP_DATE+'T00:00:00'))/86400000);}
 function recoveryActive(){var rm=S.aiDB&&S.aiDB.recoveryMode;return !!(rm&&rm.active);}
 // Fase corrente {ph,mult,setsAdj,maxMin,label,note,dayN,waiting} o null se non attiva / ciclo finito.
