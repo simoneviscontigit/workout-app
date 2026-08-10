@@ -95,7 +95,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-09d · video: frame visibile anche senza autoplay, tap per far partire'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-11 · palestra: carichi senza tetto, passo per attrezzo, stime da tarare'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -108,69 +108,69 @@ const DB={
   {id:'p3',cat:'push',name:'Chair Dips',video:'Dip su sedie.mp4',
    desc:'Due sedie stabili, mani sul bordo. Scendi finché i gomiti superano le spalle. Busto leggermente inclinato avanti per coinvolgere il petto.',
    muscles:'Tricipiti, Petto basso',reps:12,repsMax:16,sets:4,restSec:90},
-  {id:'p4',cat:'push',name:'Band Chest Press',video:'Band chest press.mp4',
-   desc:'Elastico ancorato alla porta a altezza petto. Premi le maniglie avanti con polsi dritti. Abbassa lento 3 secondi. Senti lo stretch del petto in fondo.',
-   muscles:'Petto, Tricipiti',reps:12,repsMax:16,sets:4,band:'15-25kg',restSec:90},
+  {id:'p4',cat:'push',name:'Panca Piana Manubri',video:'Band chest press.mp4',
+   desc:'Panca piana, un manubrio per mano, polsi dritti sopra i gomiti. Scendi lento 3s finche\' i manubri sono all\'altezza del petto, senti lo stretch, poi spingi. Non far sbattere i manubri in cima. Il carico indicato e\' PER MANUBRIO.',
+   muscles:'Petto, Tricipiti',reps:8,repsMax:12,sets:4,band:'20kg',restSec:90},
   {id:'p5',cat:'push',name:'Elevated Pike Push-up',video:'Pike push-up su rialzo.mp4',
    desc:'Piedi su sedia, corpo a V stretta, fianchi alti. Scendi con la testa verso il suolo tra le mani. Movimento verticale puro — spalle, non petto.',
    muscles:'Spalle ant., Tricipiti',reps:8,repsMax:11,sets:4,restSec:90},
-  {id:'p6',cat:'push',name:'Band Chest Fly',video:'Band Chest Fly.mp4',
-   desc:'Elastico ancorato DIETRO a altezza petto (o passato dietro la schiena). Braccia quasi tese, gomiti morbidi e fissi. Chiudi le mani davanti al petto in arco ampio, stringi 1s. Riapri lento 3s sentendo lo stretch. È adduzione: le braccia non spingono, si chiudono.',
-   muscles:'Petto (adduzione)',reps:12,repsMax:16,sets:3,band:'15-25kg',restSec:60},
-  {id:'p7',cat:'push',name:'Band Incline Press',video:'Band Incline Press.mp4',
-   desc:'Elastico sotto i piedi, maniglie all\'altezza delle spalle. Spingi in diagonale alto-avanti a circa 45°, non dritto sopra la testa. Chiudi in alto 1s, abbassa 3s. Colpisce il petto alto, la zona che le flessioni non prendono.',
-   muscles:'Petto alto, Spalle ant.',reps:10,repsMax:14,sets:4,band:'20-30kg',restSec:90},
+  {id:'p6',cat:'push',name:'Croci ai Cavi',video:'Band Chest Fly.mp4',
+   desc:'Cavi alti o medi, un\'impugnatura per mano, un passo avanti. Braccia quasi tese, gomiti morbidi e FISSI per tutto il movimento. Chiudi le mani davanti al petto in arco ampio, stringi 1s. Riapri lento 3s sentendo lo stretch. È adduzione: le braccia non spingono, si chiudono. Carico = per lato.',
+   muscles:'Petto (adduzione)',reps:12,repsMax:16,sets:3,band:'15kg',restSec:60},
+  {id:'p7',cat:'push',name:'Panca Inclinata Manubri',video:'Band Incline Press.mp4',
+   desc:'Schienale a 30-45°, non di piu\': oltre diventa una shoulder press. Manubri all\'altezza delle spalle, spingi in diagonale alto-avanti. Chiudi in alto 1s, abbassa 3s. Colpisce il petto alto, la zona che le flessioni non prendono. Carico PER MANUBRIO.',
+   muscles:'Petto alto, Spalle ant.',reps:8,repsMax:12,sets:4,band:'16kg',restSec:90},
  ],
  pull:[
-  {id:'r1',cat:'pull',name:'Band Bent-over Row',video:'Band bent-over row .mp4',
-   desc:'Piedi sull\'elastico, busto a 45° (schiena piatta!). Tira i gomiti dietro verso l\'anca, non verso il soffitto. Contrai la schiena in cima. Abbassa 3s.',
-   muscles:'Dorsali, Romboidi',reps:12,repsMax:16,sets:4,band:'20-30kg',restSec:90},
-  {id:'r2',cat:'pull',name:'Band Pullover',video:'Band Pullover.mp4',
-   desc:'Elastico ancorato in ALTO sulla porta. Allontanati, braccia tese sopra la testa. Tira in arco verso le cosce mantenendo i gomiti quasi dritti. La tensione è presente da subito.',
-   muscles:'Dorsali, Core',reps:12,repsMax:16,sets:4,band:'15-25kg',restSec:90},
-  {id:'r3',cat:'pull',name:'Biceps Curl',video:'Band Biceps Hammer Curl.mp4',
-   desc:'Piedi sull\'elastico, presa supinata. Gomiti fissi ai fianchi — non muoverli mai. Curla supinando il polso in cima 1s. Abbassa lento 3 secondi.',
-   muscles:'Bicipiti',reps:10,repsMax:14,sets:4,band:'35kg',restSec:60},
-  {id:'r4',cat:'pull',name:'Hammer Curl',video:'Band Biceps Hammer Curl.mp4',
-   desc:'Presa neutra, pollice verso l\'alto per tutta l\'esecuzione. Gomiti fissi. Colpisce brachiale e brachioradiale. Movimento lento e controllato.',
-   muscles:'Bicipiti, Brachiale',reps:12,repsMax:16,sets:3,band:'25-35kg',restSec:60},
-  {id:'r5',cat:'pull',name:'Tricep Overhead',video:'Band Tricep Overhead.mp4',
-   desc:'Elastico ancorato basso. Braccio sopra la testa, gomito fisso. Estendi verso l\'alto. Il lungo capo del tricipite è massimamente allungato in questa posizione.',
-   muscles:'Tricipiti (lungo capo)',reps:12,repsMax:16,sets:3,band:'15-20kg',restSec:60},
-  {id:'r6',cat:'pull',name:'Band Lat Pulldown',video:'Band lat pulldown.mp4',
-   desc:'⚠️ ELASTICO DOPPIATO — ancoralo in alto e passa l\'elastico due volte (o legalo corto): a lunghezza piena non c\'è tensione in cima e il carico nominale non conta. In ginocchio o seduto, busto stabile. Tira le maniglie verso il petto portando i gomiti giù e indietro. Contrai i dorsali in fondo 1s, risali lento 3s. Se anche doppiato è leggero, dimmelo: ricalibriamo i kg.',
-   muscles:'Dorsali, Bicipiti',reps:12,repsMax:16,sets:4,band:'20-30kg',restSec:90},
+  {id:'r1',cat:'pull',name:'Rematore Bilanciere',video:'Band bent-over row .mp4',
+   desc:'Bilanciere, presa prona poco piu\' larga delle spalle, busto a 45° e SCHIENA PIATTA (se si arrotonda, scendi di carico). Tira i gomiti dietro verso l\'anca, non verso il soffitto. Contrai la schiena in cima 1s, abbassa 3s. Carico = bilanciere compreso (bar olimpica 20kg).',
+   muscles:'Dorsali, Romboidi',reps:8,repsMax:12,sets:4,band:'45kg',restSec:100},
+  {id:'r2',cat:'pull',name:'Pullover ai Cavi',video:'Band Pullover.mp4',
+   desc:'Cavo ALTO con barra dritta o corda, un passo indietro, busto leggermente inclinato avanti. Braccia tese sopra, tira in arco verso le cosce tenendo i gomiti quasi dritti — se si piegano diventa un pushdown per i tricipiti. Sono i dorsali che lavorano.',
+   muscles:'Dorsali, Core',reps:10,repsMax:14,sets:3,band:'25kg',restSec:75},
+  {id:'r3',cat:'pull',name:'Curl Manubri',video:'Band Biceps Hammer Curl.mp4',
+   desc:'In piedi, un manubrio per mano, presa supinata. Gomiti fissi ai fianchi — non muoverli mai, se le spalle si alzano stai barando. Curla supinando il polso in cima 1s. Abbassa lento 3 secondi. Carico PER MANUBRIO.',
+   muscles:'Bicipiti',reps:8,repsMax:12,sets:4,band:'12kg',restSec:75},
+  {id:'r4',cat:'pull',name:'Hammer Curl Manubri',video:'Band Biceps Hammer Curl.mp4',
+   desc:'Manubri a presa neutra, pollice verso l\'alto per tutta l\'esecuzione. Gomiti fissi ai fianchi. Colpisce brachiale e brachioradiale. Movimento lento e controllato. Carico PER MANUBRIO, sta sempre >= al curl supinato.',
+   muscles:'Bicipiti, Brachiale',reps:8,repsMax:12,sets:3,band:'14kg',restSec:75},
+  {id:'r5',cat:'pull',name:'Tricep Overhead ai Cavi',video:'Band Tricep Overhead.mp4',
+   desc:'Cavo BASSO con corda, dai le spalle alla macchina, braccia sopra la testa e gomiti FISSI puntati avanti. Estendi verso l\'alto aprendo la corda in cima. Il lungo capo del tricipite è massimamente allungato in questa posizione: e\' li\' che serve il controllo, non il carico.',
+   muscles:'Tricipiti (lungo capo)',reps:8,repsMax:12,sets:3,band:'25kg',restSec:75},
+  {id:'r6',cat:'pull',name:'Lat Machine',video:'Band lat pulldown.mp4',
+   desc:'Seduto, ginocchia bloccate sotto il cuscinetto, presa prona poco piu\' larga delle spalle. Busto fermo, inclinato indietro di pochi gradi e BASTA: se dondoli e\' diventato un rematore. Tira la barra al petto portando i gomiti giu\' e indietro, contrai i dorsali 1s, risali lento 3s in controllo. Con l\'elastico questo esercizio non funzionava: qui si\'.',
+   muscles:'Dorsali, Bicipiti',reps:8,repsMax:12,sets:4,band:'45kg',restSec:100},
  ],
  shoulders:[
-  {id:'s1',cat:'shoulders',name:'Band Shoulder Press',video:'Band shoulder press.mp4',
-   desc:'Piedi sull\'elastico, maniglie alle orecchie. Premi sopra la testa bloccando i gomiti 1s in cima. Abbassa lento 3s. Compound spalle.',
-   muscles:'Deltoide, Tricipiti',reps:10,repsMax:14,sets:4,band:'35kg',restSec:90},
-  {id:'s2',cat:'shoulders',name:'Lateral Raises',video:'Band Lateral Raises.mp4',
-   desc:'Piedi sull\'elastico. Alza le braccia di lato a gomiti semi-flessi. Pausa 1 secondo in alto. Abbassa 3 secondi. Deltoide medio — insostituibile.',
-   muscles:'Deltoide medio',reps:15,repsMax:20,sets:4,band:'10-15kg',restSec:60},
-  {id:'s3',cat:'shoulders',name:'Face Pull',video:'Face pull con elastico.mp4',
-   desc:'Elastico ancorato al viso. Tira verso il naso dividendo le mani verso le orecchie. Gomiti SOPRA le spalle. Salute spalle + deltoide posteriore.',
-   muscles:'Deltoide post., Rotatori',reps:15,repsMax:20,sets:3,band:'15-20kg',restSec:60},
-  {id:'s4',cat:'shoulders',name:'Band Rear Delt Fly',video:'Band Rear Delt Fly.mp4',
-   desc:'Elastico teso DAVANTI a te ad altezza spalle, braccia tese incrociate. Apri le braccia di lato fino ad allineare le scapole, gomiti quasi dritti. Stringi 1s, torna lento 3s. Niente busto: se ti inclini stai barando col dorso.',
-   muscles:'Deltoide post., Romboidi',reps:15,repsMax:20,sets:3,band:'10-20kg',restSec:60},
+  {id:'s1',cat:'shoulders',name:'Shoulder Press Manubri',video:'Band shoulder press.mp4',
+   desc:'Seduto con schienale alto, manubri all\'altezza delle orecchie. Premi sopra la testa bloccando i gomiti 1s in cima, senza inarcare la schiena. Abbassa lento 3s. Compound spalle. Carico PER MANUBRIO.',
+   muscles:'Deltoide, Tricipiti',reps:7,repsMax:11,sets:4,band:'14kg',restSec:100},
+  {id:'s2',cat:'shoulders',name:'Alzate Laterali Manubri',video:'Band Lateral Raises.mp4',
+   desc:'Manubri ai fianchi, gomiti semi-flessi. Alza di lato fino all\'altezza delle spalle, pausa 1 secondo in alto, abbassa 3 secondi. Se per alzarli devi dare uno slancio col busto, il carico e\' troppo: qui contano le reps pulite, non i kg. Carico PER MANUBRIO.',
+   muscles:'Deltoide medio',reps:12,repsMax:16,sets:4,band:'8kg',restSec:60},
+  {id:'s3',cat:'shoulders',name:'Face Pull ai Cavi',video:'Face pull con elastico.mp4',
+   desc:'Cavo all\'altezza del viso con corda, presa neutra. Tira verso il naso dividendo le mani verso le orecchie, gomiti SOPRA le spalle. Salute spalle + deltoide posteriore: reps alte di proposito, non e\' un lift di forza.',
+   muscles:'Deltoide post., Rotatori',reps:14,repsMax:18,sets:3,band:'20kg',restSec:60},
+  {id:'s4',cat:'shoulders',name:'Rear Delt Fly (pec deck inverso)',video:'Band Rear Delt Fly.mp4',
+   desc:'Pec deck inverso, oppure manubri con busto piegato a 90°. Apri le braccia di lato fino ad allineare le scapole, gomiti quasi dritti. Stringi 1s, torna lento 3s. Niente slancio del busto: se ti inclini stai barando col dorso.',
+   muscles:'Deltoide post., Romboidi',reps:14,repsMax:18,sets:3,band:'20kg',restSec:60},
  ],
  legs:[
   {id:'l1',cat:'legs',name:'Pistol Squat',video:'Pistol squat.mp4',
    desc:'Squat su 1 gamba, altra tesa avanti. Scendi il più in basso possibile mantenendo il tallone a terra. Usa supporto leggero per il bilanciamento se serve.',
    muscles:'Quadricipiti, Glutei, Core',reps:6,repsMax:9,sets:4,restSec:120},
-  {id:'l2',cat:'legs',name:'Bulgarian Split Squat',video:'Bulgarian split squat con elastico.mp4',
-   desc:'Piede posteriore su sedia. Scendi col ginocchio anteriore a 90°. Elastico sulle spalle per overload. Busto eretto, spingi col tallone avanti.',
-   muscles:'Quadricipiti, Glutei',reps:10,repsMax:14,sets:4,band:'25kg',restSec:120},
-  {id:'l3',cat:'legs',name:'Band Squat',video:'Band Squat.mp4',
-   desc:'Elastico sulle spalle. Squat profondo, cosce parallele al suolo. Talloni a terra, ginocchia sui piedi. Variante bilaterale con carico progressivo. POLPACCI: a fine di ogni serie resta in piedi e sali sulle punte più in alto che puoi per 10 ripetizioni — l\'elastico è già sulle spalle, il calf non ha bisogno di un esercizio suo.',
-   muscles:'Quadricipiti, Glutei',reps:15,repsMax:20,sets:4,band:'25-35kg',restSec:120},
-  {id:'l4',cat:'legs',name:'Band Leg Curl',video:'Band leg curl .mp4',
-   desc:'A pancia in giù, elastico ancorato davanti alla caviglia. Curla il tallone verso il gluteo. Contrai il femorale in cima 1s. Abbassa lento 3s.',
-   muscles:'Femorali',reps:12,repsMax:16,sets:4,band:'15-25kg',restSec:60},
-  {id:'l5',cat:'legs',name:'RDL con Elastico',video:'RDL con elastico.mp4',
-   desc:'Piedi sull\'elastico, presa neutra. Spingi i fianchi indietro mantenendo la schiena piatta e le ginocchia morbide, scendi finché senti lo stretch dei femorali. Risali contraendo i glutei. POLPACCI: chiudi ogni serie salendo sulle punte per 10 ripetizioni, elastico ancora sotto i piedi.',
-   muscles:'Femorali, Glutei, Polpacci',reps:12,repsMax:16,sets:3,band:'20-30kg',restSec:90},
+  {id:'l2',cat:'legs',name:'Bulgarian Split Squat Manubri',video:'Bulgarian split squat con elastico.mp4',
+   desc:'Piede posteriore su panca, un manubrio per mano lungo i fianchi. Scendi col ginocchio anteriore a 90°, busto eretto, spingi col tallone avanti. Carico PER MANUBRIO. Reps per gamba.',
+   muscles:'Quadricipiti, Glutei',reps:8,repsMax:12,sets:4,band:'12kg',restSec:90},
+  {id:'l3',cat:'legs',name:'Squat Bilanciere',video:'Band Squat.mp4',
+   desc:'⚠️ SOLO dentro il rack, con i pioli di sicurezza regolati appena sotto la profondita\' del tuo squat: se ti pianti, il bilanciere lo appoggi li\'. Barra sui trapezi, squat profondo con cosce parallele, talloni a terra, ginocchia sulla linea dei piedi. Carico = bilanciere compreso (bar olimpica 20kg). All\'inizio conta la tecnica, non i kg: il pattern col bilanciere e\' nuovo.',
+   muscles:'Quadricipiti, Glutei',reps:8,repsMax:12,sets:4,band:'40kg',restSec:120},
+  {id:'l4',cat:'legs',name:'Leg Curl Macchina',video:'Band leg curl .mp4',
+   desc:'Leg curl sdraiato o seduto, cuscinetto sopra il tendine d\'Achille. Curla il tallone verso il gluteo senza staccare il bacino. Contrai il femorale in cima 1s, abbassa lento 3s. I kg del pacco pesi non si confrontano tra palestre diverse: il riferimento sono le reps.',
+   muscles:'Femorali',reps:10,repsMax:14,sets:3,band:'30kg',restSec:75},
+  {id:'l5',cat:'legs',name:'Stacco Rumeno Bilanciere',video:'RDL con elastico.mp4',
+   desc:'Bilanciere davanti alle cosce, presa prona. Spingi i FIANCHI indietro tenendo la schiena piatta e le ginocchia morbide (non e\' uno squat): la barra scorre lungo le gambe finche\' senti lo stretch dei femorali, poi risali contraendo i glutei. Schiena che si arrotonda = fermati e togli carico. Bilanciere compreso.',
+   muscles:'Femorali, Glutei',reps:8,repsMax:12,sets:3,band:'40kg',restSec:90},
  ],
  core:[
   {id:'c1', cat:'core',name:'Hollow Body Hold',    video:'core-hollow-body-hold.mp4',    time:30, desc:'Schiena piatta, lombare incollata. Braccia tese sopra la testa, gambe a 30cm. Spalle alzate. Nessun cedimento.',muscles:'Core completo'},
@@ -400,13 +400,33 @@ function applyAdaptation(ex){
  return newEx;
 }
 // ─── PROGRESSIONE CARICHI (regola meccanica + override coach) ─────────────────
-function nextBandStep(band){
- // Elastici: alza di 5kg (la banda più piccola) ogni numero nel range
+// ATTREZZATURA (11/08/2026): "elastici" o "palestra", da coachPlan.global (lo scrive
+// coach_llm.py --set-attrezzatura). Cambia lo snap e il passo di progressione, perché
+// cambia cosa è fisicamente componibile: le combo di {5,10,15,25,25} sono multipli di 5
+// col tetto a 80, un pacco pesi no. Default elastici: un blob vecchio non deve finire in
+// palestra per omissione.
+function attrezzatura(){try{return (S.aiDB.coachPlan&&S.aiDB.coachPlan.global&&S.aiDB.coachPlan.global.attrezzatura)==='palestra'?'palestra':'elastici';}catch(e){return 'elastici';}}
+var STEP_ATTREZZO={manubri:2,bilanciere:2.5,macchina:5,cavo:5};
+function stepDi(id){
+ var a='';try{a=((S.aiDB.coachPlan.perExercise[id]||{}).attrezzo||'').toLowerCase();}catch(e){}
+ for(var k in STEP_ATTREZZO){if(a.indexOf(k)>=0)return STEP_ATTREZZO[k];}
+ return 2.5;
+}
+function nextBandStep(band,id){
+ // Elastici: +5kg (la banda più piccola). Palestra: un passo dell'attrezzo — +5 su un
+ // manubrio è un salto del 25%, non una progressione.
  if(!band)return band;
- return band.replace(/\d+/g,function(m){return String(parseInt(m,10)+5);});
+ var st=attrezzatura()==='palestra'?stepDi(id):5;
+ return band.replace(/\d+(?:[.,]\d+)?/g,function(m){
+  var v=parseFloat(m.replace(',','.'))+st;
+  return String(v%1===0?v:v.toFixed(1));
+ });
 }
 function snapKg(kg){var v=parseFloat((''+kg).replace(/kg/i,'').replace(',','.'));if(isNaN(v))return null;v=Math.round(v/5)*5;return Math.max(5,Math.min(80,v));}
-function snapBand(band){if(!band)return band;var m=(''+band).match(/\d+(?:[.,]\d+)?(?!.*\d)/);if(!m)return band;var s=snapKg(m[0]);return s==null?band:s+'kg';}
+// In palestra NON si snappa: il carico lo scrive il coach già coerente col passo
+// dell'attrezzo, e riarrotondarlo qui a multipli di 5 col tetto 80 vorrebbe dire
+// riscrivere 12kg di manubrio in 10 e uno squat da 100 in 80.
+function snapBand(band){if(!band||attrezzatura()==='palestra')return band;var m=(''+band).match(/\d+(?:[.,]\d+)?(?!.*\d)/);if(!m)return band;var s=snapKg(m[0]);return s==null?band:s+'kg';}
 function withCoachOverride(e){
  // Precedenza: coachPlan (Sumi) > progression (regola meccanica) > carico reale (chat/manuale) > DB
  var cp=(S.aiDB.coachPlan&&S.aiDB.coachPlan.perExercise&&S.aiDB.coachPlan.perExercise[e.id]);
@@ -419,6 +439,8 @@ function withCoachOverride(e){
   if(o.repsMax)ov.repsMax=o.repsMax;
   if(o.sets)ov.sets=o.sets;
   if(o.restSec)ov.restSec=o.restSec;
+  if(o.attrezzo)ov.attrezzo=o.attrezzo;   // "manubri"/"bilanciere"/… → etichetta del carico
+  if(o.stima)ov.stima=true;               // carico mai verificato: la scheda lo dichiara
   ov.coachNote=o.note||'';
   ov.coachSrc=cp?'sumi':'mech';
  }
@@ -450,8 +472,8 @@ function computeProgression(session){
    var entry={name:r.name,date:new Date().toISOString().split('T')[0],lastReps:sets};
    if(allTop&&nSets>=2){
     if(hasBand){
-     entry.band=nextBandStep(cur);
-     entry.note='+5kg: chiuso il max ('+sets.join(',')+')';
+     entry.band=nextBandStep(cur,id);
+     entry.note='+'+(attrezzatura()==='palestra'?stepDi(id):5)+'kg: chiuso il max ('+sets.join(',')+')';
     } else {
      var curTarget=prevProg.reps||target,curMax=prevProg.repsMax||max;
      if(curMax>=25){
@@ -1346,7 +1368,7 @@ function rWorkout(){
   +'</div>'
   +'<div class="font-display" style="font-size:34px;font-weight:800;letter-spacing:-.2px;margin-bottom:10px;line-height:1">'+ex.name+'</div>'
   +(step.amrap?'<div class="tag-core">AMRAP · ULTIMA SERIE — MASSIME REPS PULITE</div>':'')
-  +(ex.band?'<div style="border:2px solid '+ac+';color:'+ac+';padding:9px 12px;margin-bottom:8px;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase">Elastico · '+ex.band+'</div>':'')
+  +(ex.band?'<div style="border:2px solid '+ac+';color:'+ac+';padding:9px 12px;margin-bottom:8px;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase">'+(ex.attrezzo||(attrezzatura()==='palestra'?'Carico':'Elastico'))+' · '+ex.band+(ex.stima?' · da tarare':'')+'</div>':'')
   +(ex.coachNote?'<div style="border:2px solid #1e3a5f;background:#0a1420;padding:7px 11px;margin-bottom:8px;color:#7dd3fc;font-size:11px;line-height:1.4;letter-spacing:.5px"><b>'+(ex.coachSrc==='sumi'?'SUMI':'COACH')+'</b> · '+ex.coachNote+'</div>':'')
   +mediaHtml(ex)
   +'<div class="card" style="margin-top:10px">'
