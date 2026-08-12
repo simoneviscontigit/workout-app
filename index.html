@@ -336,6 +336,7 @@ function recoveryProfileCard(){
 const S={
  view:'home',history:[],skipped:[],nutrition:null,splitIdx:0,nutQueue:[],nutQueueIdx:0,nutTarget:null,
  wSplit:null,wEx:[],wSteps:[],wStepIdx:0,wTimer:0,wElapsed:0,wSets:0,wStartTime:0,wPaused:false,
+ wAlt:{},wGaps:[], // wAlt: rotazione alternative per slot (vedi skipExercise) · wGaps: slot che il pool non ha riempito
  qStep:0,qAns:{},pending:null,
  aiDB:{sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},
  aiChat:[],aiLoading:false,aiErr:'',exFbAnswers:{},
@@ -523,7 +524,7 @@ function genWorkout(splitIdx,skipped){
  var avoid=adapt.avoidExercises||[];
  var suggest=adapt.suggestExercises||[];
  var must=(split.must||[]).slice(); // esercizi sempre presenti (es. bicipiti garantiti sui pull day)
- var exercises=[],used=[];
+ var exercises=[],used=[],gaps=[];
  Object.entries(split.cats).forEach(function(entry){
   var cat=entry[0],count=entry[1];
   // "must" di questa categoria forzati per primi (rispettano skipped/avoid), contano nel count
@@ -537,6 +538,17 @@ function genWorkout(splitIdx,skipped){
   var preferred=DB[cat].filter(function(e){return suggest.includes(e.id)&&!skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&notForced(e);});
   var pool=DB[cat].filter(function(e){return !skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&!preferred.find(function(p){return p.id===e.id;})&&notForced(e);});
   var sel=forced.concat(preferred.concat(shuf(pool)).slice(0,Math.max(0,count-forced.length)));
+  // RIEMPI SEMPRE: se il pool "pulito" non copre `count`, rientrano gli esclusi morbidi
+  // (skip a scadenza e avoid del coach). Motivo: la categoria pull ha 6 esercizi per 5 slot,
+  // quindi basta un buco per consegnare una seduta corta — e in silenzio. Meglio un esercizio
+  // che non avresti scelto di uno slot vuoto. `recoveryAllows` resta invece un vincolo duro:
+  // è sicurezza post-intervento, non una preferenza.
+  if(sel.length<count){
+   var already=function(e){return !!sel.find(function(x){return x.id===e.id;});};
+   var backup=DB[cat].filter(function(e){return !used.includes(e.id)&&!already(e)&&recoveryAllows(e);});
+   sel=sel.concat(shuf(backup).slice(0,count-sel.length));
+  }
+  if(sel.length<count){gaps.push(cat+' '+sel.length+'/'+count);console.warn('[gen] '+cat+': '+sel.length+'/'+count+' — pool esaurito');}
   sel.forEach(function(e){exercises.push(applyAdaptation(withCoachOverride(e)));used.push(e.id);});
  });
  // Scegli un circuito core casuale e costruisci la sequenza
@@ -584,7 +596,7 @@ function genWorkout(splitIdx,skipped){
    if(!last)cardio.push({id:'kbrk'+cr+'-'+kj,cat:'cardio',name:'RIPOSO',desc:'Respira. Prossimo esercizio tra poco.',muscles:'',isBreak:true,isCore:true,isTime:true,isCardio:true,time:30,sets:1});
   });
  }
- return{split:split,all:exercises.concat(core).concat(cardio),circuit:circuit};
+ return{split:split,all:exercises.concat(core).concat(cardio),circuit:circuit,gaps:gaps};
 }
 function buildSteps(all){
  var s=[];
@@ -1092,6 +1104,7 @@ function launchWorkout(){
  var w=genWorkout(S.splitIdx,S.skipped);
  S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
  S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;
+ S.wAlt={};S.wGaps=w.gaps||[];
  S.trialMode=false;
  go('workout');
 }
@@ -1156,6 +1169,7 @@ function startExtra(){
  var w=genExtra();
  S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
  S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;
+ S.wAlt={};S.wGaps=[];
  S.trialMode=false;S.extraMode=true;S.preWQAns={};
  go('workout');
 }
@@ -1181,6 +1195,7 @@ function startTrialWorkout(){
  var w=genWorkout(idx,[]);
  S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
  S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;
+ S.wAlt={};S.wGaps=w.gaps||[];
  S.trialMode=true;
  go('workout');
 }
@@ -1358,6 +1373,8 @@ function rWorkout(){
    +'<button onclick="S.wConfirmClose=false;finishWorkout()" style="background:#f97316;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;cursor:pointer">Sì, chiudi</button>'
    +'</div></div>':'')
   +(S.trialMode?'<div style="background:#422006;border:1px solid #92400e;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#fbbf24;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SESSIONE PROVA — non registrata</div>':'')
+  // se il pool non è bastato lo dice, invece di consegnare una seduta corta in silenzio
+  +((S.wGaps&&S.wGaps.length)?'<div style="background:#1c1917;border:1px solid #3f3f46;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#a1a1aa;font-size:11px;text-align:center">Seduta corta: pool esaurito ('+S.wGaps.join(' · ')+')</div>':'')
   +'<div class="pb" style="margin-bottom:14px"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:'+ac+'"></div></div>'
   +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
   +'<span class="lbl">'+sp.emoji+' '+sp.name+'</span>'
@@ -1484,25 +1501,49 @@ function wBack(){
  if(prev>=0&&S.wSteps[prev].type==='work'){S.wStepIdx=prev;S.wSets=Math.max(0,S.wSets-1);render();}
  else go('home');
 }
+// "Cambia" = ROTAZIONE nello stesso slot, NON un ban (12/08/2026).
+// Prima: il tasto metteva l'esercizio in skip per 14 giorni e lo toglieva dal pool — un click
+// per curiosità bruciava un esercizio, e con PULL a 5 slot su 6 esercizi bastava per svuotare
+// la seduta. Ora la lista dei candidati si costruisce alla prima pressione con l'ORIGINALE IN
+// TESTA, e ogni pressione avanza di uno chiudendo il ciclo: finite le alternative si torna al
+// primo. Mai un vicolo cieco, mai una scrittura su `skipped`/`skipLog`/`skippedUpdatedAt`.
+// Per togliere davvero un esercizio resta `avoidExercises` dell'adattamento IA.
 function skipExercise(){
  clearInterval(TI);var step=S.wSteps[S.wStepIdx];if(step.type!=='work')return;
- var ex=step.ex;var ns=S.skipped.concat([ex.id]);S.skipped=ns;sv('sk',ns);
- var log=S.aiDB.skipLog||{};
- log[ex.id]=new Date(Date.now()+SKIP_DAYS*864e5).toISOString(); // scade: niente ban a vita
- S.aiDB.skipLog=log;
- S.aiDB.skipped=ns;S.aiDB.skippedUpdatedAt=new Date().toISOString();sv('ai',S.aiDB); // timbro edit reale (last-wins cross-device)
- var pool=(DB[ex.cat]||[]).filter(function(e){return !ns.includes(e.id)&&!S.wEx.find(function(x){return x.id===e.id;});});
- var rep=shuf(pool)[0];
- if(rep){
-  var newEx=Object.assign({},rep,{isCore:ex.isCore});
-  var ne=S.wEx.slice();ne[step.exIdx]=newEx;
-  S.wEx=ne;S.wSteps=buildSteps(ne);
-  var fi=S.wSteps.findIndex(function(s){return s.type==='work'&&s.exIdx===step.exIdx&&s.setNum===1;});
-  S.wStepIdx=Math.max(0,fi);
- } else {
-  var nx=S.wSteps.findIndex(function(s,i){return i>S.wStepIdx&&s.type==='work'&&s.exIdx>step.exIdx;});
-  if(nx!==-1)S.wStepIdx=nx;else{finishWorkout();return;}
+ var ex=step.ex,slot=step.exIdx;
+ var rot=S.wAlt[slot];
+ if(!rot){
+  // Candidati: stessa categoria, non già in seduta in un altro slot, ammessi dal recupero.
+  var inSession=S.wEx.filter(function(x,i){return i!==slot;});
+  var shape={isCore:ex.isCore,isTime:ex.isTime,isCardio:ex.isCardio,isExtra:ex.isExtra,perSide:ex.perSide};
+  var cands=(DB[ex.cat]||[]).filter(function(e){
+   return e.id!==ex.id&&!inSession.find(function(x){return x.id===e.id;})&&recoveryAllows(e);
+  }).map(function(e){
+   // stessa forma dello slot (core/tempo/cardio): altrimenti un core diventa un reps-based
+   var n=Object.assign({},applyAdaptation(withCoachOverride(e)),shape);
+   if(ex.isTime)n.time=ex.time||n.time;
+   if(ex.isCore)n.sets=1;
+   return n;
+  });
+  rot={list:[ex].concat(shuf(cands)),i:0};
+  S.wAlt[slot]=rot;
  }
+ if(rot.list.length<2){console.log('[cambia] nessuna alternativa per',ex.id);render();return;}
+ // Avanza di uno chiudendo il ciclo, saltando chi nel frattempo è finito in un altro slot:
+ // le liste sono per-slot e congelate alla prima pressione, quindi senza questo controllo due
+ // slot che ruotano convergono sullo stesso esercizio (vale anche per l'originale, che un altro
+ // slot può aver preso). Se sono tutti occupati resta dov'è invece di duplicare.
+ var next=-1;
+ for(var t=1;t<=rot.list.length;t++){
+  var j=(rot.i+t)%rot.list.length;
+  if(!S.wEx.find(function(x,i){return i!==slot&&x.id===rot.list[j].id;})){next=j;break;}
+ }
+ if(next<0){console.log('[cambia] tutte le alternative sono già in seduta');render();return;}
+ rot.i=next;
+ var ne=S.wEx.slice();ne[slot]=rot.list[rot.i];
+ S.wEx=ne;S.wSteps=buildSteps(ne);
+ var fi=S.wSteps.findIndex(function(s){return s.type==='work'&&s.exIdx===slot&&s.setNum===1;});
+ S.wStepIdx=Math.max(0,fi);
  render();
 }
 function finishWorkout(){
