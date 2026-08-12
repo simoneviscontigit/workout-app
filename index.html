@@ -223,6 +223,103 @@ const DB={
  ]
 };
 
+// ─── POOL "A CASA": la stessa seduta del giorno, senza palestra ──────────────
+// Sostituisce l'EXTRA 20′ (circuito generico additivo) dal 12/08/2026: quando non si può
+// andare in palestra non serve un'aggiunta, serve *l'allenamento di oggi* in versione
+// corpo libero. Segue lo stesso split (PUSH/PULL/LEGS/…) e conta come seduta vera —
+// avanza la rotazione, entra nella progressione, il coach la legge come le altre.
+// Vincolo dichiarato da Simone il 12/08: a casa NON c'è niente, né sbarra né elastici.
+// Conseguenza da non nascondere: il giorno PULL a casa è **mantenimento**, non stimolo —
+// senza qualcosa da tirare restano estensioni a terra e autoresistenza. La scheda lo dice.
+// `restSec` più corti del ramo palestra: senza carico il limite è metabolico, non nervoso.
+const HOME_KEEP={push:['p1','p2','p3','p5'],legs:['l1']}; // già a corpo libero nel DB principale: stesso id = storico e progressione continuano
+const HOME_NEW={
+ push:[
+  {id:'hp1',cat:'push',name:'Push-up',
+   desc:'Mani sotto le spalle, corpo in linea dalla testa ai talloni. Scendi col petto a un pugno da terra, gomiti a 45° (non aperti a T), spingi su senza far cedere i fianchi. Se non chiudi le reps: sulle ginocchia, non a metà corsa.',
+   muscles:'Petto, Tricipiti, Core',reps:12,repsMax:18,sets:4,restSec:75},
+  {id:'hp2',cat:'push',name:'Diamond Push-up',
+   desc:'Mani unite sotto lo sterno, indici e pollici a formare un rombo. Gomiti stretti che sfiorano i fianchi. È la versione tricipiti del push-up: scendi lento e non allargare le mani quando diventa duro.',
+   muscles:'Tricipiti, Petto interno',reps:8,repsMax:12,sets:4,restSec:75},
+  {id:'hp3',cat:'push',name:'Decline Push-up',
+   desc:'Piedi su una sedia stabile, mani a terra a larghezza spalle. Più i piedi sono alti, più carico va sul petto alto e sulle spalle. Corpo in linea: se i fianchi si alzano stai riducendo il braccio di leva.',
+   muscles:'Petto alto, Spalle ant.',reps:8,repsMax:12,sets:4,restSec:90},
+  {id:'hp4',cat:'push',name:'Push-up Negativo',
+   desc:'Solo la discesa, contata: 5 secondi pieni dal blocco alto fino a terra. Poi risali come vuoi (anche sulle ginocchia) e ricomincia. Il tempo sotto tensione sostituisce il carico che a casa non hai.',
+   muscles:'Petto, Tricipiti',reps:6,repsMax:8,sets:3,restSec:90},
+ ],
+ pull:[
+  {id:'hr1',cat:'pull',name:'Superman',
+   desc:'A pancia in giù, braccia avanti. Solleva petto, braccia e gambe insieme contraendo la schiena, tieni 2s in alto e scendi lento. Non tirare il collo: guarda il pavimento.',
+   muscles:'Erettori, Dorsali bassi, Glutei',reps:12,repsMax:16,sets:3,restSec:60},
+  {id:'hr2',cat:'pull',name:'Reverse Snow Angel',
+   desc:'A pancia in giù, braccia lungo i fianchi e petto sollevato. Porta le braccia tese in alto sopra la testa sfiorando il pavimento senza toccarlo, poi torna indietro. Lento: sono le scapole a muoversi.',
+   muscles:'Deltoide post., Trapezio basso',reps:10,repsMax:14,sets:3,restSec:60},
+  {id:'hr3',cat:'pull',name:'Prone Y-T-W',
+   desc:'A pancia in giù, petto sollevato. Un ciclo = braccia a Y, poi a T, poi a W (gomiti piegati, scapole strette). Pollici in su per tutto. Una rep sono i tre passaggi.',
+   muscles:'Trapezio basso, Romboidi, Rotatori',reps:8,repsMax:12,sets:3,restSec:60},
+  {id:'hr4',cat:'pull',name:'Rematore con Asciugamano',
+   desc:'Asciugamano teso tra le mani, braccia avanti. Tira indietro col braccio che lavora mentre l\'altro RESISTE: sono i tuoi stessi dorsali a fare il carico. Gomito lungo il fianco, 3s per tirare e 3s per cedere. Alterna il lato a ogni rep.',
+   muscles:'Dorsali, Romboidi',reps:12,repsMax:16,sets:3,restSec:75},
+  {id:'hr5',cat:'pull',name:'Curl con Asciugamano',
+   desc:'Stesso principio, per i bicipiti: piede sull\'asciugamano (o mano che spinge in basso) e curl contro la resistenza. Gomito fisso al fianco, 3s su e 3s giù. Cerca il bruciore, non le reps veloci.',
+   muscles:'Bicipiti',reps:12,repsMax:16,sets:3,restSec:60},
+  {id:'hr6',cat:'pull',name:'Prone Swimmer',
+   desc:'A pancia in giù, petto sollevato. Le braccia disegnano una nuotata lenta: avanti sopra la testa, di lato, fino alla schiena bassa, e ritorno. Continuo e controllato — una rep è un giro completo.',
+   muscles:'Deltoide post., Trapezio, Erettori',reps:10,repsMax:14,sets:3,restSec:60},
+  {id:'hr7',cat:'pull',name:'Reverse Plank Hip Lift',
+   desc:'Seduto, mani dietro i fianchi con le dita verso i piedi, gambe tese. Spingi i fianchi in alto fino a mettere il corpo in linea, stringi le scapole e tieni 2s. Scendi senza appoggiarti del tutto.',
+   muscles:'Catena posteriore, Scapole',reps:10,repsMax:14,sets:3,restSec:60},
+ ],
+ shoulders:[
+  {id:'hs1',cat:'shoulders',name:'Wall Walk',
+   desc:'Plank coi piedi al muro. Cammina indietro con le mani salendo coi piedi sulla parete fino a quanto reggi, poi torna giù con lo stesso controllo. Una rep = salita + discesa. Fermati prima che la schiena si inarchi.',
+   muscles:'Spalle, Core',reps:4,repsMax:6,sets:3,restSec:90},
+  {id:'hs2',cat:'shoulders',name:'Plank Shoulder Tap',
+   desc:'Plank sulle mani, piedi larghi. Tocca la spalla opposta con una mano tenendo il bacino FERMO — se ruota, allarga i piedi o rallenta. Un tocco = una rep.',
+   muscles:'Deltoide ant., Core anti-rotazione',reps:16,repsMax:24,sets:3,restSec:60},
+  {id:'hs3',cat:'shoulders',name:'Wall Slide',
+   desc:'Schiena e braccia al muro, gomiti a 90°. Scivola con le braccia verso l\'alto senza staccare polsi e gomiti dalla parete, poi torna giù stringendo le scapole. Fa male alla mobilità, non ai muscoli: è salute della spalla.',
+   muscles:'Rotatori, Trapezio basso',reps:12,repsMax:16,sets:3,restSec:45},
+  {id:'hs4',cat:'shoulders',name:'Prone Y Raise',
+   desc:'A pancia in giù, braccia a Y sopra la testa, pollici in su. Solleva solo le braccia (petto a terra) e tieni 2s in alto. Piccolo movimento, tanto deltoide posteriore: non trasformarlo in uno slancio.',
+   muscles:'Deltoide post., Trapezio basso',reps:12,repsMax:16,sets:3,restSec:45},
+ ],
+ legs:[
+  {id:'hl1',cat:'legs',name:'Squat a corpo libero',
+   desc:'Piedi a larghezza spalle, punte leggermente aperte. Scendi spingendo i fianchi indietro fino a cosce parallele o sotto, talloni a terra, petto alto. Risali spingendo col tallone. 2s a scendere, esplosivo a salire.',
+   muscles:'Quadricipiti, Glutei',reps:15,repsMax:20,sets:4,restSec:75},
+  {id:'hl2',cat:'legs',name:'Affondi Alternati',
+   desc:'Passo avanti scendendo col ginocchio posteriore a sfiorare terra, busto eretto, ginocchio anteriore sopra il piede. Spingi col tallone per tornare e alterna. Le reps sono TOTALI, non per gamba.',
+   muscles:'Quadricipiti, Glutei',reps:12,repsMax:16,sets:4,restSec:75},
+  {id:'hl3',cat:'legs',name:'Bulgarian Split Squat (corpo libero)',
+   desc:'Piede posteriore su una sedia, piede avanti a un passo abbondante. Scendi dritto col ginocchio anteriore a 90°, busto eretto. Senza manubri la difficoltà la fai con la profondità e con 3s in discesa. Reps PER GAMBA.',
+   muscles:'Quadricipiti, Glutei',reps:10,repsMax:14,sets:4,restSec:90},
+  {id:'hl4',cat:'legs',name:'Stacco Rumeno su una gamba',
+   desc:'In piedi su una gamba, ginocchio morbido. Spingi il fianco indietro abbassando il busto e alzando la gamba libera dietro, schiena piatta, fino a sentire tirare il femorale. Risali contraendo. Reps PER GAMBA — è anche un test di equilibrio.',
+   muscles:'Femorali, Glutei, Stabilità',reps:10,repsMax:14,sets:3,restSec:75},
+  {id:'hl5',cat:'legs',name:'Leg Curl con Asciugamano',
+   desc:'Sdraiato supino, talloni su un asciugamano su pavimento liscio, fianchi sollevati. Allunga le gambe facendo scivolare i talloni in avanti e riportali indietro contraendo i femorali, senza far cadere il bacino. È l\'unico curl femorali che si fa senza attrezzi: 3s ad allungare.',
+   muscles:'Femorali',reps:8,repsMax:12,sets:3,restSec:75},
+  {id:'hl6',cat:'legs',name:'Step-up su Sedia',
+   desc:'Sali su una sedia stabile con tutto il piede, spingendo col tallone e senza darti la spinta con la gamba di sotto. Scendi lento, controllando. Reps PER GAMBA.',
+   muscles:'Quadricipiti, Glutei',reps:12,repsMax:16,sets:3,restSec:75},
+  {id:'hl7',cat:'legs',name:'Squat Jump',
+   desc:'Scendi in squat ed esplodi in alto. Atterra morbido riassorbendo con ginocchia e anche, e riparti solo quando sei stabile. Chiude la seduta: è la parte veloce che a corpo libero sostituisce il carico.',
+   muscles:'Quadricipiti, Glutei, Potenza',reps:12,repsMax:16,sets:3,restSec:90},
+ ],
+};
+const HOME_DB=(function(){
+ var out={};
+ Object.keys(HOME_NEW).forEach(function(cat){
+  var keep=(HOME_KEEP[cat]||[]).map(function(id){return (DB[cat]||[]).find(function(e){return e.id===id;});}).filter(Boolean);
+  out[cat]=keep.concat(HOME_NEW[cat]);
+ });
+ return out;
+})();
+// Il giorno in cui l'assenza di attrezzi si sente davvero: si dichiara in scheda, non si nasconde.
+const HOME_WARN={pull:'Senza sbarra né elastici la tirata è mantenimento, non stimolo: tieni le reps lente e cerca la contrazione.',pull2:'Senza sbarra né elastici la tirata è mantenimento, non stimolo: tieni le reps lente e cerca la contrazione.'};
+
 // Famiglie di movimento del core: dentro UN circuito ne passa una sola per famiglia.
 // Serve perché i circuiti scritti a mano ripetevano lo stesso movimento con nomi diversi
 // (cc3: Leg Raise + Vertical Scissors + Horizontal Scissors = tre volte la stessa cosa).
@@ -336,7 +433,7 @@ function recoveryProfileCard(){
 const S={
  view:'home',history:[],nutrition:null,splitIdx:0,nutQueue:[],nutQueueIdx:0,nutTarget:null,
  wSplit:null,wEx:[],wSteps:[],wStepIdx:0,wTimer:0,wElapsed:0,wSets:0,wStartTime:0,wPaused:false,
- wAlt:{},wGaps:[], // wAlt: rotazione alternative per slot (vedi skipExercise) · wGaps: slot che il pool non ha riempito
+ wAlt:{},wGaps:[],homeMode:false, // wAlt: rotazione alternative per slot (vedi skipExercise) · wGaps: slot che il pool non ha riempito · homeMode: seduta a corpo libero
  qStep:0,qAns:{},pending:null,
  aiDB:{sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},
  aiChat:[],aiLoading:false,aiErr:'',exFbAnswers:{},
@@ -509,12 +606,19 @@ function dropSkipState(){
  try{if(localStorage.getItem('sk')!==null){localStorage.removeItem('sk');d=true;}}catch(e){}
  if(d){console.log('[skip] stato skip rimosso: gli esercizi sono tutti nel pool');sv('ai',S.aiDB);}
 }
-function genWorkout(splitIdx){
+// opts.home = seduta A CASA: stesso split, stessi slot, pool a corpo libero (HOME_DB).
+// Core e finisher cardio non cambiano — sono già senza attrezzi in entrambi i rami.
+function genWorkout(splitIdx,opts){
+ opts=opts||{};
+ var home=!!opts.home;
+ var SRC=function(cat){return (home&&HOME_DB[cat])||DB[cat]||[];};
  var split=PLAN[splitIdx%6];
  var adapt=S.aiDB.adaptation||{};
  var avoid=adapt.avoidExercises||[];
  var suggest=adapt.suggestExercises||[];
- var must=(split.must||[]).slice(); // esercizi sempre presenti (es. bicipiti garantiti sui pull day)
+ // A casa i `must` non si applicano: sono id del ramo palestra (lat machine, squat bilanciere…)
+ // che a corpo libero non esistono. Forzarli lascerebbe lo slot vuoto invece di riempirlo.
+ var must=home?[]:(split.must||[]).slice(); // esercizi sempre presenti (es. bicipiti garantiti sui pull day)
  var exercises=[],used=[],gaps=[];
  Object.entries(split.cats).forEach(function(entry){
   var cat=entry[0],count=entry[1];
@@ -522,12 +626,12 @@ function genWorkout(splitIdx){
   var forced=[];
   must.forEach(function(id){
    if(forced.length>=count)return;
-   var e=(DB[cat]||[]).find(function(x){return x.id===id;});
+   var e=SRC(cat).find(function(x){return x.id===id;});
    if(e&&!avoid.includes(id)&&!used.includes(id))forced.push(e);
   });
   var notForced=function(e){return !forced.find(function(p){return p.id===e.id;});};
-  var preferred=DB[cat].filter(function(e){return suggest.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&notForced(e);});
-  var pool=DB[cat].filter(function(e){return !avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&!preferred.find(function(p){return p.id===e.id;})&&notForced(e);});
+  var preferred=SRC(cat).filter(function(e){return suggest.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&notForced(e);});
+  var pool=SRC(cat).filter(function(e){return !avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&!preferred.find(function(p){return p.id===e.id;})&&notForced(e);});
   var sel=forced.concat(preferred.concat(shuf(pool)).slice(0,Math.max(0,count-forced.length)));
   // RIEMPI SEMPRE: se il pool "pulito" non copre `count`, rientrano gli esclusi morbidi
   // (gli `avoidExercises` del coach). Motivo: la categoria pull ha 6 esercizi per 5 slot,
@@ -536,7 +640,7 @@ function genWorkout(splitIdx){
   // è sicurezza post-intervento, non una preferenza.
   if(sel.length<count){
    var already=function(e){return !!sel.find(function(x){return x.id===e.id;});};
-   var backup=DB[cat].filter(function(e){return !used.includes(e.id)&&!already(e)&&recoveryAllows(e);});
+   var backup=SRC(cat).filter(function(e){return !used.includes(e.id)&&!already(e)&&recoveryAllows(e);});
    sel=sel.concat(shuf(backup).slice(0,count-sel.length));
   }
   if(sel.length<count){gaps.push(cat+' '+sel.length+'/'+count);console.warn('[gen] '+cat+': '+sel.length+'/'+count+' — pool esaurito');}
@@ -587,7 +691,7 @@ function genWorkout(splitIdx){
    if(!last)cardio.push({id:'kbrk'+cr+'-'+kj,cat:'cardio',name:'RIPOSO',desc:'Respira. Prossimo esercizio tra poco.',muscles:'',isBreak:true,isCore:true,isTime:true,isCardio:true,time:30,sets:1});
   });
  }
- return{split:split,all:exercises.concat(core).concat(cardio),circuit:circuit,gaps:gaps};
+ return{split:split,all:exercises.concat(core).concat(cardio),circuit:circuit,gaps:gaps,home:home};
 }
 function buildSteps(all){
  var s=[];
@@ -897,10 +1001,10 @@ function rHome(){
   +'<div style="color:#a1a1aa;font-size:13px;margin-bottom:18px">'+t.desc+'</div>'
   +recoveryBanner()
   +(S.nutReminder
-   ?'<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px"><div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:8px">'+S.nutReminderCount+' giorni senza nutrizione</div><div style="display:flex;gap:8px"><button class="btn" style="background:#27272a;color:#fff;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;startWorkout()">Fai dopo</button><button class="btn" style="background:#f59e0b;color:#000;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;openNutrition()">Compila</button></div></div>'
+   ?'<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px"><div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:8px">'+S.nutReminderCount+' giorni senza nutrizione</div><div style="display:flex;gap:8px"><button class="btn" style="background:#27272a;color:#fff;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;startWorkout(S.homeMode)">Fai dopo</button><button class="btn" style="background:#f59e0b;color:#000;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;openNutrition()">Compila</button></div></div>'
    :'')
   +'<button class="btn" style="background:#F97316;color:#fff;border:2px solid #fafafa;margin:0;padding:26px;font-size:28px" onclick="startWorkout()">Inizia</button>'
-  +'<button class="btn" style="background:transparent;color:#f97316;border:2px solid #f97316;margin:10px 0 0;padding:14px;font-size:14px;font-weight:700;letter-spacing:1px" onclick="startExtra()">✦ EXTRA 20′ · full-body</button>'
+  +'<button class="btn" style="background:transparent;color:#f97316;border:2px solid #f97316;margin:10px 0 0;padding:14px;font-size:14px;font-weight:700;letter-spacing:1px" onclick="startWorkout(true)">⌂ A CASA · stesso giorno, corpo libero</button>'
   +'<div style="display:flex;border:2px solid #27272a;margin-top:16px">'
   +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+S.history.length+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Sessioni</div></div>'
   +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+(last?last.duration+"'":'—')+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Ultima</div></div>'
@@ -1087,80 +1191,25 @@ function pickRecovery(v){
  render();
 }
 function launchWorkout(){
- var w=genWorkout(S.splitIdx);
+ var w=genWorkout(S.splitIdx,{home:S.homeMode});
  S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
  S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;
  S.wAlt={};S.wGaps=w.gaps||[];
  S.trialMode=false;
  go('workout');
 }
-// ─── EXTRA 20′: circuito A CORPO LIBERO a tempo, additivo ─────────────────────
-// Entra in storico/conteggio/calorie ma NON tocca rotazione split, progressione, adattamento.
-// I circuiti li seleziona Sumi (coachPlan.extra.circuits, equilibrati e a rotazione);
-// fallback locale dal pool corpo-libero finché Sumi non ha ancora girato.
-const BW_POOL=[
- // cardio
- {id:'bw_jj',cat:'cardio',name:'Jumping Jack',time:40,desc:'Salta aprendo gambe e braccia sopra la testa, poi richiudi. Ritmo costante e sostenuto, atterra morbido sugli avampiedi.',muscles:'Cardio, Full-body'},
- {id:'bw_hk',cat:'cardio',name:'High Knees',time:40,desc:'Corsa sul posto portando le ginocchia all\'altezza dei fianchi. Busto eretto, addome attivo, braccia che accompagnano.',muscles:'Cardio, Gambe'},
- {id:'bw_sj',cat:'cardio',name:'Squat Jump',time:40,desc:'Scendi in squat ed esplodi in alto in un salto. Atterra morbido riassorbendo con le ginocchia e riparti subito.',muscles:'Gambe, Cardio'},
- {id:'bw_sk',cat:'cardio',name:'Skater',time:40,desc:'Salti laterali da un piede all\'altro come un pattinatore, portando la gamba dietro in diagonale. Atterra controllato.',muscles:'Gambe, Glutei, Cardio'},
- {id:'bw_mc',cat:'cardio',name:'Mountain Climber',time:40,desc:'In plank a braccia tese, porta alternate le ginocchia al petto a ritmo sostenuto. Bacino stabile, non alzarlo.',muscles:'Core, Cardio'},
- // lower
- {id:'bw_sq',cat:'lower',name:'Squat a corpo libero',time:40,desc:'Piedi a larghezza spalle. Scendi spingendo i glutei indietro fino a cosce parallele, talloni a terra. Risali spingendo coi talloni.',muscles:'Quadricipiti, Glutei'},
- {id:'bw_lu',cat:'lower',name:'Affondi Alternati',time:40,desc:'Passo avanti scendendo col ginocchio posteriore verso terra a 90°. Spingi col tallone per tornare e alterna gamba.',muscles:'Quadricipiti, Glutei'},
- {id:'bw_rl',cat:'lower',name:'Affondi Indietro',time:40,desc:'Passo indietro scendendo in affondo, busto eretto. Più gentile per le ginocchia. Alterna le gambe a ogni rep.',muscles:'Glutei, Quadricipiti'},
- {id:'bw_gb',cat:'lower',name:'Glute Bridge',time:40,desc:'Sdraiato, ginocchia piegate. Spingi i fianchi verso l\'alto contraendo i glutei in cima 1s, poi abbassa lento.',muscles:'Glutei, Femorali'},
- {id:'bw_ws',cat:'lower',name:'Wall Sit',time:40,desc:'Schiena al muro, scivola fino a cosce parallele al suolo (90°). Tieni la posizione isometrica respirando.',muscles:'Quadricipiti (isometrico)'},
- // upper
- {id:'bw_pu',cat:'upper',name:'Push-up',time:40,desc:'Mani sotto le spalle, corpo in linea. Scendi col petto vicino a terra, gomiti a 45°, spingi su. Sulle ginocchia se serve.',muscles:'Petto, Tricipiti'},
- {id:'bw_pk',cat:'upper',name:'Pike Push-up',time:40,desc:'A V rovesciata, anche alte. Piega i gomiti portando la testa verso terra, poi spingi. Carica le spalle.',muscles:'Spalle, Tricipiti'},
- {id:'bw_td',cat:'upper',name:'Dip a terra',time:40,desc:'Seduto, mani dietro i fianchi, fianchi sollevati. Piega i gomiti scendendo, poi spingi su. Isola i tricipiti.',muscles:'Tricipiti, Spalle'},
- {id:'bw_pt',cat:'upper',name:'Plank Up-Down',time:40,desc:'Dal plank sugli avambracci sali a plank sulle mani un braccio per volta, poi torna giù. Alterna il braccio che guida.',muscles:'Spalle, Core'},
- // full-body
- {id:'bw_bp',cat:'full',name:'Burpee',time:40,desc:'Squat, mani a terra, salta indietro in plank, push-up opzionale, riporta i piedi e salta in alto. Esplosivo ma controllato.',muscles:'Full-body, Cardio'},
- {id:'bw_st',cat:'full',name:'Squat Thrust',time:40,desc:'Come il burpee ma senza salto finale: mani a terra, gambe indietro in plank, riporta i piedi e risali. Più gestibile.',muscles:'Full-body, Cardio'},
- {id:'bw_bc',cat:'full',name:'Bear Crawl',time:40,desc:'A quattro appoggi con le ginocchia sollevate da terra. Avanza e indietreggia muovendo braccio e gamba opposti. Core attivo.',muscles:'Full-body, Core'},
- {id:'bw_iw',cat:'full',name:'Inchworm',time:40,desc:'In piedi, scendi con le mani a terra e cammina in avanti fino al plank, poi torna indietro e risali. Mobilità + forza.',muscles:'Full-body, Core'},
-];
-function pickExtraCircuit(){
- // Fallback locale: 1 cardio + 1 lower + 1 upper + 1 full + 1 cardio, esercizi distinti
- var byCat={};BW_POOL.forEach(function(e){(byCat[e.cat]||(byCat[e.cat]=[])).push(e);});
- var sel=[],used=[];
- ['cardio','lower','upper','full','cardio'].forEach(function(cat){
-  var p=shuf((byCat[cat]||[]).filter(function(e){return used.indexOf(e.id)<0;}));
-  if(p[0]){sel.push(p[0]);used.push(p[0].id);}
- });
- return sel;
-}
-function genExtra(){
- // Circuiti curati da Sumi se disponibili, altrimenti fallback locale corpo-libero
- var plan=S.aiDB&&S.aiDB.coachPlan&&S.aiDB.coachPlan.extra;
- var circuit;
- if(plan&&plan.circuits&&plan.circuits.length){
-  var idx=(S.aiDB.extraIdx||0)%plan.circuits.length;
-  circuit=(plan.circuits[idx]||[]).filter(function(e){return e&&e.name;});
-  S.aiDB.extraIdx=(S.aiDB.extraIdx||0)+1;sv('ai',S.aiDB);
- }
- if(!circuit||!circuit.length)circuit=pickExtraCircuit();
- var TIME=40,ROUNDS=3,all=[];
- for(var r=0;r<ROUNDS;r++){
-  circuit.forEach(function(e){
-   all.push(Object.assign({},e,{isCore:true,isTime:true,isExtra:true,sets:1,time:e.time||TIME}));
-  });
-  if(r<ROUNDS-1)all.push({id:'xbrk'+r,cat:'extra',name:'RIPOSO',desc:'Recupera. Prossimo round tra poco.',muscles:'',isBreak:true,isCore:true,isTime:true,isExtra:true,time:30,sets:1});
- }
- return{split:{id:'extra',name:'EXTRA',emoji:'✦',color:'#f97316',desc:'Corpo libero · 3 round'},all:all};
-}
-function startExtra(){
- var w=genExtra();
- S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
- S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;
- S.wAlt={};S.wGaps=[];
- S.trialMode=false;S.extraMode=true;S.preWQAns={};
- go('workout');
-}
-function startWorkout(){
- S.extraMode=false;
+// ─── ALLENAMENTO A CASA ───────────────────────────────────────────────────────
+// Ha preso il posto dell'EXTRA 20′ il 12/08/2026. L'EXTRA era un circuito full-body a tempo
+// ADDITIVO: non avanzava lo split, non entrava in progressione, non era l'allenamento del
+// giorno. Ma il caso vero non era «voglio fare qualcosa in più», era «oggi non posso andare
+// in palestra»: lì serve la seduta di oggi in versione corpo libero, e serve che CONTI.
+// Perciò `startWorkout(true)` — stesso check pre-workout, stessi slot dello split, pool
+// HOME_DB, e nessun flag `extra` nella sessione: avanza la rotazione, entra nella
+// progressione (che a corpo libero sale di reps, non di kg) e il coach la legge come le altre.
+// home=true → allenamento A CASA: stesso giorno dello split, pool a corpo libero.
+// Passa dallo stesso check pre-workout e conta come seduta vera (vedi finishSession).
+function startWorkout(home){
+ S.homeMode=!!home;
  var missing=getMissingNutritionDays();
  if(missing.length>0&&!S.nutReminder){
   S.nutReminderCount=missing.length;
@@ -1178,7 +1227,7 @@ function startWorkout(){
 }
 function startTrialWorkout(){
  var idx=(S.splitIdx+Math.floor(Math.random()*5)+1)%6;
- var w=genWorkout(idx);
+ var w=genWorkout(idx,{home:S.homeMode});
  S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
  S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;
  S.wAlt={};S.wGaps=w.gaps||[];
@@ -1250,7 +1299,6 @@ function rWorkout(){
  if(!step)return rHome();
  var prog=S.wStepIdx/S.wSteps.length;
  var sp=S.wSplit;
- var isExtraSess=!!(sp&&sp.id==='extra'); // EXTRA: rietichetta le schermate del circuito a tempo
 
  // ── LOGGING REPS: dopo "SET COMPLETATO" su esercizi a carico ────────────────
  if(S.wAwaitReps&&step.type==='work'&&step.ex&&!step.ex.isTime&&!step.ex.isCore){
@@ -1272,8 +1320,8 @@ function rWorkout(){
  if(step.type==='core_intro'){
   return '<div class="center" style="background:#09090b">'
    +'<div style="font-size:60px;margin-bottom:12px"></div>'
-   +'<div style="font-size:30px;font-weight:900;margin-bottom:8px;letter-spacing:1px">'+(isExtraSess?'EXTRA 20′':'ADDOMINALI')+'</div>'
-   +'<div style="color:#52525b;font-size:13px;margin-bottom:32px">'+(isExtraSess?'Preparati per il circuito full-body':'Preparati per il circuito core')+'</div>'
+   +'<div style="font-size:30px;font-weight:900;margin-bottom:8px;letter-spacing:1px">ADDOMINALI</div>'
+   +'<div style="color:#52525b;font-size:13px;margin-bottom:32px">Preparati per il circuito core</div>'
    +'<button class="btn" style="background:#f97316;width:auto;padding:16px 40px;font-size:16px" onclick="advStep()">PRONTO </button>'
    +'</div>';
  }
@@ -1282,7 +1330,7 @@ function rWorkout(){
    // 10s countdown verde prima del primo esercizio core
    return '<div class="center" style="background:#09090b">'
     +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#22c55e"></div></div></div>'
-    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:12px">'+(isExtraSess?'EXTRA':'ADDOMINALI')+' — PRONTI IN</div>'
+    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:12px">ADDOMINALI — PRONTI IN</div>'
     +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;color:#22c55e;line-height:1;margin-bottom:20px">'+S.wTimer+'</div>'
     +'<button class="btn" style="background:#22c55e;width:auto;padding:14px 36px" onclick="skipRest()">INIZIA </button>'
     +'</div>';
@@ -1301,7 +1349,7 @@ function rWorkout(){
    // 30 secondi di pausa nel circuito core — verde
    return '<div class="center" style="background:#09090b">'
     +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#22c55e"></div></div></div>'
-    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:8px">'+(isExtraSess?'EXTRA · ROUND':'CORE CIRCUIT')+'</div>'
+    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:8px">CORE CIRCUIT</div>'
     +'<div style="color:#52525b;font-size:13px;margin-bottom:6px">RIPOSO</div>'
     +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;color:#22c55e;line-height:1;margin-bottom:10px">'+S.wTimer+'</div>'
     +(step.nextName?'<div style="color:#52525b;font-size:11px;margin-bottom:4px">Prossimo blocco</div><div style="font-size:16px;font-weight:700;margin-bottom:20px">'+step.nextName+'</div>':'')
@@ -1333,7 +1381,7 @@ function rWorkout(){
   var coreTotal=coreSteps.length;
   return '<div style="display:flex;flex-direction:column;height:100vh;background:#09090b;align-items:center;justify-content:center;text-align:center;padding:18px;position:relative">'
    +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#f59e0b"></div></div></div>'
-   +'<div style="color:#f59e0b;font-size:10px;letter-spacing:2px;margin-bottom:6px">'+(isExtraSess?'EXTRA':'CORE CIRCUIT')+' · '+(coreIdx+1)+'/'+coreTotal+'</div>'
+   +'<div style="color:#f59e0b;font-size:10px;letter-spacing:2px;margin-bottom:6px">CORE CIRCUIT · '+(coreIdx+1)+'/'+coreTotal+'</div>'
    +'<div style="font-size:24px;font-weight:900;line-height:1.2;margin-bottom:4px;max-width:300px">'+ex.name+'</div>'
    +'<div style="color:#71717a;font-size:12px;margin-bottom:14px;max-width:280px;line-height:1.4">'+ex.muscles+'</div>'
    +(ex.video?'<div style="width:230px;max-width:74vw;margin-bottom:14px">'+mediaHtml(ex)+'</div>':'')
@@ -1344,7 +1392,7 @@ function rWorkout(){
    +'</div>'
    +'<div style="display:flex;gap:10px;justify-content:center">'
    +'<button id="core-pause-btn" class="btn-ghost" style="width:auto;padding:12px 28px" onclick="pauseCore()">'+(S.wPaused?'▶ Riprendi':'Pausa')+'</button>'
-   +'<button class="btn-ghost" style="width:auto;padding:12px 20px;color:#52525b;font-size:12px" onclick="skipCoreCircuit()">'+(isExtraSess?'Salta circuito ›':'Salta core ›')+'</button>'
+   +'<button class="btn-ghost" style="width:auto;padding:12px 20px;color:#52525b;font-size:12px" onclick="skipCoreCircuit()">Salta core ›</button>'
    +'</div>'
    +'</div>';
  }
@@ -1359,6 +1407,8 @@ function rWorkout(){
    +'<button onclick="S.wConfirmClose=false;finishWorkout()" style="background:#f97316;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;cursor:pointer">Sì, chiudi</button>'
    +'</div></div>':'')
   +(S.trialMode?'<div style="background:#422006;border:1px solid #92400e;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#fbbf24;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SESSIONE PROVA — non registrata</div>':'')
+  // A CASA: si vede che seduta è, e il giorno PULL dichiara il suo limite invece di fingersi pieno
+  +(S.homeMode?'<div style="background:#0c1a14;border:1px solid #14532d;border-radius:10px;padding:7px 12px;margin-bottom:10px;color:#86efac;font-size:11px;line-height:1.45"><b>⌂ A CASA</b> · '+sp.name+' a corpo libero — conta come la seduta di oggi'+(HOME_WARN[sp.id]?'<br><span style="color:#4ade80">'+HOME_WARN[sp.id]+'</span>':'')+'</div>':'')
   // se il pool non è bastato lo dice, invece di consegnare una seduta corta in silenzio
   +((S.wGaps&&S.wGaps.length)?'<div style="background:#1c1917;border:1px solid #3f3f46;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#a1a1aa;font-size:11px;text-align:center">Seduta corta: pool esaurito ('+S.wGaps.join(' · ')+')</div>':'')
   +'<div class="pb" style="margin-bottom:14px"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:'+ac+'"></div></div>'
@@ -1503,7 +1553,8 @@ function skipExercise(){
   // Candidati: stessa categoria, non già in seduta in un altro slot, ammessi dal recupero.
   var inSession=S.wEx.filter(function(x,i){return i!==slot;});
   var shape={isCore:ex.isCore,isTime:ex.isTime,isCardio:ex.isCardio,isExtra:ex.isExtra,perSide:ex.perSide};
-  var cands=(DB[ex.cat]||[]).filter(function(e){
+  // stessa sorgente della seduta: in casa le alternative sono a corpo libero, non della palestra
+  var cands=((S.homeMode&&HOME_DB[ex.cat])||DB[ex.cat]||[]).filter(function(e){
    return e.id!==ex.id&&!inSession.find(function(x){return x.id===e.id;})&&recoveryAllows(e);
   }).map(function(e){
    // stessa forma dello slot (core/tempo/cardio): altrimenti un core diventa un reps-based
@@ -1538,7 +1589,7 @@ function finishWorkout(){
  if(S.trialMode){S.trialMode=false;go('home');return;}
  var dur=Math.round((Date.now()-S.wStartTime)/60000)||1;
  S.pending={split:S.wSplit,exercises:S.wEx,sets:S.wSets,duration:dur,reps:S.wReps||{}};
- if(S.extraMode)S.pending.extra=true;
+ if(S.homeMode)S.pending.home=true; // marca la seduta come fatta a casa: spiega al coach perché non ci sono kg
  S.qStep=0;S.qAns={};go('post_quiz');
 }
 
@@ -1589,7 +1640,7 @@ function rExFeedback(){
    +'</div>';
  }
  var cards=normalEx.map(function(ex){return exCard(ex.id,ex.name,ex.id);}).join('');
- var coreCard=hasCore?exCard('core',(S.pending&&S.pending.extra)?'CIRCUITO EXTRA':'CIRCUITO CORE','core'):'';
+ var coreCard=hasCore?exCard('core','CIRCUITO CORE','core'):'';
  return '<div class="pg">'
   +'<div style="display:flex;gap:5px;margin-bottom:18px">'+bars+'</div>'
   +'<button class="back" style="margin-bottom:14px" onclick="S.qStep=PQ.length-1;render()">← Indietro</button>'
@@ -1625,7 +1676,10 @@ async function finishSession(){
  try{
   var session=Object.assign({},S.pending||{},{quiz:S.qAns,preCheck:S.preWQAns||{},date:new Date().toISOString()});
   S.preWQAns={};
-  var isExtra=!!session.extra; // EXTRA: additiva, non fa avanzare rotazione/carichi/adattamento
+  // Le sedute a casa CONTANO come le altre (avanzano lo split, entrano in progressione).
+  // `extra` resta letto solo per le vecchie sessioni additive già nello storico, che non
+  // devono cambiare significato a posteriori: nessuno lo scrive più.
+  var isExtra=!!session.extra;
   // aiDB.sessions deprecato 2026-08-02: duplicava history (l'unica fonte letta a valle).
   S.aiDB.patterns=calcPatterns();
   var nh=(S.history||[]).concat([session]);
@@ -1638,7 +1692,7 @@ async function finishSession(){
   syncToDrive();
   // runAdaptation rimosso 2026-08-02: il piano lo modula solo Sumi notturna (coachPlan).
  }catch(e){console.error('finishSession:',e);}
- S.extraMode=false;
+ S.homeMode=false;
  go('home');
 }
 
