@@ -334,7 +334,7 @@ function recoveryProfileCard(){
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 const S={
- view:'home',history:[],skipped:[],nutrition:null,splitIdx:0,nutQueue:[],nutQueueIdx:0,nutTarget:null,
+ view:'home',history:[],nutrition:null,splitIdx:0,nutQueue:[],nutQueueIdx:0,nutTarget:null,
  wSplit:null,wEx:[],wSteps:[],wStepIdx:0,wTimer:0,wElapsed:0,wSets:0,wStartTime:0,wPaused:false,
  wAlt:{},wGaps:[], // wAlt: rotazione alternative per slot (vedi skipExercise) · wGaps: slot che il pool non ha riempito
  qStep:0,qAns:{},pending:null,
@@ -495,30 +495,21 @@ function computeProgression(session){
   sv('ai',S.aiDB);
  }catch(e){console.error('computeProgression:',e);}
 }
-// Uno skip dura SKIP_DAYS giorni, poi l'esercizio rientra da solo.
-// Prima del 09/08/2026 `skipped` era un array di id senza scadenza: un "salta" per un
-// fastidio di giornata bandiva l'esercizio per sempre e non c'era modo di rimetterlo.
-// Il risultato misurato: 14 esercizi su 20 fuori dal generatore (tutte le gambe, tutte
-// le spalle, il petto con elastico), il giorno LEGS che non aveva più niente da proporre.
-// `skipLog` è la scadenza per id; un id senza scadenza è un residuo legacy e viene liberato.
-const SKIP_DAYS=14;
-function pruneSkips(){
- var log=S.aiDB.skipLog||{},now=Date.now(),keep=[],freed=[];
- (S.skipped||[]).forEach(function(id){
-  var until=log[id];
-  if(until&&Date.parse(until)>now)keep.push(id);else freed.push(id);
- });
- Object.keys(log).forEach(function(id){if(!(Date.parse(log[id])>now))delete log[id];});
- if(freed.length){
-  console.log('[skip] rientrati nel pool:',freed.join(', '));
-  S.skipped=keep;S.aiDB.skipped=keep;S.aiDB.skipLog=log;
-  S.aiDB.skippedUpdatedAt=new Date().toISOString(); // timbro fresco: vince sul vecchio array su Drive
-  sv('sk',keep);sv('ai',S.aiDB);
- }
- return keep;
+// LA LISTA DEGLI ESERCIZI BANDITI NON ESISTE PIÙ (12/08/2026, decisione di Simone).
+// Storia in due atti: `skipped` nasce come ban a vita (un "salta" per un fastidio di giornata
+// toglieva l'esercizio per sempre — 14 su 20 fuori dal generatore); il 09/08 diventa un cooldown
+// di 14 giorni con `skipLog`; il 12/08 sparisce del tutto, perché il tasto che lo alimentava ora
+// RUOTA le alternative invece di bandire (vedi skipExercise) e nessuno lo scrive più.
+// L'unico canale per escludere davvero un esercizio è `adaptation.avoidExercises`, che scrive
+// l'AI Coach quando glielo dici in chat: una decisione ragionata, non un click di passaggio.
+// `dropSkipState()` ripulisce i residui locali e, al primo sync, anche il blob su Drive.
+function dropSkipState(){
+ var d=false;
+ ['skipped','skipLog','skippedUpdatedAt'].forEach(function(k){if(k in S.aiDB){delete S.aiDB[k];d=true;}});
+ try{if(localStorage.getItem('sk')!==null){localStorage.removeItem('sk');d=true;}}catch(e){}
+ if(d){console.log('[skip] stato skip rimosso: gli esercizi sono tutti nel pool');sv('ai',S.aiDB);}
 }
-function genWorkout(splitIdx,skipped){
- skipped=pruneSkips();
+function genWorkout(splitIdx){
  var split=PLAN[splitIdx%6];
  var adapt=S.aiDB.adaptation||{};
  var avoid=adapt.avoidExercises||[];
@@ -527,19 +518,19 @@ function genWorkout(splitIdx,skipped){
  var exercises=[],used=[],gaps=[];
  Object.entries(split.cats).forEach(function(entry){
   var cat=entry[0],count=entry[1];
-  // "must" di questa categoria forzati per primi (rispettano skipped/avoid), contano nel count
+  // "must" di questa categoria forzati per primi (rispettano gli avoid del coach), contano nel count
   var forced=[];
   must.forEach(function(id){
    if(forced.length>=count)return;
    var e=(DB[cat]||[]).find(function(x){return x.id===id;});
-   if(e&&!skipped.includes(id)&&!avoid.includes(id)&&!used.includes(id))forced.push(e);
+   if(e&&!avoid.includes(id)&&!used.includes(id))forced.push(e);
   });
   var notForced=function(e){return !forced.find(function(p){return p.id===e.id;});};
-  var preferred=DB[cat].filter(function(e){return suggest.includes(e.id)&&!skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&notForced(e);});
-  var pool=DB[cat].filter(function(e){return !skipped.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&!preferred.find(function(p){return p.id===e.id;})&&notForced(e);});
+  var preferred=DB[cat].filter(function(e){return suggest.includes(e.id)&&!avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&notForced(e);});
+  var pool=DB[cat].filter(function(e){return !avoid.includes(e.id)&&!used.includes(e.id)&&recoveryAllows(e)&&!preferred.find(function(p){return p.id===e.id;})&&notForced(e);});
   var sel=forced.concat(preferred.concat(shuf(pool)).slice(0,Math.max(0,count-forced.length)));
   // RIEMPI SEMPRE: se il pool "pulito" non copre `count`, rientrano gli esclusi morbidi
-  // (skip a scadenza e avoid del coach). Motivo: la categoria pull ha 6 esercizi per 5 slot,
+  // (gli `avoidExercises` del coach). Motivo: la categoria pull ha 6 esercizi per 5 slot,
   // quindi basta un buco per consegnare una seduta corta — e in silenzio. Meglio un esercizio
   // che non avresti scelto di uno slot vuoto. `recoveryAllows` resta invece un vincolo duro:
   // è sicurezza post-intervento, non una preferenza.
@@ -587,7 +578,7 @@ function genWorkout(splitIdx,skipped){
  var nk=DB.cardio.length,pickK=[],cardio=[];
  for(var ki=0;ki<nk&&pickK.length<CARDIO_N;ki++){
   var cand=DB.cardio[(splitIdx*CARDIO_N+ki)%nk];
-  if(cand&&!skipped.includes(cand.id)&&!avoid.includes(cand.id)&&recoveryAllows(cand)&&pickK.indexOf(cand)<0)pickK.push(cand);
+  if(cand&&!avoid.includes(cand.id)&&recoveryAllows(cand)&&pickK.indexOf(cand)<0)pickK.push(cand);
  }
  for(var cr=0;cr<CARDIO_ROUNDS;cr++){
   pickK.forEach(function(k,kj){
@@ -644,7 +635,6 @@ function calcPatterns(){
   avgEnergy:avg(wq,'energy'),avgDifficulty:avg(wq,'difficulty'),
   recentEnergy:avg(wq.slice(-5),'energy'),recentDifficulty:avg(wq.slice(-5),'difficulty'),
   splitHistory:sess.slice(-6).map(function(s){return s.split&&s.split.id;}),
-  skippedExercises:S.skipped.slice(),
  };
 }
 
@@ -712,12 +702,10 @@ function mergeDown(dd){
  S.aiDB.chatLog=unionBy(S.aiDB.chatLog,r.chatLog,function(x){return (x&&x.date)+'|'+(x&&x.userMsg);});
  // LAST-WINS per-esercizio (carichi dichiarati)
  S.aiDB.loads=mergeByKey(S.aiDB.loads,r.loads,'updatedAt');
- // LAST-WINS scalari timbrati (esercizi saltati, indice rotazione split)
- if(Array.isArray(r.skipped)&&newer(r.skippedUpdatedAt,S.aiDB.skippedUpdatedAt)){S.skipped=r.skipped;S.aiDB.skipped=r.skipped;S.aiDB.skippedUpdatedAt=r.skippedUpdatedAt;}
- // UNION delle scadenze skip: uno skip messo su un altro device non deve sparire, ma un id
- // senza scadenza resta legacy e `pruneSkips` lo libera comunque.
- if(r.skipLog&&typeof r.skipLog==='object'){var sl=S.aiDB.skipLog||{};for(var _k in r.skipLog){if(!sl[_k]||_ts(r.skipLog[_k])>_ts(sl[_k]))sl[_k]=r.skipLog[_k];}S.aiDB.skipLog=sl;}
- if(typeof pruneSkips==='function')pruneSkips();
+ // `skipped`/`skipLog` NON si fondono più: la lista dei banditi è stata rimossa il 12/08/2026
+ // (vedi dropSkipState). Un blob vecchio può ancora portarli — vengono semplicemente ignorati e
+ // ripuliti, così un device non aggiornato non può reintrodurre un ban dalla sincronizzazione.
+ // LAST-WINS scalare timbrato (indice rotazione split)
  if(typeof r.splitIdx==='number'&&newer(r.splitIdxUpdatedAt,S.aiDB.splitIdxUpdatedAt)){S.splitIdx=r.splitIdx;S.aiDB.splitIdx=r.splitIdx;S.aiDB.splitIdxUpdatedAt=r.splitIdxUpdatedAt;}
  // LAST-WINS timbrato (modalità recupero): vince il device che ha timbrato updatedAt per ultimo
  if(r.recoveryMode&&newer(r.recoveryMode.updatedAt,S.aiDB.recoveryMode&&S.aiDB.recoveryMode.updatedAt))S.aiDB.recoveryMode=r.recoveryMode;
@@ -733,12 +721,11 @@ async function loadData(){
   var v;
   v=localStorage.getItem('wh');if(v)S.history=JSON.parse(v);
   v=localStorage.getItem('si');if(v)S.splitIdx=parseInt(v)||0;
-  v=localStorage.getItem('sk');if(v)S.skipped=JSON.parse(v)||[];
   v=localStorage.getItem('nd');if(v)S.nutrition=JSON.parse(v);
   v=localStorage.getItem('ai');if(v){var _ai=JSON.parse(v);S.aiDB=Object.assign({sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},_ai);if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};if(!S.aiDB.nutritionAdvice)S.aiDB.nutritionAdvice='';if(!S.aiDB.mealLog)S.aiDB.mealLog={};}
   if(!S.aiDB.profile)S.aiDB.profile={peso:74,altezza:182,eta:30,obiettivo:'massa'};
   if(typeof recoveryInit==='function')recoveryInit(); // modalità recupero: init una-tantum + auto-uscita g30
-  if(typeof pruneSkips==='function')pruneSkips(); // libera gli skip scaduti e i ban legacy senza scadenza
+  dropSkipState(); // la lista dei banditi non esiste più: ripulisce i residui locali e, al primo sync, il blob
   // Migrazione: ripristina da array nutrition legacy (preferisci dati reali su skipped)
   if(S.aiDB.nutrition&&S.aiDB.nutrition.length){
    S.aiDB.nutrition.forEach(function(n){
@@ -783,7 +770,6 @@ async function loadData(){
     mergeDown(dd);
     sv('ai',S.aiDB);
     if(S.history&&S.history.length)sv('wh',S.history);
-    if(Array.isArray(S.skipped))sv('sk',S.skipped);
     if(typeof S.splitIdx==='number')sv('si',String(S.splitIdx));
    }else if(r){
     // Fallback backward-safe: blob pre-contratto (senza serverUpdatedAt) → vecchio comportamento
@@ -825,11 +811,11 @@ async function syncToDrive(){
  // (evita che un telefono appena reinstallato/azzerato cancelli il backup).
  if(!(S.history&&S.history.length)){console.warn('sync saltato: storico locale vuoto');return;}
  try{
-  // Round-trip: skipped/splitIdx vivono anche in aiDB (solo aiDB sopravvive al POST del telefono,
-  // che sovrascrive tutto il blob). I timbri *UpdatedAt li mette chi edita (skip/finishSession).
-  if(Array.isArray(S.skipped))S.aiDB.skipped=S.skipped;
+  // Round-trip: splitIdx vive anche in aiDB (solo aiDB sopravvive al POST del telefono, che
+  // sovrascrive tutto il blob). Il timbro *UpdatedAt lo mette chi edita (finishSession).
+  dropSkipState(); // il payload non deve riportare su Drive lo stato skip appena rimosso
   if(typeof S.splitIdx==='number')S.aiDB.splitIdx=S.splitIdx;
-  var payload={history:S.history,nutrition:S.nutrition,aiDB:S.aiDB,skipped:S.skipped,savedAt:new Date().toISOString()};
+  var payload={history:S.history,nutrition:S.nutrition,aiDB:S.aiDB,savedAt:new Date().toISOString()};
   var _k=getApiKey();if(_k)payload.proxyToken=_k; // backup proxy-token: sopravvive a wipe localStorage / reinstall PWA
   fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload)});
  }catch(e){}
@@ -1101,7 +1087,7 @@ function pickRecovery(v){
  render();
 }
 function launchWorkout(){
- var w=genWorkout(S.splitIdx,S.skipped);
+ var w=genWorkout(S.splitIdx);
  S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
  S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;
  S.wAlt={};S.wGaps=w.gaps||[];
@@ -1192,7 +1178,7 @@ function startWorkout(){
 }
 function startTrialWorkout(){
  var idx=(S.splitIdx+Math.floor(Math.random()*5)+1)%6;
- var w=genWorkout(idx,[]);
+ var w=genWorkout(idx);
  S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
  S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;
  S.wAlt={};S.wGaps=w.gaps||[];
@@ -1506,8 +1492,9 @@ function wBack(){
 // per curiosità bruciava un esercizio, e con PULL a 5 slot su 6 esercizi bastava per svuotare
 // la seduta. Ora la lista dei candidati si costruisce alla prima pressione con l'ORIGINALE IN
 // TESTA, e ogni pressione avanza di uno chiudendo il ciclo: finite le alternative si torna al
-// primo. Mai un vicolo cieco, mai una scrittura su `skipped`/`skipLog`/`skippedUpdatedAt`.
-// Per togliere davvero un esercizio resta `avoidExercises` dell'adattamento IA.
+// primo. Mai un vicolo cieco, e nessun effetto fuori dalla seduta in corso: la lista dei banditi
+// è stata rimossa insieme al vecchio comportamento (vedi dropSkipState).
+// Per togliere davvero un esercizio resta `avoidExercises` dell'adattamento IA, che scrive il coach.
 function skipExercise(){
  clearInterval(TI);var step=S.wSteps[S.wStepIdx];if(step.type!=='work')return;
  var ex=step.ex,slot=step.exIdx;
