@@ -95,7 +95,7 @@ function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-11 · palestra: carichi senza tetto, passo per attrezzo, stime da tarare'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-16 · tombstone pasti: una rimozione ora attraversa il sync'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -435,7 +435,7 @@ const S={
  wSplit:null,wEx:[],wSteps:[],wStepIdx:0,wTimer:0,wElapsed:0,wSets:0,wStartTime:0,wPaused:false,
  wAlt:{},wGaps:[],homeMode:false, // wAlt: rotazione alternative per slot (vedi skipExercise) · wGaps: slot che il pool non ha riempito · homeMode: seduta a corpo libero
  qStep:0,qAns:{},pending:null,
- aiDB:{sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},
+ aiDB:{sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},mealTombstones:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},
  aiChat:[],aiLoading:false,aiErr:'',exFbAnswers:{},
  aiOpen:false,floatChat:[],floatLoading:false,
  trialMode:false,trialNutMode:false,wConfirmClose:false,
@@ -779,6 +779,39 @@ function mealKey(m){
  if(m.mealId)return m.mealId;
  return (m.loggedAt||'')+'|'+(m.foodDescription||'');
 }
+// TOMBSTONE PASTI (16/08/2026) — perche' una rimozione ha bisogno di un record che viaggi.
+// `mealLog` si fonde in UNIONE (mai in rimozione): togliere un pasto dal blob NON basta,
+// perche' il telefono ce l'ha ancora in locale e lo ri-pusha al primo sync. E' successo:
+// la rimozione dei due doppioni del 04/08, applicata al blob il 12/08, e' stata annullata
+// dal sync del telefono e il giorno e' tornato a raccontare quattro pasti. Le kcal no —
+// `nutritionLog` e' LAST-WINS per data e aveva retto: numeri giusti, elenco pasti doppio,
+// cioe' la colonna che si legge quando si controlla una giornata. Stesso schema con cui il
+// 12/08 e' stata tolta la lista dei banditi (`skipLog`): l'assenza di un record non si
+// propaga, la presenza di un record sì.
+// `mealTombstones` = mappa data → array di mealKey soppressi. Viaggia dentro `aiDB` in
+// entrambe le direzioni, quindi anche un device mai aggiornato smette di resuscitare il
+// pasto appena scarica il blob. Si aggiunge, non si toglie: e' una lista di lapidi.
+function mergeTombstones(dst,src){
+ dst=dst||{};
+ if(!src||typeof src!=='object')return dst;
+ for(var day in src){if(!Object.prototype.hasOwnProperty.call(src,day))continue;
+  var have=(dst[day]||[]).slice(),seen={};
+  have.forEach(function(k){if(k!=null)seen[k]=1;});
+  (src[day]||[]).forEach(function(k){if(k!=null&&!seen[k]){have.push(k);seen[k]=1;}});
+  dst[day]=have;
+ }
+ return dst;
+}
+// Applica le lapidi al mealLog. Va richiamata DOPO il merge (il blob remoto puo' ancora
+// portarsi dietro il pasto soppresso) e all'avvio, prima che l'app possa ri-pushare.
+function purgeTombstoned(mealLog,tomb){
+ if(!mealLog||!tomb)return mealLog||{};
+ for(var day in tomb){if(!Object.prototype.hasOwnProperty.call(tomb,day))continue;
+  var dead=tomb[day]||[];if(!dead.length||!mealLog[day])continue;
+  mealLog[day]=mealLog[day].filter(function(m){return dead.indexOf(mealKey(m))<0;});
+ }
+ return mealLog;
+}
 function unionBy(a,b,keyFn){ // unione di due array, dedup per keyFn (funzione o nome campo)
  var kf=typeof keyFn==='function'?keyFn:function(x){return x?x[keyFn]:x;};
  var out=[],seen={};
@@ -801,6 +834,11 @@ function mergeDown(dd){
  S.aiDB.weightLog=mergeByKey(S.aiDB.weightLog,r.weightLog,'loggedAt');
  // UNION per-voce (pasti: mappa data→array), identita' per mealKey e non per `loggedAt` nudo
  S.aiDB.mealLog=mergeArrayMap(S.aiDB.mealLog,r.mealLog,mealKey);
+ // ...poi le lapidi, che sono l'unico modo in cui una rimozione attraversa una UNIONE.
+ // Ordine obbligato: prima si fonde, poi si sopprime — al contrario il pasto rientrerebbe
+ // dal blob remoto nella stessa chiamata.
+ S.aiDB.mealTombstones=mergeTombstones(S.aiDB.mealTombstones,r.mealTombstones);
+ S.aiDB.mealLog=purgeTombstoned(S.aiDB.mealLog,S.aiDB.mealTombstones);
  // UNION log (storico sessioni + chat/feedback)
  S.history=unionBy(S.history,dd.history,'date');
  S.aiDB.chatLog=unionBy(S.aiDB.chatLog,r.chatLog,function(x){return (x&&x.date)+'|'+(x&&x.userMsg);});
@@ -826,7 +864,11 @@ async function loadData(){
   v=localStorage.getItem('wh');if(v)S.history=JSON.parse(v);
   v=localStorage.getItem('si');if(v)S.splitIdx=parseInt(v)||0;
   v=localStorage.getItem('nd');if(v)S.nutrition=JSON.parse(v);
-  v=localStorage.getItem('ai');if(v){var _ai=JSON.parse(v);S.aiDB=Object.assign({sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},_ai);if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};if(!S.aiDB.nutritionAdvice)S.aiDB.nutritionAdvice='';if(!S.aiDB.mealLog)S.aiDB.mealLog={};}
+  v=localStorage.getItem('ai');if(v){var _ai=JSON.parse(v);S.aiDB=Object.assign({sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},mealTombstones:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},_ai);if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};if(!S.aiDB.nutritionAdvice)S.aiDB.nutritionAdvice='';if(!S.aiDB.mealLog)S.aiDB.mealLog={};if(!S.aiDB.mealTombstones)S.aiDB.mealTombstones={};
+  // Le lapidi si applicano gia' qui, non solo nel mergeDown: `loadData` gira prima che
+  // l'utente possa syncare, e un telefono che parte con il pasto soppresso ancora in
+  // localStorage lo ri-pusherebbe al primo salvataggio, prima di aver mai fuso col server.
+  S.aiDB.mealLog=purgeTombstoned(S.aiDB.mealLog,S.aiDB.mealTombstones);}
   if(!S.aiDB.profile)S.aiDB.profile={peso:74,altezza:182,eta:30,obiettivo:'massa'};
   if(typeof recoveryInit==='function')recoveryInit(); // modalità recupero: init una-tantum + auto-uscita g30
   dropSkipState(); // la lista dei banditi non esiste più: ripulisce i residui locali e, al primo sync, il blob
@@ -2847,9 +2889,10 @@ function openNutritionDay(date){
 // sparita verrebbe risorta dal blob del server al primo merge. Si scrive invece la
 // stessa lapide che usa "Salta" ({skipped:true} con savedAt fresco), che il merge
 // rispetta perche' e' piu' recente.
-// Le foto pasti del giorno restano: `mealLog` si fonde in UNIONE (mai in rimozione),
-// quindi cancellarle in locale non reggerebbe al primo sync. Se il giorno si ricompila,
-// le foto tornano utili; se davvero vanno tolte, si tolgono dal foglio.
+// Le foto pasti del giorno restano, ed e' voluto: se il giorno si ricompila tornano utili.
+// Cancellarle in locale non reggerebbe comunque al primo sync, perche' `mealLog` si fonde
+// in UNIONE — l'unico modo perche' una rimozione attecchisca e' scrivere il `mealKey` in
+// `mealTombstones` (vedi purgeTombstoned), che e' il canale usato per i doppioni del 04/08.
 async function removeNutritionDay(date){
  var d=new Date(date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
  if(!confirm('Rimuovo la nutrizione di '+d+'?\n\nIl giorno torna "da compilare". Le foto pasti restano.'))return;
