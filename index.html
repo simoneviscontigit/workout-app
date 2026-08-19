@@ -441,6 +441,7 @@ const S={
  trialMode:false,trialNutMode:false,wConfirmClose:false,
  mealPhotoState:{date:'',note:'',loading:false,estimate:null,error:''},
  nutReminder:false,nutReminderCount:0,
+ ioError:'',syncError:'',syncBusy:false,nutDraft:null,
  nutPhotoUploads:[],
  preWorkoutCheck:false,preWQStep:0,preWQAns:{},
  nutQty:{},
@@ -870,6 +871,7 @@ async function loadData(){
   // localStorage lo ri-pusherebbe al primo salvataggio, prima di aver mai fuso col server.
   S.aiDB.mealLog=purgeTombstoned(S.aiDB.mealLog,S.aiDB.mealTombstones);}
   if(!S.aiDB.profile)S.aiDB.profile={peso:74,altezza:182,eta:30,obiettivo:'massa'};
+  S.nutDraft=loadNutDraft(); // compilazione interrotta da un riavvio: la home la offre indietro
   if(typeof recoveryInit==='function')recoveryInit(); // modalità recupero: init una-tantum + auto-uscita g30
   dropSkipState(); // la lista dei banditi non esiste più: ripulisce i residui locali e, al primo sync, il blob
   // Migrazione: ripristina da array nutrition legacy (preferisci dati reali su skipped)
@@ -932,7 +934,24 @@ async function loadData(){
 const DRIVE_URL='https://script.google.com/macros/s/AKfycbxtbx4x2KZZxgCvzOtibFtFTI8h0Bxg1-xalRboisHzyP_w8QD14Hb2-ZiAgTTDNQPP/exec';
 // Sandbox: sui domini di test (Vercel) NON scriviamo mai su Drive (solo lettura per caricare i dati veri).
 const TEST_MODE=(typeof location!=='undefined'&&/vercel\.app$/i.test(location.hostname));
-async function sv(k,v){try{localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}}
+// SALVATAGGIO RUMOROSO (19/08/2026). Prima era `try{...}catch(e){}`: se localStorage
+// falliva (quota, storage evicted da iOS, modalita' privata) il dato restava solo in RAM,
+// la schermata continuava a mostrarlo come salvato e al riavvio non c'era piu'. Nessun
+// errore, da nessuna parte. Un dato che non si scrive e' perdita di dati: adesso si vede
+// (banner rosso in home + un alert, una volta sola per sessione, perche' il primo va letto
+// e i successivi diventerebbero rumore da ignorare).
+var _ioAlerted=false;
+async function sv(k,v){
+ try{
+  localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));
+  S.ioError='';
+  return true;
+ }catch(e){
+  S.ioError='Salvataggio su questo telefono FALLITO ('+((e&&e.name)||'errore')+'). Quello che vedi e\' solo in memoria: non chiudere l\'app.';
+  if(!_ioAlerted){_ioAlerted=true;try{alert(S.ioError);}catch(_e){}}
+  return false;
+ }
+}
 async function restoreFromDrive(){
  var btn=document.getElementById('restore-btn');
  if(btn){btn.textContent='Scaricando...';btn.disabled=true;}
@@ -951,7 +970,7 @@ async function restoreFromDrive(){
   if(btn){btn.textContent='Ripristina da Drive';btn.disabled=false;}
  }
 }
-async function syncToDrive(){
+async function syncToDrive(){ // NB: da qui in poi e' await-abile — chiamarla senza await resta legittimo (fire-and-forget con badge)
  if(TEST_MODE)return; // sandbox: niente scrittura su Drive
  // ANTI-WIPE: non sincronizzare mai uno storico vuoto sopra i dati su Drive
  // (evita che un telefono appena reinstallato/azzerato cancelli il backup).
@@ -963,8 +982,21 @@ async function syncToDrive(){
   if(typeof S.splitIdx==='number')S.aiDB.splitIdx=S.splitIdx;
   var payload={history:S.history,nutrition:S.nutrition,aiDB:S.aiDB,savedAt:new Date().toISOString()};
   var _k=getApiKey();if(_k)payload.proxyToken=_k; // backup proxy-token: sopravvive a wipe localStorage / reinstall PWA
-  fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload)});
- }catch(e){}
+  // 19/08/2026 — era fire-and-forget dentro un catch vuoto: una POST persa non lasciava
+  // traccia. Ora si aspetta la risposta dell'Apps Script (`{ok:true}`) e un push non
+  // confermato accende il badge in home, cosi' "l'ho compilato" e "e' arrivato" smettono
+  // di essere la stessa cosa. Il badge dice NON CONFERMATO, non "fallito": la risposta puo'
+  // perdersi anche a scrittura avvenuta, e gridare al errore sbagliato si impara a ignorarlo.
+  S.syncBusy=true;
+  var _r=await fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload),redirect:'follow'});
+  var _d=await _r.json();
+  if(!_d||!_d.ok)throw new Error((_d&&_d.error)||'risposta non valida');
+  S.syncError='';localStorage.setItem('syncOk',new Date().toISOString());
+ }catch(e){
+  S.syncError='Ultimo salvataggio non confermato su Drive ('+((e&&e.message)||'rete')+'). Riapri l\'app quando hai linea.';
+ }
+ S.syncBusy=false;
+ if(S.view==='home')render();
 }
 // Force-run (Fase 3): scrive un flag aiDB.forceRun={ts} e sincronizza. Il Mac (poller
 // launchd ogni ~10 min) lo vede e lancia il coach subito, senza aspettare la notte.
@@ -987,6 +1019,7 @@ function go(v,extra){clearInterval(TI);S.view=v;if(extra)Object.assign(S,extra);
 function render(){
  var app=document.getElementById('app');
  try{document.body.classList.toggle('recovery',!!(S.aiDB&&S.aiDB.recoveryMode&&S.aiDB.recoveryMode.active));}catch(e){} // tema ciano se modalità recupero attiva
+ if(S.view==='nutrition'&&typeof saveNutDraft==='function')saveNutDraft(); // bozza su disco a ogni passo
  if(S.preWorkoutCheck){app.innerHTML=rPreWorkoutCheck();updateFloatAI();return;}
  var map={home:rHome,workout:rWorkout,post_quiz:rPQ,nutrition:rNut,history:rHist,ai:rAI,meal_photo:rMealPhoto,profile:rProfile};
  app.innerHTML=(map[S.view]||rHome)();
@@ -1016,6 +1049,32 @@ async function skipDay(){
 }
 
 // ─── HOME ─────────────────────────────────────────────────────────────────────
+// Le tre bandiere che prima non esistevano: disco fallito, push non confermato,
+// compilazione interrotta. Stanno in home perche' e' la schermata che si guarda sempre,
+// e la perdita di un dato non deve dipendere dal fatto che uno vada a cercarla.
+function rAlerts(){
+ var out='';
+ if(S.ioError)
+  out+='<div style="border:2px solid #ef4444;background:#1a0000;padding:12px 14px;margin-bottom:14px">'
+   +'<div class="lbl" style="color:#ef4444;font-size:11px;margin-bottom:4px">SALVATAGGIO FALLITO</div>'
+   +'<div style="color:#fca5a5;font-size:12px;line-height:1.5">'+S.ioError+'</div></div>';
+ if(S.syncError)
+  out+='<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px">'
+   +'<div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:4px">NON CONFERMATO SU DRIVE</div>'
+   +'<div style="color:#fcd34d;font-size:12px;line-height:1.5">'+S.syncError+'</div>'
+   +'<button class="btn" style="background:#f59e0b;color:#000;margin:8px 0 0;padding:8px;font-size:12px" onclick="syncToDrive()">Riprova ora</button></div>';
+ if(S.nutDraft&&S.nutDraft.target){
+  var dl=new Date(S.nutDraft.target.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+  out+='<div style="border:2px solid #818cf8;background:#0d0d18;padding:12px 14px;margin-bottom:14px">'
+   +'<div class="lbl" style="color:#818cf8;font-size:11px;margin-bottom:4px">COMPILAZIONE INTERROTTA</div>'
+   +'<div style="color:#c7d2fe;font-size:12px;line-height:1.5;margin-bottom:8px">'+dl+' non e\' mai stata salvata. La bozza c\'e\' ancora.</div>'
+   +'<div style="display:flex;gap:8px">'
+   +'<button class="btn" style="background:#818cf8;color:#000;margin:0;flex:1;font-size:13px" onclick="resumeNutDraft()">Riprendi</button>'
+   +'<button class="btn" style="background:#27272a;color:#a1a1aa;margin:0;flex:1;font-size:13px" onclick="discardNutDraft()">Scarta</button>'
+   +'</div></div>';
+ }
+ return out;
+}
 function rHome(){
  var t=PLAN[S.splitIdx%6];
  var last=S.history[S.history.length-1];
@@ -1042,6 +1101,7 @@ function rHome(){
   +'<div class="font-display" style="font-size:76px;font-weight:700;letter-spacing:-3px;line-height:.85;text-transform:uppercase;margin:2px 0 6px">'+t.name+'</div>'
   +'<div style="color:#a1a1aa;font-size:13px;margin-bottom:18px">'+t.desc+'</div>'
   +recoveryBanner()
+  +rAlerts()
   +(S.nutReminder
    ?'<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px"><div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:8px">'+S.nutReminderCount+' giorni senza nutrizione</div><div style="display:flex;gap:8px"><button class="btn" style="background:#27272a;color:#fff;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;startWorkout(S.homeMode)">Fai dopo</button><button class="btn" style="background:#f59e0b;color:#000;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;openNutrition()">Compila</button></div></div>'
    :'')
@@ -1789,7 +1849,7 @@ function rNutPhotoScreen(){
    +'</div>';
  }).join('');
  return '<div class="pg">'
-  +'<div class="hdr"><button class="back" onclick="S.trialNutMode=false;S.nutPhotoUploads=[];go(\'home\')" style="margin:0">✕</button>'
+  +'<div class="hdr"><button class="back" onclick="S.trialNutMode=false;S.nutPhotoUploads=[];clearNutDraft();go(\'home\')" style="margin:0">✕</button>'
   +'<span style="font-weight:800;font-size:16px">NUTRIZIONE</span></div>'
   +(S.trialNutMode?'<div style="background:#1c1c1e;border:1px solid #3f3f46;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#6b6b70;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SURVEY PROVA — non registrata</div>':'')
   +(S.nutQueue&&S.nutQueue.length>1
@@ -1847,7 +1907,7 @@ function rNut(){
    +'</div>'
   :(S.nutTarget?'<div style="background:#18181b;border-radius:12px;padding:8px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><div style="color:#a1a1aa;font-size:13px"><strong style="color:#d4d4d8">'+tLabel+'</strong></div><button onclick="skipNutDay()" style="border:none;background:transparent;color:#3f3f46;font-size:11px;cursor:pointer">Salta ×</button></div>':'');
  return '<div class="pg">'
-  +'<div class="hdr"><button class="back" onclick="S.trialNutMode=false;go(\'home\')" style="margin:0">✕</button><span style="font-weight:800;font-size:16px">NUTRIZIONE</span></div>'
+  +'<div class="hdr"><button class="back" onclick="S.trialNutMode=false;clearNutDraft();go(\'home\')" style="margin:0">✕</button><span style="font-weight:800;font-size:16px">NUTRIZIONE</span></div>'
   +(S.trialNutMode?'<div style="background:#1c1c1e;border:1px solid #3f3f46;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#6b6b70;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SURVEY PROVA — non registrata</div>':'')
   +queueBanner
   +'<div style="display:flex;gap:4px;margin-bottom:18px">'+bars+'</div>'
@@ -2613,6 +2673,14 @@ async function skipNutDay(){
   if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};
   S.aiDB.nutritionLog[target.date]={skipped:true,savedAt:new Date().toISOString()};
  }
+ // 19/08/2026 — QUI STAVA LA PERDITA. La riga sopra scriveva `skipped:true` solo
+ // sull'oggetto in memoria: niente `sv`, niente `syncToDrive`. Al riavvio dell'app il
+ // salto non esisteva piu' e il giorno tornava "da compilare", per sempre, a ogni giro.
+ // Ogni altro percorso della nutrizione (saveNutrition, saveMealToLog, confirmNutPhotos,
+ // removeNutritionDay) il salvataggio ce l'aveva: mancava solo questo. Caso reale: 16 e
+ // 17/08/2026, nel blob Drive non esisteva nemmeno la CHIAVE di quei due giorni.
+ await sv('ai',S.aiDB);
+ syncToDrive();
  // Avanza nella coda o chiudi
  if(S.nutQueue.length>0&&S.nutQueueIdx<S.nutQueue.length-1){
   S.nutQueueIdx++;
@@ -2620,11 +2688,53 @@ async function skipNutDay(){
   S.nutPhotoUploads=[];S.nutQty={};
   go('nutrition',{qStep:-1,qAns:{}});
  } else {
-  S.nutQueue=[];S.nutQueueIdx=0;S.nutTarget=null;
+  S.nutQueue=[];S.nutQueueIdx=0;S.nutTarget=null;clearNutDraft();
   go('home');
  }
 }
+// ─── BOZZA DELLA COMPILAZIONE (19/08/2026) ───────────────────────────────────
+// Fino a qui la compilazione viveva SOLO in RAM: le stime delle foto in `S.nutPhotoUploads`,
+// le risposte in `S.qAns`. Sul disco non finiva niente finche' non si toccava il verde in
+// fondo. Su iOS la web-app da home viene scaricata dalla memoria mentre sei nel selettore
+// foto: al ritorno la pagina si e' ricaricata, sei in home e non e' rimasto un byte —
+// identico a non aver mai compilato, ma con la sensazione di averlo fatto.
+// Ora ogni render della nutrizione lascia una bozza su disco e la home la offre indietro.
+// Le foto NON ci stanno (solo le stime, che sono testo): la bozza deve restare piccola.
+var NUT_DRAFT_KEY='nutDraft';
+var NUT_DRAFT_MAX_H=36; // oltre, la bozza e' archeologia: meglio ricompilare da zero
+function saveNutDraft(){
+ try{
+  if(S.trialNutMode||!S.nutTarget){return;}
+  localStorage.setItem(NUT_DRAFT_KEY,JSON.stringify({
+   at:new Date().toISOString(),
+   target:S.nutTarget,queue:S.nutQueue||[],queueIdx:S.nutQueueIdx||0,
+   qStep:S.qStep,qAns:S.qAns||{},qty:S.nutQty||{},
+   uploads:(S.nutPhotoUploads||[]).filter(function(u){return u&&u.status==='done';})
+  }));
+ }catch(e){}
+}
+function clearNutDraft(){try{localStorage.removeItem(NUT_DRAFT_KEY);}catch(e){}S.nutDraft=null;}
+function loadNutDraft(){
+ try{
+  var v=localStorage.getItem(NUT_DRAFT_KEY);if(!v)return null;
+  var d=JSON.parse(v);
+  if(!d||!d.target||!d.target.date)return null;
+  var t=Date.parse(d.at);
+  if(!isFinite(t)||(Date.now()-t)>NUT_DRAFT_MAX_H*3600000){localStorage.removeItem(NUT_DRAFT_KEY);return null;}
+  return d;
+ }catch(e){return null;}
+}
+function resumeNutDraft(){
+ var d=S.nutDraft;if(!d)return;
+ S.trialNutMode=false;
+ S.nutTarget=d.target;S.nutQueue=d.queue||[];S.nutQueueIdx=d.queueIdx||0;
+ S.nutQty=d.qty||{};S.nutPhotoUploads=d.uploads||[];
+ S.nutDraft=null;
+ go('nutrition',{qStep:(typeof d.qStep==='number'?d.qStep:-1),qAns:d.qAns||{}});
+}
+function discardNutDraft(){clearNutDraft();render();}
 function openNutrition(){
+ clearNutDraft(); // si riparte da capo: la bozza vecchia non deve sopravvivere alla nuova coda
  var missing=getMissingNutritionDays();
  var queue=missing.map(function(d){return{date:d};});
  S.nutQueue=queue;
@@ -2677,7 +2787,7 @@ async function saveNutrition(){
   S.nutPhotoUploads=[];S.nutQty={};
   go('nutrition',{qStep:-1,qAns:{}});
  } else {
-  S.nutQueue=[];S.nutQueueIdx=0;S.nutTarget=null;
+  S.nutQueue=[];S.nutQueueIdx=0;S.nutTarget=null;clearNutDraft();
   go('home');
  }
 }
