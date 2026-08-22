@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-22c · DB palestra + tetto muscolo + progressione posizione-consapevole'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-22d · niente bilanciere sopra il petto (nessun fermo in palestra)'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -140,15 +140,9 @@ const DB={
   {id:'r5',cat:'push',name:'Tricep Overhead ai Cavi',video:'gym-tricep-overhead-ai-cavi.mp4',
    desc:'Cavo BASSO con corda, dai le spalle alla macchina, braccia sopra la testa e gomiti FISSI puntati avanti. Estendi verso l\'alto aprendo la corda in cima. Il lungo capo del tricipite è massimamente allungato in questa posizione: e\' li\' che serve il controllo, non il carico.',
    muscles:'Tricipiti (lungo capo)',primary:'tricipiti',attrezzo:'cavo',reps:8,repsMax:12,sets:3,band:'25kg',restSec:75},
-  {id:'p8',cat:'push',name:'Panca Piana Bilanciere',
-   desc:'Scapole retratte e schiacciate nella panca per tutta la serie, piedi piantati a terra. Il bilanciere scende sullo sterno — non sul collo — coi gomiti a 45°, non aperti a T. Tocca senza rimbalzare, poi spingi. Il carico e\' TOTALE, bilanciere compreso.',
-   muscles:'Petto, Tricipiti, Spalle ant.',primary:'petto',attrezzo:'bilanciere',reps:6,repsMax:10,sets:4,band:'45kg',restSec:120},
-  {id:'p9',cat:'push',name:'Panca Stretta Bilanciere',
-   desc:'Presa a larghezza spalle, non piu\' stretta: i polsi devono restare dritti. Gomiti stretti lungo i fianchi, il bilanciere scende sotto il petto. E\' un esercizio di TRICIPITI: se allarghi i gomiti per finire la serie e\' tornata una panca.',
-   muscles:'Tricipiti, Petto interno',primary:'tricipiti',attrezzo:'bilanciere',reps:8,repsMax:12,sets:3,band:'35kg',restSec:90},
-  {id:'p10',cat:'push',name:'French Press Bilanciere',
-   desc:'Sdraiato sulla panca, braccia perpendicolari al suolo. Piega SOLO i gomiti e porta il bilanciere sopra la fronte, gomiti fermi e puntati al soffitto. Risali senza portare le braccia indietro. Scendi lento 3s: e\' l\'eccentrica che allena il lungo capo.',
-   muscles:'Tricipiti (lungo capo)',primary:'tricipiti',attrezzo:'bilanciere',reps:10,repsMax:14,sets:3,band:'25kg',restSec:75},
+  {id:'p10',cat:'push',name:'French Press Manubri',
+   desc:'Sdraiato sulla panca, un manubrio per mano, braccia perpendicolari al suolo e palmi che si guardano. Piega solo i gomiti e porta i manubri ai lati della testa, gomiti fermi e puntati al soffitto. Risali senza spostare le braccia indietro. Scendi lento 3s: e\' l\'eccentrica che allena il lungo capo. Coi manubri, se la serie finisce, si aprono le braccia e cadono di lato — col bilanciere no, ed e\' il motivo per cui qui non c\'e\'. Carico per manubrio.',
+   muscles:'Tricipiti (lungo capo)',primary:'tricipiti',attrezzo:'manubri',reps:10,repsMax:14,sets:3,band:'10kg',restSec:75},
   {id:'p11',cat:'push',name:'Pushdown ai Cavi',
    desc:'Cavo alto, corda o barra. Gomiti incollati ai fianchi e FERMI: si muove solo l\'avambraccio. Estendi fino a bloccare, con la corda apri le mani in fondo. Busto leggermente avanti ma immobile — se ti sbilanci per chiudere la rep, il carico e\' troppo.',
    muscles:'Tricipiti (capo laterale)',primary:'tricipiti',attrezzo:'cavo',reps:12,repsMax:16,sets:3,band:'25kg',restSec:60},
@@ -199,7 +193,7 @@ const DB={
    desc:'Seduto sulla panca col busto sulle cosce, oppure in piedi piegato a 90°. Manubri sotto il petto, gomiti quasi dritti e fissi: apri di lato fino ad allineare le scapole, mai piu\' su. Stringi 1s, torna lento 3s. Se ti raddrizzi per finire la rep stai tirando col dorso, non col deltoide. Carico per manubrio.',
    muscles:'Deltoide post., Romboidi',primary:'deltoide-post',attrezzo:'manubri',reps:12,repsMax:16,sets:3,band:'8kg',restSec:60},
   {id:'s5',cat:'shoulders',name:'Military Press Bilanciere',
-   desc:'In piedi, presa poco piu\' larga delle spalle, bilanciere all\'altezza delle clavicole. Glutei e addome contratti: la schiena non si inarca per spingere. Porta la testa leggermente indietro e poi sotto il bilanciere, blocca in alto con le braccia alle orecchie.',
+   desc:'In piedi, presa poco piu\' larga delle spalle, bilanciere all\'altezza delle clavicole. Glutei e addome contratti: la schiena non si inarca per spingere. Porta la testa leggermente indietro e poi sotto il bilanciere, blocca in alto con le braccia alle orecchie. SENZA RACK il bilanciere va portato alle spalle da terra a ogni serie: se il carico non te lo permette in sicurezza, il carico e\' sbagliato. Se la spinta cede, butta AVANTI e togliti — non riabbassarlo sul collo.',
    muscles:'Deltoide ant., Tricipiti, Core',primary:'spalle',attrezzo:'bilanciere',reps:6,repsMax:10,sets:4,band:'30kg',restSec:120},
   {id:'s6',cat:'shoulders',name:'Alzate Laterali ai Cavi',
    desc:'Cavo basso, impugnatura nella mano opposta, un passo di lato. Sali fino all\'altezza della spalla col gomito leggermente piegato e FISSO, mignolo appena piu\' alto del pollice. Il cavo tiene tensione anche in basso, dove i manubri non ne hanno: carico piu\' leggero, stessa fatica.',
@@ -446,9 +440,9 @@ const PLAN=[
  // genWorkout è quello che impedisce a una categoria larga di riempire la seduta con un
  // muscolo solo (22/08/2026: due panche + archer + pseudo planche nello stesso giorno push).
  {id:'push', name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:4,shoulders:1},must:['p4','p7','s3'],desc:'Petto (piano + inclinato) · Tricipiti · Delt. post.'},
- {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:5},            must:['r6','r3'],    desc:'Dorsali (verticale + orizzontale) · Bicipiti'},
+ {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:5},            must:['r6','r1','r3'],    desc:'Dorsali (verticale + orizzontale) · Bicipiti'},
  {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:4},            must:['l3','l5'],    desc:'Quadricipiti · Femorali · Glutei'},
- {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:2},must:['p8','p6','s1'],desc:'Petto (adduzione) · Tricipiti · Spalle'},
+ {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:2},must:['p6','s1'],desc:'Petto (adduzione) · Tricipiti · Spalle'},
  {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4,shoulders:1},must:['r4','s4'],    desc:'Dorsali · Bicipiti (hammer) · Delt. post.'},
  {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:2,legs:1,shoulders:1},must:['l3'],desc:'Corpo completo · Mix intelligente'},
 ];
@@ -467,7 +461,7 @@ const RECOVERY_PHASES=[
 // Fase minima ammessa per esercizio (1=sicuro da g10, 2=da g15, 3=da g20). Default 1.
 // Il default e' 1, cioe' AMMESSO gia' nella fase piu' leggera: per un esercizio nuovo e
 // pesante il default sbaglia dalla parte pericolosa. Ogni id del DB va elencato qui.
-const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p8:2,p9:2,p10:2,p11:1,
+const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
  r1:3,r2:2,r3:1,r4:1,r5:2,r6:2,r7:3,r8:2,r9:2,r10:1,r11:1,
  s1:3,s2:1,s3:2,s4:1,s5:3,s6:1,
  l1:3,l2:2,l3:2,l5:3,l6:2,l7:3,l8:2,l9:3,
