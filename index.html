@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-23a · core a ZONE: 10 esercizi nuovi, caricabili con le reps, zona F aperta'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-23b · core a ZONE + Hollow Body e V-sit alla capacita\' vera (60s)'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -223,7 +223,7 @@ const DB={
    muscles:'Femorali, Glutei',primary:'femorali',attrezzo:'manubri',reps:10,repsMax:14,sets:3,band:'20kg',stima:true,restSec:90},
  ],
  core:[
-  {id:'c1', cat:'core',noLast:true,zona:'B',name:'Hollow Body Hold',    video:'core-hollow-body-hold.mp4',    time:30, desc:'Schiena piatta, lombare incollata. Braccia tese sopra la testa, gambe a 30cm. Spalle alzate. Nessun cedimento.',muscles:'Core completo'},
+  {id:'c1', cat:'core',noLast:true,zona:'B',name:'Hollow Body Hold',    video:'core-hollow-body-hold.mp4',    time:60, desc:'Schiena piatta, lombare incollata. Braccia tese sopra la testa, gambe a 30cm. Spalle alzate. Nessun cedimento.',muscles:'Core completo'},
   {id:'c2', cat:'core',noLast:true,zona:'A',name:'V-Up',                video:'core-v-up.mp4',                time:35, desc:'Sdraiato, braccia oltre la testa. Alza gambe tese e busto insieme cercando di toccare le punte. Abbassa controllato senza appoggiarti.',muscles:'Retto addominale'},
   {id:'c3', cat:'core',zona:'D',name:'Windshield Wiper',    video:'core-windshield-wiper.mp4',    time:35, desc:'Sdraiato, gambe verticali tese. Abbassa lentamente verso destra, centro, sinistra. Zero momentum — è il core che controlla.',muscles:'Obliqui'},
   {id:'c4', cat:'core',zona:'D',name:'Bicycle',             video:'core-bicycle.mp4',             time:40, desc:'Mani alla nuca, gomiti larghi. Gomito dx verso ginocchio sn, poi inverti. Gambe basse. Ritmo controllato — non correre.',muscles:'Obliqui, Retto'},
@@ -243,7 +243,7 @@ const DB={
   {id:'c22',cat:'core',zona:null,name:'Plank Jack',           video:'core-plank-jack.mp4',          time:35, desc:'Posizione plank braccia tese. Salta aprendo e chiudendo i piedi (jumping jack). Core stabile, bacino fermo, non oscillare.',muscles:'Core, Cardio'},
   {id:'c23',cat:'core',zona:'D',name:'Karate Kid',           time:40, desc:'In piedi. Solleva il ginocchio dx verso il petto ruotando il busto a dx, poi sn verso sn. Ritmo costante, core contratto per l\'equilibrio.',muscles:'Obliqui, Core, Equilibrio'},
   {id:'c24',cat:'core',zona:'A',name:'Unicorn Crunch',       time:35, desc:'Sdraiato, una gamba tesa alzata, braccio opposto teso. Crunch diagonale portando il gomito verso il ginocchio alzato. Alterna ogni rep.',muscles:'Obliqui, Retto'},
-  {id:'c25',cat:'core',noLast:true,zona:'B',name:'V-sit',                video:'core-v-sit.mp4',            time:30, desc:'Seduto, gambe a 45° e busto inclinato indietro — forma a V. Braccia tese parallele alle gambe. Tieni la posizione. Il core regge tutto.',muscles:'Core completo, Flessori anca'},
+  {id:'c25',cat:'core',noLast:true,zona:'B',name:'V-sit',                video:'core-v-sit.mp4',            time:60, desc:'Seduto, gambe a 45° e busto inclinato indietro — forma a V. Braccia tese parallele alle gambe. Tieni la posizione. Il core regge tutto.',muscles:'Core completo, Flessori anca'},
   {id:'c26',cat:'core',zona:'C',name:'Flutter Kick',         video:'core-flutter-kick.mp4',        time:40, desc:'Sdraiato, gambe a 45°. Scalcia alternando in ritmo (flutter kick) portando le braccia verso la coscia che scende. Ritmo cadenzato.',muscles:'Addominali bassi, Obliqui'},
   {id:'c28',cat:'core',zona:'C',name:'Vertical Scissors',    video:'core-vertical-scissors.mp4',   time:40, desc:'Sdraiato, gambe tese al soffitto. Abbassa una gamba quasi a terra mentre l\'altra resta su. Alterna il movimento in forbice verticale.',muscles:'Addominali bassi, Flessori'},
   // ── CARICABILI E ZONA F (23/08/2026) ─────────────────────────────────────
