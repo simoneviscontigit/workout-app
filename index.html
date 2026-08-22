@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-23c · perSide: i secondi sono PER LATO, niente piu\' dimezzamento'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-23d · Side Plank 60s per lato · gli unilaterali a tempo fanno un giro'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -237,7 +237,7 @@ const DB={
   {id:'c13',cat:'core',zona:'D',name:'Twist Plank',         video:'core-twist-plank.mp4',      time:40, desc:'Plank su avambracci. Ruota il bacino verso dx quasi a sfiorare il suolo, poi sn. Il core frena il movimento.',muscles:'Obliqui, Core'},
   {id:'c14',cat:'core',zona:'E',name:'Side Crunch',video:'core-alternating-side-crunch.mp4',time:30,perSide:true,desc:'Gambe piegate su un lato. Alza il busto verso il ginocchio alto. Solo l\'obliquo lavora — niente slancio di braccia.',muscles:'Obliqui'},
   {id:'c16',cat:'core',zona:'A',name:'Alternating Toe Touch',video:'core-alternating-toe-touch.mp4',time:40, desc:'Sdraiato, gambe tese verso il soffitto. Alza il busto e tocca la punta del piede dx con la mano sn, poi inverti. Torna giù lento.',muscles:'Retto, Obliqui'},
-  {id:'c17',cat:'core',zona:'E',name:'Side Plank',           video:'core-side-plank.mp4',          time:45, perSide:true, desc:'Appoggiati su un avambraccio, corpo in linea retta. Fianchi alti, non cedere. Spalla impilata sul gomito.',muscles:'Obliqui, Core'},
+  {id:'c17',cat:'core',zona:'E',name:'Side Plank',           video:'core-side-plank.mp4',          time:60, perSide:true, desc:'Appoggiati su un avambraccio, corpo in linea retta. Fianchi alti, non cedere. Spalla impilata sul gomito.',muscles:'Obliqui, Core'},
   {id:'c19',cat:'core',zona:'C',name:'Leg Raise',            video:'core-leg-raise.mp4',           time:40, desc:'Sdraiato, mani sotto i glutei. Tieni le gambe tese e alzale a 90°, abbassa lento fermandoti a 15cm da terra. Lombare incollata.',muscles:'Addominali bassi'},
   {id:'c20',cat:'core',zona:'A',name:'Double Crunch',        video:'core-double-crunch.mp4',       time:35, desc:'Soleva contemporaneamente spalle e ginocchia verso il centro. Le due metà del corpo si avvicinano — contrai forte in cima prima di abbassare.',muscles:'Retto completo'},
   {id:'c22',cat:'core',zona:null,name:'Plank Jack',           video:'core-plank-jack.mp4',          time:35, desc:'Posizione plank braccia tese. Salta aprendo e chiudendo i piedi (jumping jack). Core stabile, bacino fermo, non oscillare.',muscles:'Core, Cardio'},
@@ -910,6 +910,9 @@ function genWorkout(splitIdx,opts){
  // sotto, e l'intensita' da sola non basta a compensare un dimezzamento del lavoro.
  // I caricabili tengono le serie della loro riga (3): la progressione ha bisogno di
  // almeno tre serie confrontabili per dire qualcosa.
+ // ECCEZIONE unilaterali (23/08/2026): un `perSide` produce GIA' due blocchi, uno per
+ // lato. Con 2 giri diventano quattro, e un side plank da 60s per lato mangia quattro
+ // minuti da solo. I due lati SONO il volume: un giro basta.
  var CORE_SETS_TEMPO=2;
  // espansione: gli unilaterali a tempo diventano DUE blocchi, cosi' il secondo lato non
  // dipende dal fatto che l'atleta se lo ricordi. I caricabili per lato non si sdoppiano:
@@ -930,7 +933,7 @@ function genWorkout(splitIdx,opts){
   // e non riceveva comando — ed e' il motivo per cui non e' progredito di un secondo in
   // 69 giorni.
   var base=applyAdaptation(withCoachOverride(Object.assign({},e,{
-   isCore:true,isTime:isT,sets:isT?CORE_SETS_TEMPO:(e.sets||3)})));
+   isCore:true,isTime:isT,sets:isT?(e.perSide?1:CORE_SETS_TEMPO):(e.sets||3)})));
   if(!isT||!e.perSide){core.push(base);return;}
   core.push(Object.assign({},base,{id:e.id+'-L1',name:e.name+' · 1° lato',perSide:true}));
   core.push(Object.assign({},base,{id:e.id+'-L2',name:e.name+' · 2° lato',perSide:true,desc:'CAMBIA LATO. '+base.desc}));
