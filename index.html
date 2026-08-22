@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-23d · Side Plank 60s per lato · gli unilaterali a tempo fanno un giro'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-23e · clip video sui 10 esercizi core nuovi (c30-c39)'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -254,34 +254,34 @@ const DB={
   // `stima:true` su tutti: i carichi sono dedotti, mai verificati sul campo.
   // Niente sit-up zavorrato: il divieto per dolore a base colonna/coccige vale ancora
   // (§4-octies), quindi la zona A si carica al cavo — che sul coccige non appoggia nulla.
-  {id:'c30',cat:'core',zona:'A',name:'Crunch al Cavo in ginocchio',
+  {id:'c30',cat:'core',zona:'A',name:'Crunch al Cavo in ginocchio',video:'core-crunch-al-cavo.mp4',
    desc:'In ginocchio davanti al cavo alto, corda dietro la nuca. Arrotola la colonna portando i gomiti verso le cosce — e\' il retto che chiude, non le anche che si piegano. Bacino FERMO: se scendi ruotando dall\'anca stai facendo un inchino con un peso. Risali controllato senza perdere la contrazione.',
    muscles:'Retto addominale',primary:'retto alto',attrezzo:'cavo',reps:12,repsMax:18,sets:3,band:'25kg',restSec:45,stima:true},
-  {id:'c31',cat:'core',zona:'B',name:'Ab Rollout con Bilanciere',
+  {id:'c31',cat:'core',zona:'B',name:'Ab Rollout con Bilanciere',video:'core-ab-rollout-bilanciere.mp4',
    desc:'In ginocchio, mani sul bilanciere a larghezza spalle. Rotola in avanti tenendo il bacino in retroversione e la lombare PIATTA: il range e\' il carico, quindi vai avanti solo finche\' tieni. Appena la lombare si inarca sei andato oltre. Torna tirando con gli addominali, non con le spalle.',
    muscles:'Core anteriore, Dorsali',primary:'core anteriore',attrezzo:'bilanciere',reps:8,repsMax:12,sets:3,band:'20kg',restSec:75,stima:true},
-  {id:'c32',cat:'core',zona:'C',name:'Hanging Knee Raise',
+  {id:'c32',cat:'core',zona:'C',name:'Hanging Knee Raise',video:'core-hanging-knee-raise.mp4',
    desc:'Appeso alla sbarra, presa prona, spalle ATTIVE (non appeso morto). Porta le ginocchia verso il petto arrotolando il bacino in alto: se le ginocchia salgono e il bacino resta fermo stanno lavorando i flessori, non gli addominali bassi. Scendi lento, zero dondolio. Quando chiudi il max: stessa cosa a gambe tese (leg raise).',
    muscles:'Addominali bassi',primary:'retto basso',attrezzo:'sbarra',reps:8,repsMax:15,sets:3,restSec:75,stima:true},
-  {id:'c33',cat:'core',zona:'D',name:'Cable Woodchopper',
+  {id:'c33',cat:'core',zona:'D',name:'Cable Woodchopper',video:'core-cable-woodchopper.mp4',
    desc:'Di fianco al cavo alto, piedi larghi, braccia tese. Tira in diagonale verso l\'anca opposta ruotando dal TORACE, non dalle braccia. Il bacino resta quasi fermo — ruota il busto, non i piedi. Fai tutte le reps da un lato e poi cambia. Reps indicate PER LATO.',
    muscles:'Obliqui',primary:'obliqui',attrezzo:'cavo',reps:10,repsMax:15,sets:3,band:'15kg',restSec:45,stima:true},
-  {id:'c34',cat:'core',zona:'D',name:'Russian Twist con Manubrio',
+  {id:'c34',cat:'core',zona:'D',name:'Russian Twist con Manubrio',video:'core-russian-twist-manubrio.mp4',
    desc:'Seduto, busto a 45\u00b0 indietro, piedi sollevati se tieni. Manubrio con due mani: portalo di fianco all\'anca destra, poi alla sinistra ruotando le SPALLE, non solo le braccia. Lombare mai a curva: se cedi, appoggia i piedi. Una rep = un lato.',
    muscles:'Obliqui, Retto',primary:'obliqui',attrezzo:'manubri',reps:16,repsMax:24,sets:3,band:'10kg',restSec:45,stima:true},
-  {id:'c35',cat:'core',zona:'E',name:'Suitcase Carry',
+  {id:'c35',cat:'core',zona:'E',name:'Suitcase Carry',video:'core-suitcase-carry.mp4',
    desc:'Un manubrio pesante in UNA mano, l\'altra libera. Cammina dritto restando perfettamente verticale: e\' il fianco scarico che lavora per non farti piegare. Spalle pari, niente inclinazione, passo normale. Conta i PASSI (un passo = una rep) e fai lo stesso numero per lato.',
    muscles:'Obliqui, Quadrato dei lombi',primary:'core laterale',attrezzo:'manubri',reps:20,repsMax:30,sets:3,band:'24kg',restSec:45,stima:true},
-  {id:'c36',cat:'core',zona:'E',name:'Side Plank con disco',time:30,perSide:true,
+  {id:'c36',cat:'core',zona:'E',name:'Side Plank con disco',video:'core-side-plank-disco.mp4',time:30,perSide:true,
    desc:'Side plank su avambraccio, corpo in linea, fianchi ALTI. Un disco appoggiato sul fianco alto (mano libera che lo tiene fermo). E\' il side plank reso progressivo: il tempo non cambia, cambia il disco. Se i fianchi scendono, il disco e\' troppo.',
    muscles:'Obliqui, Core',primary:'core laterale',attrezzo:'dischi',band:'5kg',restSec:60,stima:true},
-  {id:'c37',cat:'core',zona:'F',name:'Pallof Press al Cavo',
+  {id:'c37',cat:'core',zona:'F',name:'Pallof Press al Cavo',video:'core-pallof-press-cavo.mp4',
    desc:'Di fianco al cavo all\'altezza del petto, mani unite sullo sterno, piedi larghi. Spingi le braccia AVANTI e tieni due secondi: il cavo cerca di ruotarti e tu non ti giri. Il lavoro e\' quello che NON succede. Torna al petto controllato. Reps PER LATO.',
    muscles:'Core anti-rotazione, Obliqui',primary:'anti-rotazione',attrezzo:'cavo',reps:10,repsMax:15,sets:3,band:'15kg',restSec:45,stima:true},
-  {id:'c38',cat:'core',zona:'F',name:'Bird Dog',
+  {id:'c38',cat:'core',zona:'F',name:'Bird Dog',video:'core-bird-dog.mp4',
    desc:'A quattro zampe, schiena neutra. Estendi braccio destro e gamba sinistra fino alla linea del corpo, due secondi fermo, poi cambia. Il bacino NON si inclina: immagina un bicchiere pieno sulla lombare. Lento — se dondoli stai usando lo slancio. Una rep = un lato.',
    muscles:'Erettori spinali, Core anti-rotazione',primary:'anti-rotazione',reps:12,repsMax:20,sets:3,restSec:45},
-  {id:'c39',cat:'core',zona:'F',name:'Superman a terra',
+  {id:'c39',cat:'core',zona:'F',name:'Superman a terra',video:'core-superman-a-terra.mp4',
    desc:'A pancia in giu\', braccia avanti. Solleva insieme petto, braccia e gambe di pochi centimetri contraendo la bassa schiena e i glutei, due secondi in alto, giu\' lento. Collo neutro: guarda il pavimento, non avanti. Poche reps fatte bene battono venti a strappi. A TERRA, non su panca 45\u00b0.',
    muscles:'Erettori spinali, Catena posteriore',primary:'erettori',reps:12,repsMax:20,sets:3,restSec:45},
  ],
