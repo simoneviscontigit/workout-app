@@ -94,8 +94,37 @@ body.recovery button[style*="#f97316"],body.recovery button[style*="#F97316"]{bo
 function getApiKey(){return localStorage.getItem('workoutProxyToken')||'';}
 const APIKEY = getApiKey();
 
+// ─── CHIAVE-GIORNO (locale, non UTC) ─────────────────────────────────────────
+// Fino al 22/08/2026 ogni chiave-giorno del blob usciva da `toISOString().split('T')[0]`,
+// cioe' UTC. A Bali (+08) tutto cio' che si salva fra mezzanotte e le 08:00 locali finisce
+// sul giorno PRIMA: la survey di ieri compilata all'una di notte si scriveva su l'altro
+// ieri, e la pesata delle 7 del mattino sul giorno sbagliato. Silenzioso, perche' il
+// numero e' plausibile: sbaglia solo di riga.
+// Il lato Python converte gia' gli ISTANTI al giorno locale (workout_targets.session_day,
+// TZ=+08) — ma le chiavi di nutritionLog/mealLog/weightLog non passano di li': sono date
+// nude scritte qui, e vanno scritte giuste qui.
+// `dayKey` usa il fuso DEL DISPOSITIVO. Finche' il telefono e' a +08 coincide con la TZ
+// fissa del lato Python; se Simone cambia fuso i due divergono finche' non si allinea
+// workout_targets.TZ — divergenza dichiarata, non nuova (session_day era gia' cosi').
+// NB: lo STORICO non si riscrive. Le chiavi gia' sbagliate restano dove sono.
+function dayKey(d){
+ d=d||new Date();
+ return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().split('T')[0];
+}
+function dayKeyOffset(days){return dayKey(new Date(Date.now()+days*86400000));}
+// giorno LOCALE di un istante ISO (es. history[].date, che resta un istante UTC completo).
+// Mirror di workout_targets.session_day: una data nuda resta com'e', convertirla sarebbe
+// inventare un orario.
+function sessionDay(iso){
+ if(!iso)return null;
+ var str=String(iso);
+ if(str.indexOf('T')===-1)return str.slice(0,10);
+ var d=new Date(str);
+ return isNaN(d.getTime())?str.slice(0,10):dayKey(d);
+}
+
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-19 · il salto di un giorno si scrive su disco + bozza nutrizione'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-22 · chiave-giorno locale (non piu\' UTC)'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -568,7 +597,7 @@ function computeProgression(session){
    var prevProg=S.aiDB.progression[id]||{};
    var cur=prevProg.band||r.band||'';
    var hasBand=!!cur; // niente elastico → esercizio a corpo libero, progressione su reps invece che su carico
-   var entry={name:r.name,date:new Date().toISOString().split('T')[0],lastReps:sets};
+   var entry={name:r.name,date:dayKey(),lastReps:sets};
    if(allTop&&nSets>=2){
     if(hasBand){
      entry.band=nextBandStep(cur,id);
@@ -881,7 +910,10 @@ async function loadData(){
      S.aiDB.nutritionLog[n.date]=n;
    });
   }
-  // Migrazione: ripristina da h.nutrition sui vecchi session objects
+  // Migrazione: ripristina da h.nutrition sui vecchi session objects.
+  // Qui la chiave resta il giorno UTC di proposito (NON sessionDay): sono record
+  // storici le cui chiavi gemelle in nutritionLog furono scritte in UTC. Usare il
+  // giorno locale ne creerebbe di nuove accanto a quelle vecchie.
   (S.history||[]).forEach(function(h){
    var d=h.date&&h.date.split('T')[0];
    if(d&&h.nutrition&&h.nutrition.score!=null&&(!S.aiDB.nutritionLog[d]||S.aiDB.nutritionLog[d].skipped))
@@ -1152,12 +1184,14 @@ function forceRefresh(){
 var NUT_WINDOW_DAYS=20;
 function nutWindowDays(){
  var out=[];
- var yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
- var maxBack=new Date(Date.now()-NUT_WINDOW_DAYS*86400000).toISOString().split('T')[0];
+ var yesterday=dayKeyOffset(-1);
+ var maxBack=dayKeyOffset(-NUT_WINDOW_DAYS);
  // Non si va piu' indietro del primo allenamento: prima non c'era niente da compilare.
  var firstSession=(S.history||[])[0];
- var firstDate=firstSession&&firstSession.date?firstSession.date.split('T')[0]:null;
+ var firstDate=sessionDay(firstSession&&firstSession.date);
  var startDate=(firstDate&&firstDate>maxBack)?firstDate:maxBack;
+ // walker sintetico: l'ancora e' mezzogiorno UTC, quindi toISOString() rende la data
+ // voluta in qualunque fuso. Qui NON si legge l'ora del dispositivo -> niente dayKey.
  for(var d=new Date(startDate+'T12:00:00Z');d.toISOString().split('T')[0]<=yesterday;d.setDate(d.getDate()+1)){
   out.push(d.toISOString().split('T')[0]);
  }
@@ -1219,7 +1253,7 @@ function buildPreWorkoutComment(){
 }
 function rPreWorkoutCheck(){
  var lastSession=(S.history||[]).slice(-1)[0];
- var lastDate=lastSession&&lastSession.date?lastSession.date.split('T')[0]:'?';
+ var lastDate=sessionDay(lastSession&&lastSession.date)||'?';
  var lastSplit=lastSession&&lastSession.split?(lastSession.split.emoji+' '+lastSession.split.name):'?';
  var todaySplit=PLAN[S.splitIdx%6];
  var phase=S.preWQPhase||'doms';
@@ -1339,7 +1373,7 @@ function startTrialWorkout(){
 function startTrialNutrition(){
  S.trialNutMode=true;
  S.nutQueue=[];S.nutQueueIdx=0;S.nutPhotoUploads=[];
- S.nutTarget={date:new Date(Date.now()-86400000).toISOString().split('T')[0]};
+ S.nutTarget={date:dayKeyOffset(-1)};
  go('nutrition',{qStep:-1,qAns:{}});
 }
 async function handleNutPhotos(event){
@@ -1377,7 +1411,7 @@ async function confirmNutPhotos(){
   tot.calories+=e.calories||0;
   descs.push(e.foodDescription);
  });
- var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var targetDate=S.nutTarget?S.nutTarget.date:dayKeyOffset(-1);
  if(!S.trialNutMode){
   // Salva ogni singola stima nel mealLog — via pushMeal, che mette il mealId e scarta il
   // reinvio dello stesso batch (vedi §doppioni del 03/08 sopra).
@@ -1625,7 +1659,7 @@ function setLoad(id){
  if(!S.aiDB.loads)S.aiDB.loads={};
  if(v===''){if(S.aiDB.loads[id])delete S.aiDB.loads[id];}
  else{
-  S.aiDB.loads[id]={kg:v.replace(/kg/i,'').replace(/\s/g,''),name:ex.name,date:new Date().toISOString().split('T')[0],updatedAt:new Date().toISOString(),manual:true};
+  S.aiDB.loads[id]={kg:v.replace(/kg/i,'').replace(/\s/g,''),name:ex.name,date:dayKey(),updatedAt:new Date().toISOString(),manual:true};
  }
  sv('ai',S.aiDB);render();
 }
@@ -1831,7 +1865,7 @@ function hasMealPhotos(date){
  return !!(S.aiDB.mealLog&&S.aiDB.mealLog[date]&&S.aiDB.mealLog[date].length);
 }
 function rNutPhotoScreen(){
- var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var targetDate=S.nutTarget?S.nutTarget.date:dayKeyOffset(-1);
  var d=new Date(targetDate+'T12:00:00');
  var dLabel=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
  var uploads=S.nutPhotoUploads||[];
@@ -1881,7 +1915,7 @@ function rNutPhotoScreen(){
 function rNut(){
  if(S.qStep===-1)return rNutPhotoScreen();
  if(S.qStep>=NQ.length)return rNutSummary();
- var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var targetDate=S.nutTarget?S.nutTarget.date:dayKeyOffset(-1);
  if(hasMealPhotos(targetDate)&&NQ_MACRO_KEYS.includes(NQ[S.qStep].key)){
   S.qStep++;render();return '';
  }
@@ -2069,7 +2103,7 @@ function lastWeighIn(){
 // una misura del corpo il mantenimento non e' tarabile, quindi il -640 kcal/giorno che l'app
 // dichiara resta non attribuibile fra stima dei pasti, basale Oura e peso a occhio.
 function weighInCard(ultima){
- var oggi=new Date().toISOString().split('T')[0];
+ var oggi=dayKey();
  var giaOggi=ultima&&ultima.date===oggi;
  var sub=ultima
   ?'Ultima: <b style="color:#d4d4d8">'+ultima.kg+' kg</b> · '+new Date(ultima.date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})
@@ -2089,7 +2123,7 @@ async function saveWeighIn(){
  var kg=el?parseFloat(el.value):NaN;
  if(!(kg>0)){alert('Scrivi il peso in kg.');return;}
  if(kg<40||kg>150){alert('Peso fuori range (40-150 kg).');return;}
- var oggi=new Date().toISOString().split('T')[0]; // stessa chiave-giorno del resto del blob
+ var oggi=dayKey(); // stessa chiave-giorno del resto del blob
  if(!S.aiDB.weightLog||typeof S.aiDB.weightLog!=='object')S.aiDB.weightLog={};
  S.aiDB.weightLog[oggi]={kg:kg,loggedAt:new Date().toISOString(),source:'app'};
  await sv('ai',S.aiDB);syncToDrive();
@@ -2112,7 +2146,7 @@ function scoreToQty(key,score){
  return arr[Math.min(score-1,arr.length-1)];
 }
 function rNutSummary(){
- var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var targetDate=S.nutTarget?S.nutTarget.date:dayKeyOffset(-1);
  var a=S.qAns;
  // Pre-popola sempre tutte le quantità (da foto se disponibili, altrimenti da score)
  var photoMacros=calcDailyMacrosFromPhotos(targetDate);
@@ -2230,12 +2264,12 @@ function rNutSummary(){
   +'</div>';
 }
 function hadWorkoutOn(date){
- return (S.history||[]).some(function(h){return h.date&&h.date.split('T')[0]===date;});
+ return (S.history||[]).some(function(h){return h.date&&sessionDay(h.date)===date;});
 }
 function calcNutScore(a,dateOverride){
  var s=0,m=0;
  function add(v,pts,max){if(v){s+=pts[v-1]||0;m+=max;}}
- var targetDate=dateOverride||(S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0]);
+ var targetDate=dateOverride||(S.nutTarget?S.nutTarget.date:dayKeyOffset(-1));
  var workout=hadWorkoutOn(targetDate);
  add(a.protein,[10,25,40,50,50],50);
  add(a.carbs,[10,25,45,50,40],50);
@@ -2253,7 +2287,7 @@ function calcNutScore(a,dateOverride){
 }
 function getNutAdvice(a){
  var tips=[];
- var targetDate=S.nutTarget?S.nutTarget.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var targetDate=S.nutTarget?S.nutTarget.date:dayKeyOffset(-1);
  var workout=hadWorkoutOn(targetDate);
  if(!a.protein||a.protein<=2)tips.push('Proteine basse: aggiungi una fonte proteica domani (200g petto pollo +45g, 4 uova +24g, 200g ricotta +24g).');
  else if(a.protein>=4)tips.push('Ottimo apporto proteico — sintesi muscolare supportata al massimo.');
@@ -2579,13 +2613,13 @@ async function saveMealToLog(date,estimate){
  syncToDrive(); // il pasto e' dato-verita' UNION: pushalo subito (prima solo locale)
 }
 function openMealPhoto(){
- var today=new Date().toISOString().split('T')[0];
+ var today=dayKey();
  S.mealPhotoState={date:today,note:'',loading:false,estimate:null,error:''};
  go('meal_photo');
 }
 function rMealPhoto(){
  var ps=S.mealPhotoState;
- var today=new Date().toISOString().split('T')[0];
+ var today=dayKey();
  // Lista pasti già loggati per la data selezionata
  var existing=(S.aiDB.mealLog&&S.aiDB.mealLog[ps.date])||[];
  var existingHtml=existing.length?'<div style="margin-bottom:14px">'
@@ -2741,8 +2775,8 @@ function openNutrition(){
  S.nutQueueIdx=0;
  S.nutPhotoUploads=[];
  // Se non ci sono giorni mancanti, offri comunque ieri
- var yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
- var today=new Date().toISOString().split('T')[0];
+ var yesterday=dayKeyOffset(-1);
+ var today=dayKey();
  S.nutTarget=queue.length>0?queue[0]:{date:today};
  go('nutrition',{qStep:-1,qAns:{}});
 }
@@ -2750,7 +2784,7 @@ function openNutrition(){
 async function saveNutrition(){
  if(S.trialNutMode){S.trialNutMode=false;S.nutQueue=[];S.nutTarget=null;go('home');return;}
  var target=S.nutTarget;
- var targetDate=target?target.date:new Date(Date.now()-86400000).toISOString().split('T')[0];
+ var targetDate=target?target.date:dayKeyOffset(-1);
  // Auto-popola macro da foto se disponibili
  var photoMacros=calcDailyMacrosFromPhotos(targetDate);
  if(photoMacros){
@@ -2768,8 +2802,9 @@ async function saveNutrition(){
  // valore, esplicito e in coda all'Object.assign, vince sempre su quello ereditato.
  // Fino al 03/08/2026 lo stampava SOLO sumi-workout-inbox.py (i bottoni di Sumi Legacy): al
  // passo 6, spento l'inbox, la colonna sarebbe rimasta 0 per sempre — un campo che mente.
- // Chiave-giorno in UTC come tutto il resto del blob (vedi §chiavi UTC vs locali, aperta).
- var _ieri=new Date(Date.now()-86400000).toISOString().split('T')[0];
+ // Chiave-giorno LOCALE dal 22/08/2026 (dayKey): prima era UTC e a +08 il confronto
+ // targetDate<_ieri sbagliava di un giorno fra mezzanotte e le 08:00.
+ var _ieri=dayKeyOffset(-1);
  var data=Object.assign({},S.qAns,{savedAt:new Date().toISOString(),score:calcNutScore(S.qAns),
                                    retroCompiled:targetDate<_ieri},qty);
  S.nutrition=data;
@@ -2801,7 +2836,7 @@ async function runNutritionReasoning(){
   var log=S.aiDB.nutritionLog||{};
   var dates=Object.keys(log).sort().slice(-5);
   var recentNut=dates.map(function(d){return Object.assign({date:d},log[d]);});
-  var recentWorkouts=S.history.slice(-5).map(function(h){return{date:h.date&&h.date.split('T')[0],energy:h.quiz&&h.quiz.energy,difficulty:h.quiz&&h.quiz.difficulty};});
+  var recentWorkouts=S.history.slice(-5).map(function(h){return{date:sessionDay(h.date),energy:h.quiz&&h.quiz.energy,difficulty:h.quiz&&h.quiz.difficulty};});
   var prompt='Sei un coach. Analizza pattern multi-giorno, NON un singolo giorno isolato.\n'
    +'NUTRIZIONE ULTIMI GIORNI: '+JSON.stringify(recentNut)+'\n'
    +'ALLENAMENTI ULTIMI GIORNI: '+JSON.stringify(recentWorkouts)+'\n\n'
@@ -2909,7 +2944,7 @@ var WKUI=(function(){
 // Il giorno in corso c'e' in cima ma non e' mai un buco: la giornata non e' finita.
 function rHist(){
  var log=S.aiDB.nutritionLog||{};
- var todayStr=new Date().toISOString().split('T')[0]; // UTC, come le chiavi nutritionLog
+ var todayStr=dayKey(); // locale, come le chiavi nutritionLog (vedi dayKey)
  var giorni=nutWindowDays().slice().reverse();        // da ieri all'indietro
  giorni.unshift(todayStr);
  var mancanti=getMissingNutritionDays().length;
@@ -2947,7 +2982,7 @@ function rHist(){
   var dateStr=new Date(ds+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
   if(ds===todayStr)dateStr='Oggi · '+dateStr;
   // sottotitolo: cosa e' stato quel giorno (serve a ricordarsi cosa si e' mangiato)
-  var sess=(S.history||[]).filter(function(h){return h.date&&h.date.split('T')[0]===ds;});
+  var sess=(S.history||[]).filter(function(h){return sessionDay(h.date)===ds;});
   var sub=sess.length
    ?sess.map(function(s){var nm=(s.split&&s.split.name)?splitLabel(s.split.name):'Workout';return nm+' · '+(s.duration||'?')+'min';}).join('  +  ')
    :'Riposo';
@@ -3017,13 +3052,13 @@ async function removeNutritionDay(date){
 function buildCtx(){
  var p=S.aiDB.patterns||{};
  var recent=S.history.slice(-10).map(function(h){return{
-  d:h.date&&h.date.split('T')[0],s:h.split&&h.split.id,dur:h.duration,
+  d:sessionDay(h.date),s:h.split&&h.split.id,dur:h.duration,
   e:h.quiz&&h.quiz.energy,diff:h.quiz&&h.quiz.difficulty,ns:h.nutrition&&h.nutrition.score,
   pump:h.quiz&&h.quiz.muscleWork,
   domsAct:h.preCheck&&h.preCheck.domsActual,recov:h.preCheck&&h.preCheck.recoveryFeel
  };});
  var chatSummary=(S.aiDB.chatLog||[]).slice(-8).map(function(c){
-  var when=c.date?c.date.split('T')[0]:'?';
+  var when=sessionDay(c.date)||'?';
   var exLabel=c.exerciseName||c.exercise||'generale';
   return when+' ['+exLabel+']: utente="'+c.userMsg+'" coach="'+(c.reply||'').slice(0,80)+'"';
  }).join('\n');
@@ -3044,7 +3079,7 @@ function buildCtx(){
 }
 
 // ─── RIEPILOGHI AUTO ──────────────────────────────────────────────────────────
-function isoDate(d){return d.toISOString().split('T')[0];}
+function isoDate(d){return dayKey(d);}
 async function generateWeeklySummary(){
  return; // DISMESSO: recap in-app (Haiku) sostituito dal recap canonico coach (Sonnet, vault). Corpo lasciato per reversibilità.
  if(!getApiKey())return;
@@ -3061,7 +3096,7 @@ async function generateWeeklySummary(){
   var energia=(h.quiz&&h.quiz.energy)||'?';
   var diff=(h.quiz&&h.quiz.difficulty)||'?';
   var dur=h.duration||'?';
-  var d=h.date?h.date.split('T')[0]:'?';
+  var d=sessionDay(h.date)||'?';
   return d+' '+splitName+' energia='+energia+'/4 diff='+diff+'/4 '+dur+'min';
  }).join('\n');
  if(!sessStr.replace(/\s/g,''))return; // sicurezza extra: sessStr vuota
@@ -3372,7 +3407,7 @@ async function sendFloatAI(){
    if(detectedKg==null&&/^\s*\d+(?:[.,]\d+)?\s*$/.test(msg))detectedKg=parseFloat(msg.replace(',','.'));
    if(detectedKg!=null&&detectedKg>0){
     if(!S.aiDB.loads)S.aiDB.loads={};
-    S.aiDB.loads[loadEx.id]={kg:detectedKg,name:loadEx.name,date:new Date().toISOString().split('T')[0],updatedAt:new Date().toISOString()};
+    S.aiDB.loads[loadEx.id]={kg:detectedKg,name:loadEx.name,date:dayKey(),updatedAt:new Date().toISOString()};
    }
   }
   // Persist floatChat so it survives panel close/reopen
