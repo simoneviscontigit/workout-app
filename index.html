@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-23b · core a ZONE + Hollow Body e V-sit alla capacita\' vera (60s)'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-23c · perSide: i secondi sono PER LATO, niente piu\' dimezzamento'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -235,9 +235,9 @@ const DB={
   {id:'c11',cat:'core',zona:'A',name:'Cross Crunch',        video:'core-cross-crunch.mp4',        time:35, desc:'Mani alla nuca. Gomito dx verso ginocchio sn alzando il busto, poi inverti. Lento e controllato — non rimbalzare.',muscles:'Obliqui, Retto'},
   {id:'c12',cat:'core',zona:null,name:'Mountain Climber',    video:'core-mountain-climber.mp4',    time:35, desc:'Plank braccia tese. Porta il ginocchio al petto alternando, ritmo sostenuto. Bacino stabile — non alzarlo.',muscles:'Core, Cardio'},
   {id:'c13',cat:'core',zona:'D',name:'Twist Plank',         video:'core-twist-plank.mp4',      time:40, desc:'Plank su avambracci. Ruota il bacino verso dx quasi a sfiorare il suolo, poi sn. Il core frena il movimento.',muscles:'Obliqui, Core'},
-  {id:'c14',cat:'core',zona:'E',name:'Side Crunch',video:'core-alternating-side-crunch.mp4',time:35,perSide:true,desc:'Gambe piegate su un lato. Alza il busto verso il ginocchio alto. Solo l\'obliquo lavora — niente slancio di braccia.',muscles:'Obliqui'},
+  {id:'c14',cat:'core',zona:'E',name:'Side Crunch',video:'core-alternating-side-crunch.mp4',time:30,perSide:true,desc:'Gambe piegate su un lato. Alza il busto verso il ginocchio alto. Solo l\'obliquo lavora — niente slancio di braccia.',muscles:'Obliqui'},
   {id:'c16',cat:'core',zona:'A',name:'Alternating Toe Touch',video:'core-alternating-toe-touch.mp4',time:40, desc:'Sdraiato, gambe tese verso il soffitto. Alza il busto e tocca la punta del piede dx con la mano sn, poi inverti. Torna giù lento.',muscles:'Retto, Obliqui'},
-  {id:'c17',cat:'core',zona:'E',name:'Side Plank',           video:'core-side-plank.mp4',          time:40, perSide:true, desc:'Appoggiati su un avambraccio, corpo in linea retta. Fianchi alti, non cedere. Spalla impilata sul gomito.',muscles:'Obliqui, Core'},
+  {id:'c17',cat:'core',zona:'E',name:'Side Plank',           video:'core-side-plank.mp4',          time:45, perSide:true, desc:'Appoggiati su un avambraccio, corpo in linea retta. Fianchi alti, non cedere. Spalla impilata sul gomito.',muscles:'Obliqui, Core'},
   {id:'c19',cat:'core',zona:'C',name:'Leg Raise',            video:'core-leg-raise.mp4',           time:40, desc:'Sdraiato, mani sotto i glutei. Tieni le gambe tese e alzale a 90°, abbassa lento fermandoti a 15cm da terra. Lombare incollata.',muscles:'Addominali bassi'},
   {id:'c20',cat:'core',zona:'A',name:'Double Crunch',        video:'core-double-crunch.mp4',       time:35, desc:'Soleva contemporaneamente spalle e ginocchia verso il centro. Le due metà del corpo si avvicinano — contrai forte in cima prima di abbassare.',muscles:'Retto completo'},
   {id:'c22',cat:'core',zona:null,name:'Plank Jack',           video:'core-plank-jack.mp4',          time:35, desc:'Posizione plank braccia tese. Salta aprendo e chiudendo i piedi (jumping jack). Core stabile, bacino fermo, non oscillare.',muscles:'Core, Cardio'},
@@ -272,7 +272,7 @@ const DB={
   {id:'c35',cat:'core',zona:'E',name:'Suitcase Carry',
    desc:'Un manubrio pesante in UNA mano, l\'altra libera. Cammina dritto restando perfettamente verticale: e\' il fianco scarico che lavora per non farti piegare. Spalle pari, niente inclinazione, passo normale. Conta i PASSI (un passo = una rep) e fai lo stesso numero per lato.',
    muscles:'Obliqui, Quadrato dei lombi',primary:'core laterale',attrezzo:'manubri',reps:20,repsMax:30,sets:3,band:'24kg',restSec:45,stima:true},
-  {id:'c36',cat:'core',zona:'E',name:'Side Plank con disco',time:60,perSide:true,
+  {id:'c36',cat:'core',zona:'E',name:'Side Plank con disco',time:30,perSide:true,
    desc:'Side plank su avambraccio, corpo in linea, fianchi ALTI. Un disco appoggiato sul fianco alto (mano libera che lo tiene fermo). E\' il side plank reso progressivo: il tempo non cambia, cambia il disco. Se i fianchi scendono, il disco e\' troppo.',
    muscles:'Obliqui, Core',primary:'core laterale',attrezzo:'dischi',band:'5kg',restSec:60,stima:true},
   {id:'c37',cat:'core',zona:'F',name:'Pallof Press al Cavo',
@@ -911,10 +911,15 @@ function genWorkout(splitIdx,opts){
  // I caricabili tengono le serie della loro riga (3): la progressione ha bisogno di
  // almeno tre serie confrontabili per dire qualcosa.
  var CORE_SETS_TEMPO=2;
- // espansione: gli unilaterali a tempo diventano DUE blocchi, meta' tempo ciascuno,
- // cosi' il secondo lato non dipende dal fatto che l'atleta se lo ricordi. I caricabili
- // per lato non si sdoppiano: lo dice la loro `desc` ("reps PER LATO"), perche' sdoppiare
- // un esercizio a reps vorrebbe dire due righe di storico per un esercizio solo.
+ // espansione: gli unilaterali a tempo diventano DUE blocchi, cosi' il secondo lato non
+ // dipende dal fatto che l'atleta se lo ricordi. I caricabili per lato non si sdoppiano:
+ // lo dice la loro `desc` ("reps PER LATO"), perche' sdoppiare un esercizio a reps
+ // vorrebbe dire due righe di storico per un esercizio solo.
+ // DAL 23/08/2026 il tempo NON si dimezza piu': su una riga `perSide` il campo `time` E'
+ // GIA' i secondi PER LATO. Prima il DB portava il totale e qui si divideva per due, ma
+ // sul foglio finiva scritto il mezzo — quindi il coach LEGGEVA per-lato e SCRIVEVA
+ // totale: un suo "alzo da 20 a 25" diventava 12s per lato, cioe' un aumento che e' una
+ // riduzione. Un campo con due significati lungo la catena e' un bug che aspetta.
  var core=[];
  picks.forEach(function(e,idx){
   if(e==='B'){core.push({id:'brk'+idx,cat:'core',name:'RIPOSO',desc:'Respira. Prossimo blocco tra poco.',muscles:'',isBreak:true,isCore:true,isTime:true,time:30,sets:1});return;}
@@ -927,9 +932,8 @@ function genWorkout(splitIdx,opts){
   var base=applyAdaptation(withCoachOverride(Object.assign({},e,{
    isCore:true,isTime:isT,sets:isT?CORE_SETS_TEMPO:(e.sets||3)})));
   if(!isT||!e.perSide){core.push(base);return;}
-  var half=Math.max(15,Math.round((base.time||40)/2));
-  core.push(Object.assign({},base,{id:e.id+'-L1',name:e.name+' · 1° lato',time:half,perSide:true}));
-  core.push(Object.assign({},base,{id:e.id+'-L2',name:e.name+' · 2° lato',time:half,perSide:true,desc:'CAMBIA LATO. '+base.desc}));
+  core.push(Object.assign({},base,{id:e.id+'-L1',name:e.name+' · 1° lato',perSide:true}));
+  core.push(Object.assign({},base,{id:e.id+'-L2',name:e.name+' · 2° lato',perSide:true,desc:'CAMBIA LATO. '+base.desc}));
  });
  // 3) finisher cardio: blocco corto in coda, ruota per giorno
  var nk=DB.cardio.length,pickK=[],cardio=[];
