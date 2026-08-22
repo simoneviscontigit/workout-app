@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-22b · DB palestra completo + tetto per muscolo'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-08-22c · DB palestra + tetto muscolo + progressione posizione-consapevole'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -663,6 +663,11 @@ function computeProgression(session){
  try{
   var reps=session.reps||{};
   if(!S.aiDB.progression)S.aiDB.progression={};
+  // POSIZIONE IN SEDUTA (22/08/2026). Le chiavi di `reps` seguono l'ordine della scheda;
+  // core e cardio stanno sempre in coda e non competono per la freschezza, quindi il
+  // numero che conta e' la posizione fra i soli esercizi PRINCIPALI.
+  var principali=Object.keys(reps).filter(function(k){return !/^(c\d|k\d|brk|kbrk)/.test(k);});
+  var posDi=function(id){var i=principali.indexOf(id);return i<0?null:i+1;};
   Object.keys(reps).forEach(function(id){
    var r=reps[id];if(!r||!r.reps||!r.reps.length)return;
    var sets=r.reps,max=r.max||r.target||8,target=r.target||8,nSets=sets.length;
@@ -672,7 +677,27 @@ function computeProgression(session){
    var cur=prevProg.band||r.band||'';
    var hasBand=!!cur; // niente elastico → esercizio a corpo libero, progressione su reps invece che su carico
    var entry={name:r.name,date:dayKey(),lastReps:sets};
-   if(allTop&&nSets>=2){
+   var pos=posDi(id),posPrec=prevProg.posAumento;
+   // Un massimo chiuso da PRIMO non vale come un massimo chiuso da quarto: sono la stessa
+   // forza in due condizioni diverse. Prima di oggi bastava `allTop` per alzare, e il
+   // carico saliva sempre sul giorno in cui l'esercizio capitava fresco — per poi restare
+   // li' il giorno in cui capitava in coda (dove `allBelow` dice solo "mantieni", non
+   // scende). Caso reale: p1 Archer, 13x4 sotto target da terzo il 20/08, 17/17/17/15 da
+   // primo il 22/08. Regola: si alza solo se il massimo e' stato chiuso da una posizione
+   // NON piu' fresca di quella dell'ultimo aumento. Il primo aumento non ha termine di
+   // paragone e passa. Non e' un blocco: e' un rinvio alla prima conferma a pari condizioni.
+   // Valvola contro lo stallo: se un esercizio si sposta STABILMENTE piu' avanti, `pos`
+   // resterebbe per sempre sotto `posPrec` e il carico non salirebbe mai piu' per via
+   // meccanica. Due sedute di fila col massimo chiuso sono prova sufficiente da sole.
+   var prec=prevProg.lastReps||[];
+   var giaChiusoPrima=prec.length>=2&&prec.every(function(x){return x>=max;});
+   var posOk=(pos==null||posPrec==null||pos>=posPrec||giaChiusoPrima);
+   if(allTop&&nSets>=2&&!posOk){
+    entry.band=cur;
+    entry.note='Max chiuso ('+sets.join(',')+') ma da posizione '+pos+', piu\' fresca della '
+     +posPrec+' dell\'ultimo aumento: confermalo da fondo seduta e salgo';
+   } else if(allTop&&nSets>=2){
+    if(pos!=null)entry.posAumento=pos;
     if(hasBand){
      entry.band=nextBandStep(cur,id);
      entry.note='+'+(attrezzatura()==='palestra'?stepDi(id):5)+'kg: chiuso il max ('+sets.join(',')+')';
