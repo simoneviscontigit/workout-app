@@ -1172,6 +1172,17 @@ function mergeDown(dd){
  // LAST-WINS timbrato (adaptation IA): confronto per ISTANTE su lastUpdated (mai lessicografico) —
  // evita che il telefono ri-pushi un'adaptation locale stale sopra un reset/normalizzazione server (guardia coach_run.py).
  if(r.adaptation&&newer(r.adaptation.lastUpdated,S.aiDB.adaptation&&S.aiDB.adaptation.lastUpdated))S.aiDB.adaptation=r.adaptation;
+ // `serverUpdatedAt` e' SERVER-OWNED: lo scrive solo chi gira sul Mac (coach_llm, publish_metrics,
+ // hook inbox). Va pero' propagato anche nella copia locale, non solo nel marker `_lastServerSync`.
+ // Perche' (bug 30/08/2026): `syncToDrive` rimanda su l'INTERO `S.aiDB`, e l'Apps Script (`saveJson_`)
+ // fa `setContent` = sostituzione piena del blob. Tenendo qui il solo `_lastServerSync` fresco, il
+ // `serverUpdatedAt` locale restava fossile e al primo salvataggio del telefono tornava sul blob
+ // SOPRA il bump del coach. Al riavvio il gate confrontava un serverUpdatedAt vecchio con un
+ // _lastServerSync fresco -> false -> mergeDown mai piu' eseguito: referto e coachPlan non
+ // scendevano piu'. Deadlock che si autoalimentava a ogni salvataggio.
+ // Per la stessa ragione NON si puo' risolvere togliendo la chiave dal payload: con un blob
+ // sostituito per intero, omettere `serverUpdatedAt` lo CANCELLA dal server invece di preservarlo.
+ S.aiDB.serverUpdatedAt=r.serverUpdatedAt;
  S.aiDB._lastServerSync=r.serverUpdatedAt;
 }
 
@@ -1307,7 +1318,13 @@ async function syncToDrive(){ // NB: da qui in poi e' await-abile — chiamarla 
   // confermato accende il badge in home, cosi' "l'ho compilato" e "e' arrivato" smettono
   // di essere la stessa cosa. Il badge dice NON CONFERMATO, non "fallito": la risposta puo'
   // perdersi anche a scrittura avvenuta, e gridare al errore sbagliato si impara a ignorarlo.
-  S.syncBusy=true;
+  // Il render qui e' load-bearing (30/08/2026). Prima `syncBusy` veniva alzato ma non lo leggeva
+  // nessuno: per tutta la durata del POST la schermata restava identica, e al termine di un
+  // tentativo fallito veniva ridipinto lo STESSO banner con lo stesso testo. Da fuori era
+  // indistinguibile da un tasto morto -> "riprova ora non fa nulla". Il POST dura decine di
+  // secondi (l'Apps Script rigenera 5 tab del Foglio prima di rispondere), quindi il silenzio
+  // non e' un istante: e' tutta l'attesa.
+  S.syncBusy=true;if(S.view==='home')render();
   var _r=await fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload),redirect:'follow'});
   var _d=await _r.json();
   if(!_d||!_d.ok)throw new Error((_d&&_d.error)||'risposta non valida');
@@ -1378,7 +1395,15 @@ function rAlerts(){
   out+='<div style="border:2px solid #ef4444;background:#1a0000;padding:12px 14px;margin-bottom:14px">'
    +'<div class="lbl" style="color:#ef4444;font-size:11px;margin-bottom:4px">SALVATAGGIO FALLITO</div>'
    +'<div style="color:#fca5a5;font-size:12px;line-height:1.5">'+S.ioError+'</div></div>';
- if(S.syncError)
+ // Tre stati distinti, non due: IN CORSO (sto lavorando), NON CONFERMATO (ho finito male),
+ // niente (tutto a posto). Il salvataggio su Drive non e' istantaneo — l'Apps Script rigenera
+ // 5 tab del Foglio prima di rispondere — quindi "sto lavorando" e' uno stato che va MOSTRATO,
+ // altrimenti l'attesa e' indistinguibile da un tasto che non ha fatto nulla.
+ if(S.syncBusy)
+  out+='<div style="border:2px solid #52525b;background:#111114;padding:12px 14px;margin-bottom:14px">'
+   +'<div class="lbl" style="color:#a1a1aa;font-size:11px;margin-bottom:4px">SALVATAGGIO IN CORSO</div>'
+   +'<div style="color:#d4d4d8;font-size:12px;line-height:1.5">Sto scrivendo su Drive. Puo\' metterci qualche decina di secondi: tieni l\'app aperta.</div></div>';
+ else if(S.syncError)
   out+='<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px">'
    +'<div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:4px">NON CONFERMATO SU DRIVE</div>'
    +'<div style="color:#fcd34d;font-size:12px;line-height:1.5">'+S.syncError+'</div>'
