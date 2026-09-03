@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-08-23g · tutte le clip a 25 fps'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-03a · ripristino non distruttivo + sync sbloccato'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -1283,18 +1283,46 @@ async function sv(k,v){
   return false;
  }
 }
+// RIPRISTINO NON DISTRUTTIVO (03/09/2026). Prima questa funzione faceva
+// `sv('wh',data.history)` + `sv('ai',data.aiDB)`: SOSTITUZIONE PIENA dello stato locale
+// con il blob del server. Con il canale di push rotto (il POST all'Apps Script non
+// rispondeva piu' — vedi la nota in `syncToDrive`) il telefono conteneva giorni MAI
+// arrivati su Drive, e un solo tocco qui li cancellava per sempre: proprio il bottone che
+// si preme quando si sospetta di aver perso qualcosa era quello che completava la perdita.
+// Ora un ripristino puo' AGGIUNGERE, mai TOGLIERE:
+//  1. snapshot dello stato locale in `bkp-pre-restore` PRIMA di toccare alcunche',
+//     cosi' un ripristino sbagliato resta annullabile;
+//  2. le chiavi che `mergeDown` non tratta (sessions, progression, recap...) si riempiono
+//     SOLO se il locale e' vuoto — un valore locale presente non viene mai schiacciato;
+//  3. tutto il resto passa da `mergeDown`, cioe' dallo stesso contratto del sync
+//     automatico (union sui log, last-wins timbrato sui record), mai da una sostituzione.
+function _vuoto(v){
+ if(v==null)return true;
+ if(Array.isArray(v))return v.length===0;
+ if(typeof v==='object')return Object.keys(v).length===0;
+ return v==='';
+}
 async function restoreFromDrive(){
  var btn=document.getElementById('restore-btn');
  if(btn){btn.textContent='Scaricando...';btn.disabled=true;}
  try{
-  var r=await fetch(DRIVE_URL+'?t='+Date.now(),{redirect:'follow',cache:'no-store'});
-  var data=await r.json();
+  var resp=await fetch(DRIVE_URL+'?t='+Date.now(),{redirect:'follow',cache:'no-store'});
+  var data=await resp.json();
   if(!data.ok){alert('Errore: '+(data.error||'risposta non valida'));if(btn){btn.textContent='Ripristina da Drive';btn.disabled=false;}return;}
-  if(data.history)await sv('wh',data.history);
-  if(data.aiDB)await sv('ai',data.aiDB);
+  // Rete di sicurezza: lo stato locale com'era un istante fa, recuperabile a mano.
+  try{localStorage.setItem('bkp-pre-restore',JSON.stringify({at:new Date().toISOString(),wh:localStorage.getItem('wh'),ai:localStorage.getItem('ai'),nd:localStorage.getItem('nd'),si:localStorage.getItem('si')}));}catch(e){}
+  var r=data.aiDB||{};
+  Object.keys(r).forEach(function(k){if(_vuoto(S.aiDB[k])&&!_vuoto(r[k]))S.aiDB[k]=r[k];});
+  mergeDown(data); // union/last-wins del contratto, `history` compresa
+  if(typeof S.splitIdx!=='number')S.splitIdx=0;
+  var okH=await sv('wh',S.history);
+  var okA=await sv('ai',S.aiDB);
+  await sv('si',String(S.splitIdx));
   if(data.splits)await sv('splits',data.splits);
   if(data.proxyToken)localStorage.setItem('workoutProxyToken',data.proxyToken);
-  alert('Dati ripristinati da Drive!\n'+((data.history||[]).length)+' sessioni caricate.\nRicarico...');
+  if(!okH||!okA){alert('Ripristino NON scritto su questo telefono: '+(S.ioError||'errore di scrittura')+'\nNessun dato perso, riprova.');if(btn){btn.textContent='Ripristina da Drive';btn.disabled=false;}return;}
+  alert('Ripristinato da Drive e FUSO con quello che c\'era (niente cancellato).\n'
+   +(S.history||[]).length+' sessioni · '+Object.keys(S.aiDB.nutritionLog||{}).length+' giorni di nutrizione.\nRicarico...');
   location.reload();
  }catch(e){
   alert('Errore connessione: '+e.message);

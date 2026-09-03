@@ -22,12 +22,26 @@ function doGet(e) {
   }
 }
 
-// ── POST: salva JSON + aggiorna Sheet ─────────────────────────
+// ── POST: salva JSON e basta ──────────────────────────────────
+// 03/09/2026 — `updateSheet_(payload)` è USCITO dal percorso della richiesta.
+// Perché: rigenerava da zero 5 tab dello specchio «Workout Storia» applicando la
+// formattazione riga per riga, in modo sincrono, con il telefono che aspettava la
+// risposta. Con il dataset cresciuto (payload ~600 KB, ~1000 serie) l'esecuzione ha
+// superato il timeout della risposta HTTP: Google chiude la connessione dopo ~60 s
+// SENZA rispondere. Il file JSON veniva anche salvato — `saveJson_` gira prima — ma
+// l'app non riceveva mai `{ok:true}`, quindi mostrava «NON CONFERMATO SU DRIVE»; e su
+// un telefono un POST di oltre un minuto in primo piano non arriva quasi mai in fondo
+// (schermo bloccato / app in background = fetch abortita, blob mai spedito).
+// Risultato: dal 31/08/2026 nessun salvataggio del telefono è più arrivato su Drive.
+// Lo specchio «Workout Storia» NON è il foglio sorgente del coach — quello è
+// «Sumi Workout — dati», che `workout-sheet/travaso.py` rigenera dal blob ogni notte —
+// quindi è disaccoppiabile senza perdere nulla.
+// Se lo specchio serve ancora: Trigger → time-driven giornaliero su
+// `backfillSheetFromDrive` (gira per conto suo, nessuno aspetta).
 function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
     saveJson_(payload);
-    updateSheet_(payload);
     return jsonResp_({ ok: true, savedAt: payload.savedAt });
   } catch(err) {
     return jsonResp_({ ok: false, error: err.message });
@@ -449,7 +463,9 @@ function jsonResp_(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ── Aggiorna il Sheet dal backup Drive (esegui manualmente dall'editor) ──
+// ── Aggiorna il Sheet dal backup Drive ────────────────────────
+// Da eseguire a mano dall'editor, o da un trigger time-driven giornaliero.
+// NON chiamarlo da doPost: è la cosa che faceva scadere la risposta (vedi doPost).
 function backfillSheetFromDrive() {
   var file = findFile_(FILE_NAME);
   if (!file) { Logger.log('Nessun backup trovato'); return; }
