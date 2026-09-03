@@ -10,3 +10,8 @@ LIVE_*.html
 index_backup_*.html
 workout_standalone.html
 .vercel
+
+# Il backend Apps Script NON sta qui: repo PUBBLICO, e il .gs porta ID di cartelle Drive.
+# Casa: ~/Documents/Claude/Projects/Personal/processi/workout-appscript/ (R30)
+appscript_backup.gs
+*.gs
