@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-09-04a · pike push-up a casa + PULL a 4 slot + guardia d\'ordine'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-04b · core con un ramo casa + fasi di recupero sul corpo libero'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -255,6 +255,18 @@ const DB={
   {id:'c40',cat:'core',zona:'B',name:'Plank con disco',video:'core-plank-disco.mp4',time:30,
    desc:'Plank su avambraccio, corpo in linea dalla testa ai talloni, glutei e addome contratti. Un disco appoggiato sulla parte alta della schiena, fra le scapole. E\' il plank reso progressivo: il tempo non cambia, cambia il disco. Se la lombare si inarca o il bacino sale, il disco e\' troppo. Fattelo appoggiare, non caricartelo da solo.',
    muscles:'Core anti-estensione',primary:'core anteriore',attrezzo:'dischi',band:'5kg',restSec:60,stima:true},
+  // c42 (04/09/2026) — la zona B aveva UN SOLO esercizio a corpo libero, c1 Hollow Body.
+  // Finche' il core girava solo in palestra non si vedeva: la zona la portavano c31 e c40,
+  // che sono caricabili. Con il ramo casa del core (che scarta le righe con `attrezzo`) la
+  // zona B si presentava con un esercizio per due slot, cioe' un buco dichiarato ogni tre
+  // sedute. Il Body Saw lo riempie ed e' l'unico anti-estensione a corpo libero che NON
+  // progredisce ne' a reps ne' a secondi: la leva e' quanto lontano scivoli, cioe' la leva
+  // del corpo. Non ha il tetto che ha fatto fuori c25 V-sit e hs2 Shoulder Tap.
+  // Attrezzatura: un asciugamano su pavimento liscio — la stessa gia' assunta da hl5.
+  // ⚠️ Senza clip: e' l'unico del DB in questa condizione, va girata (skill `clip-loop`).
+  {id:'c42',cat:'core',zona:'B',name:'Body Saw con Asciugamano',
+   desc:'Plank sugli avambracci, piedi su un asciugamano su pavimento liscio. Spingi coi gomiti per far scivolare il corpo INDIETRO di qualche centimetro tenendo il bacino fermo e la lombare piatta, poi tirati avanti. Una rep = indietro + avanti, 3 secondi per direzione. La progressione NON e\' fare piu\' reps: e\' scivolare piu\' LONTANO, che allunga la leva. Se la lombare si inarca sei andato oltre il tuo range: torna corto.',
+   muscles:'Core anti-estensione, Dorsali',reps:6,repsMax:10,sets:3,restSec:60,stima:true},
   {id:'c26',cat:'core',zona:'C',name:'Flutter Kick',         video:'core-flutter-kick.mp4',        time:40, desc:'Sdraiato, gambe a 45°. Scalcia alternando in ritmo (flutter kick) portando le braccia verso la coscia che scende. Ritmo cadenzato.',muscles:'Addominali bassi, Obliqui'},
   {id:'c28',cat:'core',zona:'C',name:'Vertical Scissors',    video:'core-vertical-scissors.mp4',   time:40, desc:'Sdraiato, gambe tese al soffitto. Abbassa una gamba quasi a terra mentre l\'altra resta su. Alterna il movimento in forbice verticale.',muscles:'Addominali bassi, Flessori'},
   // ── CARICABILI E ZONA F (23/08/2026) ─────────────────────────────────────
@@ -498,8 +510,15 @@ const CORE_CARICO_SENZA_BAND=['c32'];
 function coreCaricabile(e){return !!e.band||CORE_CARICO_SENZA_BAND.indexOf(e.id)>=0;}
 // Pool di una zona, separato nei due lati. Ordinato per id = ordine stabile e ripetibile:
 // la rotazione deve dipendere dal giorno, non dall'ordine in cui il DB e' scritto.
-function corePool(zona,carico){
+// `home` (04/09/2026): il core NON aveva un ramo casa. `corePool` leggeva sempre `DB.core`
+// e in modalita' casa proponeva Crunch al Cavo, Hanging Knee Raise ALLA SBARRA e Ab Rollout
+// COL BILANCIERE — a casa non c'e' niente, ne' sbarra ne' elastici (vincolo di Simone del
+// 12/08). Latente dal 23/08, cioe' da quando i caricabili sono entrati: prima il core era
+// tutto a corpo libero e la distinzione non esisteva. Il filtro e' `attrezzo`, lo stesso
+// campo che gia' dichiara di cosa ha bisogno una riga — non una seconda lista da mantenere.
+function corePool(zona,carico,home){
  return DB.core.filter(function(e){
+  if(home&&e.attrezzo)return false;
   return e.zona===zona&&coreCaricabile(e)===!!carico&&recoveryAllows(e);
  }).sort(function(a,b){return a.id<b.id?-1:1;});
 }
@@ -581,12 +600,23 @@ const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
  s1:3,s2:1,s3:2,s4:1,s5:3,s6:1,
  l1:3,l2:2,l3:2,l5:3,l6:2,l7:3,l8:2,l9:3,
  k1:9,k2:9,k3:9,k4:9,
- // ⚠️ RAMO CASA — buco noto (annotato il 04/09/2026, non risolto). Nessuna riga `h*` e'
- // elencata qui: cadono tutte sul default 1 di `recoveryAllows`, cioe' "ammesso nella
- // fase piu' fragile del post-operatorio". Vale per hs1 Wall Walk, hp4 Push-up Negativo,
- // hl7 Squat Jump — roba che in fase 1 non ci sta. E' lo stesso difetto latente che i
- // `c*` avevano fino al 23/08. Va chiuso a mano riga per riga, non indovinato. Gli id
- // `p*`/`l*` passati al ramo casa (p1,p2,p3,p5,l1) la loro fase ce l'hanno gia', sopra.
+ c42:3,                                               // plank a leva lunga: brace forte come c1
+ // RAMO CASA (04/09/2026). Fino a oggi NESSUNA riga `h*` era elencata qui: cadevano tutte
+ // sul default 1 di `recoveryAllows`, cioe' "ammesso nella fase piu' fragile del
+ // post-operatorio" — Wall Walk quasi in verticale e Squat Jump compresi. E' lo stesso
+ // difetto latente che i `c*` avevano fino al 23/08, rimasto scoperto perche' il ramo casa
+ // e' nato dopo (12/08) e nessuno ha ripetuto il passaggio.
+ // Criterio, dalle note delle fasi: fase 1 = "isolamento leggero, zero apnea/spinta,
+ // niente overhead o chinarsi". A cui si aggiunge la regola che spiega perche' p4 Panca
+ // Piana Manubri sta in fase 1 e p1 Archer Push-up in fase 3: quel che si CARICA si puo'
+ // scalare a piacere, il corpo libero no — pesi sempre te stesso. Quindi a casa quasi
+ // niente sta in fase 1.
+ hr4:1,hr5:1,hs3:1,                                   // auto-resistenza o mobilita': il carico lo decidi tu, busto eretto
+ hp1:2,hr1:2,hr2:2,hr3:2,hr6:2,hs4:2,                 // spinta base o prono leggero: la testa appoggia, niente apnea
+ hl1:2,hl2:2,hl3:2,hl5:2,hl6:2,                       // gambe a corpo libero, busto eretto
+ hp2:3,hp3:3,hp4:3,hr7:3,hl4:3,                       // spinta dura, ponte inverso, o hinge = "chinarsi"
+ hs1:9,hl7:9,                                         // Wall Walk va quasi in verticale, Squat Jump e' impatto: mai in recupero
+ // Gli id `p*`/`l*` passati al ramo casa (p1,p2,p3,p5,l1) la loro fase ce l'hanno gia', sopra.
  // CORE (23/08/2026). Fino a oggi NESSUN c* era elencato qui: cadevano tutti sul
  // default 1, cioe' "ammesso nella fase piu' fragile del post-operatorio". Era latente
  // finche' il core era tutto a corpo libero; con i caricabili un Ab Rollout o un Hanging
@@ -1007,6 +1037,23 @@ function genWorkout(splitIdx,opts){
  var picks=[];
  (circuit.zone||[]).forEach(function(z,zi){
   if(zi)picks.push('B');                        // pausa 30s fra le due zone
+  // A CASA (04/09/2026): lo slot "caricabile" non esiste — non c'e' niente da caricare.
+  // Invece di lasciarlo scoperto (che dimezzerebbe il core di casa da 4 a 2 esercizi) si
+  // pescano DUE esercizi a corpo libero dalla stessa zona. La zona resta quella, cambia
+  // solo che entrambi gli slot vengono dal lato libero. `rot*2` fa scorrere il pool di due
+  // posizioni a ogni comparsa, cosi' i due non sono mai la stessa coppia due volte di fila.
+  if(home){
+   var poolH=corePool(z,false,true);
+   for(var n=0;n<2;n++){
+    var eh=poolH.length?poolH[(((rot*2+n)%poolH.length)+poolH.length)%poolH.length]:null;
+    if(!eh||picks.find(function(x){return x!=='B'&&x.id===eh.id;})){
+     gaps.push('core '+z+' casa (pool a corpo libero: '+poolH.length+')');
+     continue;
+    }
+    picks.push(eh);
+   }
+   return;
+  }
   [true,false].forEach(function(carico){
    var e=pickZona(z,carico,rot);
    // Pool vuoto (di solito: recoveryAllows ha filtrato tutto) → slot scoperto DICHIARATO,
