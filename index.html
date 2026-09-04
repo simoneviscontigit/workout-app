@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-09-04b · core con un ramo casa + fasi di recupero sul corpo libero'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-04c · clip del Body Saw'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -263,8 +263,11 @@ const DB={
   // progredisce ne' a reps ne' a secondi: la leva e' quanto lontano scivoli, cioe' la leva
   // del corpo. Non ha il tetto che ha fatto fuori c25 V-sit e hs2 Shoulder Tap.
   // Attrezzatura: un asciugamano su pavimento liscio — la stessa gia' assunta da hl5.
-  // ⚠️ Senza clip: e' l'unico del DB in questa condizione, va girata (skill `clip-loop`).
-  {id:'c42',cat:'core',zona:'B',name:'Body Saw con Asciugamano',
+  // Clip presa il 04/09 (fonte Rachel Gregory, "Towel Body Saw"): il crop toglie il
+  // lower-third, che diceva «add weight to back to progress» — cioe' l'esatto contrario
+  // della leva di questo esercizio, che e' il range. Una didascalia che contraddice la
+  // scheda insegna con l'autorita' del video: andava tolta, non tollerata.
+  {id:'c42',cat:'core',zona:'B',name:'Body Saw con Asciugamano',video:'core-body-saw.mp4',
    desc:'Plank sugli avambracci, piedi su un asciugamano su pavimento liscio. Spingi coi gomiti per far scivolare il corpo INDIETRO di qualche centimetro tenendo il bacino fermo e la lombare piatta, poi tirati avanti. Una rep = indietro + avanti, 3 secondi per direzione. La progressione NON e\' fare piu\' reps: e\' scivolare piu\' LONTANO, che allunga la leva. Se la lombare si inarca sei andato oltre il tuo range: torna corto.',
    muscles:'Core anti-estensione, Dorsali',reps:6,repsMax:10,sets:3,restSec:60,stima:true},
   {id:'c26',cat:'core',zona:'C',name:'Flutter Kick',         video:'core-flutter-kick.mp4',        time:40, desc:'Sdraiato, gambe a 45°. Scalcia alternando in ritmo (flutter kick) portando le braccia verso la coscia che scende. Ritmo cadenzato.',muscles:'Addominali bassi, Obliqui'},
