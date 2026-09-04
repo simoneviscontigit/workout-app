@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-09-03a · ripristino non distruttivo + sync sbloccato'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-04a · pike push-up a casa + PULL a 4 slot + guardia d\'ordine'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -366,9 +366,7 @@ const HOME_NEW={
   {id:'p3',cat:'push',name:'Chair Dips',video:'Dip su sedie.mp4',
    desc:'Due sedie stabili, mani sul bordo. Scendi finché i gomiti superano le spalle. Busto leggermente inclinato avanti per coinvolgere il petto.',
    muscles:'Tricipiti, Petto basso',reps:12,repsMax:16,sets:4,restSec:90},
-  {id:'p5',cat:'push',name:'Elevated Pike Push-up',video:'Pike push-up su rialzo.mp4',
-   desc:'Piedi su sedia, corpo a V stretta, fianchi alti. Scendi con la testa verso il suolo tra le mani. Movimento verticale puro — spalle, non petto.',
-   muscles:'Spalle ant., Tricipiti',reps:8,repsMax:11,sets:4,restSec:90},
+  // Riga trasferita in HOME_NEW.shoulders il 04/09/2026 — vedi il commento la' sotto.
  ],
  pull:[
   {id:'hr1',cat:'pull',name:'Superman',
@@ -397,9 +395,29 @@ const HOME_NEW={
   {id:'hs1',cat:'shoulders',name:'Wall Walk',
    desc:'Plank coi piedi al muro. Cammina indietro con le mani salendo coi piedi sulla parete fino a quanto reggi, poi torna giù con lo stesso controllo. Una rep = salita + discesa. Fermati prima che la schiena si inarchi.',
    muscles:'Spalle, Core',reps:4,repsMax:6,sets:3,restSec:90},
-  {id:'hs2',cat:'shoulders',name:'Plank Shoulder Tap',
-   desc:'Plank sulle mani, piedi larghi. Tocca la spalla opposta con una mano tenendo il bacino FERMO — se ruota, allarga i piedi o rallenta. Un tocco = una rep.',
-   muscles:'Deltoide ant., Core anti-rotazione',reps:16,repsMax:24,sets:3,restSec:60},
+  // hs2 Plank Shoulder Tap RITIRATO il 04/09/2026 (decisione Simone, Q&A n.74: «cambia
+  // totalmente»). Il 17/08 chiuso 25/25/25 a difficolta' 1: l'esercizio piu' facile del
+  // dossier E gia' al tetto delle 25 reps, cioe' zero margine da qualunque lato lo
+  // guardi. Le tre varianti proposte (piedi stretti, elastico ai polsi, rialzo con mani
+  // strette) sono state scartate: irrigidire la variante lascia la progressione dov'era,
+  // sulle reps, che e' esattamente il campo che ha il tetto. Stesso schema del ritiro di
+  // c25 V-sit il 30/08 — quando la leva di progressione e' satura, si cambia leva, non
+  // esercizio-gemello. Al suo posto hs5, dove il carico e' l'ALTEZZA del rialzo.
+  // Costo dichiarato: il ramo casa perde l'unico anti-rotazione dello slot spalle.
+  // Resta coperto dalla zona F del core (c38 Bird Dog, corpo libero).
+  // Al posto di hs2 NON entra una riga nuova: entra `p5` Elevated Pike Push-up, che
+  // esisteva gia' nel ramo casa — con la sua clip, il suo storico e il suo piano del
+  // coach — ma stava in `push`. Era archiviato male: la sua stessa desc dice «movimento
+  // verticale puro — spalle, non petto» e `muscles` dice 'Spalle ant., Tricipiti'.
+  // Scriverne una copia in `shoulders` avrebbe creato due righe per lo stesso esercizio,
+  // cioe' il difetto che il tetto su `muscles` esiste apposta per prendere.
+  // La riga vera sta qui sotto, spostata da HOME_NEW.push. Cambia solo `cat` e la desc,
+  // che ora dichiara la leva di progressione: e' l'ALTEZZA del rialzo, non le reps —
+  // che e' il motivo per cui questo esercizio prende il posto di hs2 invece di una sua
+  // variante piu' dura. `id`, clip, storico e piano del coach restano gli stessi.
+  {id:'p5',cat:'shoulders',name:'Elevated Pike Push-up',video:'Pike push-up su rialzo.mp4',
+   desc:'Piedi su sedia (o divano, se la sedia ti e\' diventata facile), corpo a V stretta, fianchi alti. Scendi con la testa verso il suolo tra le mani. Movimento verticale puro — spalle, non petto. La progressione e\' l\'ALTEZZA del rialzo, non le ripetizioni: quando chiudi il massimo su tutte le serie, alza il rialzo e riparti dal target basso.',
+   muscles:'Spalle ant., Tricipiti',reps:8,repsMax:11,sets:4,restSec:90},
   {id:'hs3',cat:'shoulders',name:'Wall Slide',
    desc:'Schiena e braccia al muro, gomiti a 90°. Scivola con le braccia verso l\'alto senza staccare polsi e gomiti dalla parete, poi torna giù stringendo le scapole. Fa male alla mobilità, non ai muscoli: è salute della spalla.',
    muscles:'Rotatori, Trapezio basso',reps:12,repsMax:16,sets:3,restSec:45},
@@ -520,7 +538,24 @@ const PLAN=[
  // genWorkout è quello che impedisce a una categoria larga di riempire la seduta con un
  // muscolo solo (22/08/2026: due panche + archer + pseudo planche nello stesso giorno push).
  {id:'push', name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:4,shoulders:1},must:['p4','p7','s3'],desc:'Petto (piano + inclinato) · Tricipiti · Delt. post.'},
- {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:5},            must:['r6','r1','r3'],    desc:'Dorsali (verticale + orizzontale) · Bicipiti'},
+ // PULL da 5 a 4 slot il 04/09/2026. Il tetto per muscolo (§4-sexies) non poteva reggere
+ // su questo giorno, e non per un bug del tetto: per aritmetica. Il pool `pull` ha DUE
+ // soli `primary` (dorsali, bicipiti); su 5 slot il principio dei cassetti impone
+ // ceil(5/2)=3 esercizi dello stesso muscolo comunque vada. `capMuscolo` valeva 3 e li
+ // lasciava passare tutti e tre, legalmente. Il 30/08 e' uscita cosi': Lat Machine,
+ // Rematore Bilanciere, poi Curl Manubri + Curl Panca Inclinata + Hammer Curl di fila,
+ // con l'ultimo a 5/1/1 — non un calo di carico, la coda dei due prima. E il dedup su
+ // `muscles` non poteva vederli: 'Bicipiti', 'Bicipiti (capo lungo)' e
+ // 'Bicipiti, Brachiale' sono tre stringhe diverse, e sono davvero tre capi diversi.
+ // INVARIANTE, da controllare quando si compone un giorno: `slot <= 2 * n_primary
+ // disponibili nella categoria`. Sopra quella soglia il terzo esercizio sullo stesso
+ // muscolo non e' evitabile, e il tetto diventa decorativo. Verificata su tutti i
+ // giorni: solo questo la violava (5 > 2x2).
+ // Perche' togliere lo slot invece di aggiungerne uno di spalle: 5/1/1 non e' volume, e'
+ // rumore. Quattro esercizi fatti freschi valgono piu' di cinque di cui l'ultimo non
+ // conta — che e' lo stesso scambio volume->intensita' gia' fatto sul core il 23/08.
+ // Reversibile in una riga se il giorno risultasse corto.
+ {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4},            must:['r6','r1','r3'],    desc:'Dorsali (verticale + orizzontale) · Bicipiti'},
  {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:4},            must:['l3','l5'],    desc:'Quadricipiti · Femorali · Glutei'},
  {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:2},must:['p6','s1'],desc:'Petto (adduzione) · Tricipiti · Spalle'},
  {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4,shoulders:1},must:['r4','s4'],    desc:'Dorsali · Bicipiti (hammer) · Delt. post.'},
@@ -546,6 +581,12 @@ const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
  s1:3,s2:1,s3:2,s4:1,s5:3,s6:1,
  l1:3,l2:2,l3:2,l5:3,l6:2,l7:3,l8:2,l9:3,
  k1:9,k2:9,k3:9,k4:9,
+ // ⚠️ RAMO CASA — buco noto (annotato il 04/09/2026, non risolto). Nessuna riga `h*` e'
+ // elencata qui: cadono tutte sul default 1 di `recoveryAllows`, cioe' "ammesso nella
+ // fase piu' fragile del post-operatorio". Vale per hs1 Wall Walk, hp4 Push-up Negativo,
+ // hl7 Squat Jump — roba che in fase 1 non ci sta. E' lo stesso difetto latente che i
+ // `c*` avevano fino al 23/08. Va chiuso a mano riga per riga, non indovinato. Gli id
+ // `p*`/`l*` passati al ramo casa (p1,p2,p3,p5,l1) la loro fase ce l'hanno gia', sopra.
  // CORE (23/08/2026). Fino a oggi NESSUN c* era elencato qui: cadevano tutti sul
  // default 1, cioe' "ammesso nella fase piu' fragile del post-operatorio". Era latente
  // finche' il core era tutto a corpo libero; con i caricabili un Ab Rollout o un Hanging
@@ -905,7 +946,9 @@ function genWorkout(splitIdx,opts){
    prendi(e);
   });
   // RIEMPI SEMPRE: se il pool "pulito" non copre `count`, rientrano gli esclusi morbidi
-  // (gli `avoidExercises` del coach). Motivo: la categoria pull ha 6 esercizi per 5 slot,
+  // (gli `avoidExercises` del coach). Motivo: una categoria stretta puo' non coprire gli
+  // slot (quando fu scritto: pull con 6 esercizi per 5 slot; oggi pull e' 10 per 4, ma la
+  // categoria stretta e' `shoulders` con 1-2 slot e i tetti addosso),
   // quindi basta un buco per consegnare una seduta corta — e in silenzio. Meglio un esercizio
   // che non avresti scelto di uno slot vuoto. `recoveryAllows` resta invece un vincolo duro:
   // è sicurezza post-intervento, non una preferenza.
@@ -915,6 +958,41 @@ function genWorkout(splitIdx,opts){
    sel=sel.concat(shuf(backup).slice(0,count-sel.length));
   }
   if(sel.length<count){gaps.push(cat+' '+sel.length+'/'+count);console.warn('[gen] '+cat+': '+sel.length+'/'+count+' — pool esaurito');}
+  // GUARDIA D'ORDINE (04/09/2026): mai TRE esercizi di fila sullo stesso `primary`.
+  // Fino a oggi una regola d'ordine esisteva SOLO nel core (`noLast`, §5 del briefing).
+  // Fuori dal core gli esercizi uscivano nell'ordine di pesca — i `must` per primi, poi
+  // il pool mescolato — e nessuno guardava cosa finiva accanto a cosa. Ma i due tetti
+  // sopra contano QUANTI, non DOVE: due esercizi dello stesso muscolo di fila passano
+  // entrambi i tetti e il secondo raccoglie la fatica del primo. E le due passate di
+  // riempimento ignorano i tetti per disegno, quindi un terzo dello stesso muscolo puo'
+  // sempre rientrare da li'.
+  // Sposta il minimo: scorre in ordine e devia solo quando il prossimo creerebbe il
+  // terzo di fila, prendendo il primo candidato con `primary` diverso. Cosi' i `must`
+  // restano davanti e la seduta resta quella pescata — cambia solo l'accostamento.
+  // Se restano SOLO esercizi dello stesso muscolo, non c'e' ordine che salvi: si tiene
+  // l'ordine e si DICHIARA in `gaps`, come per uno slot scoperto. Meglio uno squilibrio
+  // dichiarato di uno silenzioso — e' la stessa regola gia' fissata per il riempimento.
+  // Nota: le righe del ramo casa non hanno `primary`, quindi a casa la guardia non
+  // morde. E' coerente col fatto che nemmeno `capMuscolo` le vede.
+  (function(){
+   var resto=sel.slice(),ord=[],forzato=false;
+   while(resto.length){
+    var i=0,n=ord.length;
+    if(n>=2&&ord[n-1].primary&&ord[n-1].primary===ord[n-2].primary){
+     var p=ord[n-1].primary,k=-1;
+     for(var j=0;j<resto.length;j++){if(resto[j].primary!==p){k=j;break;}}
+     if(k>=0)i=k;else forzato=true;
+    }
+    ord.push(resto.splice(i,1)[0]);
+   }
+   if(forzato){
+    var run=1,peggio=1;
+    for(var q=1;q<ord.length;q++){run=(ord[q].primary&&ord[q].primary===ord[q-1].primary)?run+1:1;if(run>peggio)peggio=run;}
+    gaps.push(cat+': '+peggio+' di fila sullo stesso muscolo');
+    console.warn('[gen] '+cat+': '+peggio+' esercizi di fila sullo stesso primary — pool senza alternative');
+   }
+   sel=ord;
+  })();
   sel.forEach(function(e){exercises.push(applyAdaptation(withCoachOverride(e)));used.push(e.id);});
  });
  // ─ CORE A ZONE (23/08/2026) ─────────────────────────────────────────────────
