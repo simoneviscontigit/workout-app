@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-09-04c · clip del Body Saw'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-07 · la panca piana apre la seduta'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -584,6 +584,24 @@ const PLAN=[
  {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:2,legs:1,shoulders:1},must:['l3'],desc:'Corpo completo · Mix intelligente'},
 ];
 
+// ─── PRIMA IN SEDUTA (07/09/2026) ──────────────────────────────────────
+// Esercizi che, quando escono, devono APRIRE la seduta. Non e' una selezione: non
+// aggiunge e non toglie niente dalla seduta pescata, decide solo l'ordine (la regola
+// vive in fondo al picker, dentro la GUARDIA D'ORDINE).
+// p4 Panca Piana Manubri: il 03/09 e' uscita TERZA su un giorno `push2` — dietro p6
+// Croci ai Cavi (il `must` di push2) e r5 Tricep Overhead — e ha chiuso 8/7/4/2; il
+// 29/08, da PRIMA e con lo STESSO peso, 12/12/12/8. Non e' un calo di forza, e' la
+// posizione: la panca e' il massimale della seduta e paga tutto cio' che petto e
+// tricipiti hanno gia' speso prima.
+// Perche' qui e non come `must` di push2: su push2 gli slot push sono 3 e i `must`
+// sono esenti dai due tetti — mettendo p4 accanto a p6 due slot su tre sarebbero
+// decisi in partenza e il giorno "petto adduzione + tricipiti + spalle" diventerebbe
+// in parte un panca-day. Cosi' invece p4 esce quando la pesca il pool, ma quando esce
+// apre, su QUALUNQUE split la peschi (push, push2, full) — e la stessa riga vale
+// domani per un altro esercizio.
+// A casa non si applica, come i `must` e i due tetti: il ramo casa ha altri id.
+const PRIMA_IN_SEDUTA=['p4'];
+
 // ─── MODALITÀ RECUPERO (post-intervento) ─────────────────────────────────────
 // Ripresa progressiva post-trapianto capelli (op 13/07/2026). Fasi per giorno-N:
 // g<10 attesa (no training) · g10-14 fase1 · g15-19 fase2 · g20-29 fase3 · g30+ off.
@@ -1007,8 +1025,15 @@ function genWorkout(splitIdx,opts){
   // dichiarato di uno silenzioso — e' la stessa regola gia' fissata per il riempimento.
   // Nota: le righe del ramo casa non hanno `primary`, quindi a casa la guardia non
   // morde. E' coerente col fatto che nemmeno `capMuscolo` le vede.
+  // PRIMA IN SEDUTA: i pinnati aprono, poi la guardia ordina il resto (vedi
+  // PRIMA_IN_SEDUTA sopra). L'ordine fra i pinnati e' quello della costante, non
+  // quello di pesca. Nota: `exercises` si riempie categoria per categoria nell'ordine
+  // di `split.cats`, e su tutti gli split che contengono p4 la categoria `push` e' la
+  // prima — quindi "primo della sua categoria" e' anche "primo della seduta".
   (function(){
-   var resto=sel.slice(),ord=[],forzato=false;
+   var pin=home?[]:PRIMA_IN_SEDUTA.map(function(id){return sel.find(function(e){return e.id===id;});}).filter(Boolean);
+   var resto=sel.filter(function(e){return !pin.find(function(p){return p.id===e.id;});});
+   var ord=pin.slice(),forzato=false;
    while(resto.length){
     var i=0,n=ord.length;
     if(n>=2&&ord[n-1].primary&&ord[n-1].primary===ord[n-2].primary){
