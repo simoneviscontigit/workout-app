@@ -1591,9 +1591,13 @@ function rAlerts(){
    +'<button class="btn" style="background:#f59e0b;color:#000;margin:8px 0 0;padding:8px;font-size:12px" onclick="syncToDrive()">Riprova ora</button></div>';
  if(S.nutDraft&&S.nutDraft.target){
   var dl=new Date(S.nutDraft.target.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'});
+  var _up=(S.nutDraft.uploads||[]).length;
   out+='<div style="border:2px solid #818cf8;background:#0d0d18;padding:12px 14px;margin-bottom:14px">'
-   +'<div class="lbl" style="color:#818cf8;font-size:11px;margin-bottom:4px">COMPILAZIONE INTERROTTA</div>'
-   +'<div style="color:#c7d2fe;font-size:12px;line-height:1.5;margin-bottom:8px">'+dl+' non e\' mai stata salvata. La bozza c\'e\' ancora.</div>'
+   +'<div class="lbl" style="color:#818cf8;font-size:11px;margin-bottom:4px">'+(_up?'PASTI IN SOSPESO':'COMPILAZIONE INTERROTTA')+'</div>'
+   +'<div style="color:#c7d2fe;font-size:12px;line-height:1.5;margin-bottom:8px">'+(_up
+    ?dl+' — '+_up+(_up>1?' pasti caricati, non ancora inviati':' pasto caricato, non ancora inviato')
+      +'. Riprendi quando vuoi: puoi aggiungerne altri prima di inviare.'
+    :dl+' non e\' mai stata salvata. La bozza c\'e\' ancora.')+'</div>'
    +'<div style="display:flex;gap:8px">'
    +'<button class="btn" style="background:#818cf8;color:#000;margin:0;flex:1;font-size:13px" onclick="resumeNutDraft()">Riprendi</button>'
    +'<button class="btn" style="background:#27272a;color:#a1a1aa;margin:0;flex:1;font-size:13px" onclick="discardNutDraft()">Scarta</button>'
@@ -2413,7 +2417,7 @@ function rNutPhotoScreen(){
    +'</div>';
  }).join('');
  return '<div class="pg">'
-  +'<div class="hdr"><button class="back" onclick="S.trialNutMode=false;S.nutPhotoUploads=[];clearNutDraft();go(\'home\')" style="margin:0">✕</button>'
+  +'<div class="hdr"><button class="back" onclick="exitNutrition()" style="margin:0">✕</button>'
   +'<span style="font-weight:800;font-size:16px">NUTRIZIONE</span></div>'
   +(S.trialNutMode?'<div style="background:#1c1c1e;border:1px solid #3f3f46;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#6b6b70;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SURVEY PROVA — non registrata</div>':'')
   +(S.nutQueue&&S.nutQueue.length>1
@@ -2471,7 +2475,7 @@ function rNut(){
    +'</div>'
   :(S.nutTarget?'<div style="background:#18181b;border-radius:12px;padding:8px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><div style="color:#a1a1aa;font-size:13px"><strong style="color:#d4d4d8">'+tLabel+'</strong></div><button onclick="skipNutDay()" style="border:none;background:transparent;color:#3f3f46;font-size:11px;cursor:pointer">Salta ×</button></div>':'');
  return '<div class="pg">'
-  +'<div class="hdr"><button class="back" onclick="S.trialNutMode=false;clearNutDraft();go(\'home\')" style="margin:0">✕</button><span style="font-weight:800;font-size:16px">NUTRIZIONE</span></div>'
+  +'<div class="hdr"><button class="back" onclick="exitNutrition()" style="margin:0">✕</button><span style="font-weight:800;font-size:16px">NUTRIZIONE</span></div>'
   +(S.trialNutMode?'<div style="background:#1c1c1e;border:1px solid #3f3f46;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#6b6b70;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SURVEY PROVA — non registrata</div>':'')
   +queueBanner
   +'<div style="display:flex;gap:4px;margin-bottom:18px">'+bars+'</div>'
@@ -3265,7 +3269,8 @@ async function skipNutDay(){
 // Ora ogni render della nutrizione lascia una bozza su disco e la home la offre indietro.
 // Le foto NON ci stanno (solo le stime, che sono testo): la bozza deve restare piccola.
 var NUT_DRAFT_KEY='nutDraft';
-var NUT_DRAFT_MAX_H=36; // oltre, la bozza e' archeologia: meglio ricompilare da zero
+var NUT_DRAFT_MAX_H=36;        // bozza di sole risposte: oltre e' archeologia, meglio rifarla
+var NUT_DRAFT_MAX_H_FOTO=24*7; // bozza con stime dentro: scadere vuol dire perdere pasti veri
 function saveNutDraft(){
  try{
   if(S.trialNutMode||!S.nutTarget){return;}
@@ -3284,7 +3289,8 @@ function loadNutDraft(){
   var d=JSON.parse(v);
   if(!d||!d.target||!d.target.date)return null;
   var t=Date.parse(d.at);
-  if(!isFinite(t)||(Date.now()-t)>NUT_DRAFT_MAX_H*3600000){localStorage.removeItem(NUT_DRAFT_KEY);return null;}
+  var maxH=(d.uploads&&d.uploads.length)?NUT_DRAFT_MAX_H_FOTO:NUT_DRAFT_MAX_H;
+  if(!isFinite(t)||(Date.now()-t)>maxH*3600000){localStorage.removeItem(NUT_DRAFT_KEY);return null;}
   return d;
  }catch(e){return null;}
 }
@@ -3296,9 +3302,32 @@ function resumeNutDraft(){
  S.nutDraft=null;
  go('nutrition',{qStep:(typeof d.qStep==='number'?d.qStep:-1),qAns:d.qAns||{}});
 }
-function discardNutDraft(){clearNutDraft();render();}
+// USCIRE NON E' BUTTARE (08/09/2026). I due ✕ della survey facevano
+// `S.nutPhotoUploads=[];clearNutDraft()`: bastava uscire un attimo e le stime gia' pagate
+// sparivano — una chiamata Opus e, soprattutto, una foto del pranzo che non esiste piu'.
+// Per non perderle si era costretti a chiudere la survey nello stesso momento in cui si
+// caricava il pasto. Ora l'uscita SALVA: il pasto resta in bozza, la home la offre
+// indietro, e si invia quando si vuole — anche dopo averne caricato un altro domani.
+function exitNutrition(){
+ if(S.trialNutMode){S.trialNutMode=false;S.nutPhotoUploads=[];clearNutDraft();go('home');return;}
+ saveNutDraft();            // `go('home')` renderizza la home: qui e' l'ultima occasione di scrivere
+ S.nutDraft=loadNutDraft(); // senza, il banner "Riprendi" comparirebbe solo al riavvio dell'app
+ go('home');
+}
+function discardNutDraft(){
+ // Un tap qui su una bozza che contiene stime butta lavoro non rifacibile (la foto del
+ // pasto non c'e' piu'): si chiede. Su una bozza di sole risposte resta un tap solo.
+ var up=((S.nutDraft&&S.nutDraft.uploads)||[]).length;
+ if(up&&!confirm('Nella bozza ci sono '+up+(up>1?' pasti gia\' stimati':' pasto gia\' stimato')
+  +' non ancora inviati.\n\nScartare vuol dire perderli.'))return;
+ clearNutDraft();render();
+}
 function openNutrition(){
- clearNutDraft(); // si riparte da capo: la bozza vecchia non deve sopravvivere alla nuova coda
+ // Se c'e' una bozza viva la si RIPRENDE. Prima qui c'era `clearNutDraft()`: bastava
+ // ritoccare NUTRIZIONE dalla home invece del bottone "Riprendi" per cancellare in
+ // silenzio i pasti parcheggiati. Per ripartire da zero c'e' "Scarta" nel banner.
+ var _d=S.nutDraft||loadNutDraft();
+ if(_d){S.nutDraft=_d;resumeNutDraft();return;}
  var missing=getMissingNutritionDays();
  var queue=missing.map(function(d){return{date:d};});
  S.nutQueue=queue;
@@ -3549,6 +3578,16 @@ function rHist(){
 // come punto di partenza (nessuno vuole riscrivere da zero per correggere un campo).
 function openNutritionDay(date){
  S.trialNutMode=false;
+ // La bozza viva va difesa QUI. Il primo render della nutrizione chiama `saveNutDraft`,
+ // che riscrive la bozza con questo giorno e zero foto: senza guardia, aprire un giorno
+ // dallo storico cancellerebbe in silenzio i pasti parcheggiati per un altro giorno.
+ var _d=S.nutDraft||loadNutDraft();
+ if(_d&&_d.target&&_d.target.date===date){S.nutDraft=_d;resumeNutDraft();return;}
+ var _up=(_d&&_d.uploads||[]).length;
+ if(_up&&!confirm('Hai '+_up+(_up>1?' pasti caricati e non ancora inviati':' pasto caricato e non ancora inviato')
+  +' per il '+new Date(_d.target.date+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'})
+  +'.\n\nAprire un altro giorno li perde.\n\nOK = apri comunque \u00b7 Annulla = torna a quelli'))return;
+ clearNutDraft();
  S.nutQueue=[];S.nutQueueIdx=0;S.nutPhotoUploads=[];S.nutQty={};
  S.nutTarget={date:date};
  var prev=(S.aiDB.nutritionLog||{})[date];
