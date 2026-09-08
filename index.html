@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-09-07 · la panca piana apre la seduta'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-09 · stima pasti ritarata'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -2429,6 +2429,7 @@ function rNutPhotoScreen(){
   +'<div style="font-size:22px;font-weight:900;margin-bottom:6px;line-height:1.2">Cosa hai mangiato?</div>'
   +'<div style="color:#71717a;font-size:13px;margin-bottom:20px">Carica le foto dei tuoi pasti oppure compila manualmente.</div>'
   +uploadsHtml
+  +dayPlausibilityHtml(targetDate,uploads.filter(function(u){return u.status==='done';}).map(function(u){return u.estimate;}))
   +'<label style="display:block;background:#18181b;border:2px dashed '+(uploads.length?'#27272a':'#3f3f46')+';border-radius:14px;padding:'+(uploads.length?'14px':'24px')+';text-align:center;cursor:pointer;margin-bottom:12px">'
   +(uploads.length?'<div style="color:#71717a;font-size:12px">+ Aggiungi altre foto</div>':'<div style="font-size:36px;margin-bottom:8px"></div><div style="color:#a1a1aa;font-size:14px;font-weight:600">Carica foto pasti</div><div style="color:#52525b;font-size:12px;margin-top:4px">Multipli, dalla galleria</div>')
   +'<input type="file" accept="image/*" multiple style="display:none" onchange="handleNutPhotos(event)">'
@@ -2875,6 +2876,40 @@ function mealWords(s){
  for(var i=0;i<w.length;i++)if(w[i].length>3&&MEAL_SIM_STOP.indexOf(w[i])<0)out[w[i]]=1;
  return Object.keys(out);
 }
+// FIRMA-GRAMMATURE (09/09/2026) — la chiave giusta per riconoscere un reinvio.
+// Il confronto sul TESTO non poteva reggere: una ri-stima della stessa foto produce per
+// costruzione una descrizione diversa, ed e' il modello a scriverla. Il doppione del 07/09 stava
+// a Jaccard 0,27 — sotto MEAL_SIM_THRESHOLD, quindi passava — mentre i suoi componenti erano
+// identici al grammo (200/150/100 g). I grammi li assume lo stimatore guardando la stessa
+// immagine: e' la parte della stima che si RIPETE, mentre le parole no.
+// Dal 08/09 la bozza con le stime dentro vive 7 giorni (NUT_DRAFT_MAX_H_FOTO), e ri-stimare un
+// upload rimasto in bozza e' esattamente il gesto che produce questo doppione: per questo la
+// firma si confronta su TUTTO il giorno e non dentro MEAL_DUP_WINDOW_MS — a distanza di ore o
+// di giorni resta lo stesso pasto contato due volte.
+// Overlap = intersezione dei multiset (i doppioni si ripetono, non si sommano) diviso il piu'
+// lungo dei due. Soglia 0,75 e minimo 2 componenti: sotto, una firma tipo [150] combacerebbe con
+// mezzo storico. Verificata sui 72 giorni di blob: prende la coppia del 07/09 (overlap 1,00) e
+// nient'altro, zero falsi positivi.
+var MEAL_GRAM_OVERLAP=0.75;
+function mealGramSig(m){
+ var c=m&&m.componenti;
+ if(!Array.isArray(c))return null;
+ var g=[],x;
+ for(var i=0;i<c.length;i++){
+  x=c[i]&&+c[i].grammi;
+  if(isFinite(x)&&x>0)g.push(Math.round(x));
+ }
+ return g.length>=2?g.sort(function(a,b){return a-b;}):null;
+}
+function gramOverlap(a,b){
+ if(!a||!b)return 0;
+ var rest=b.slice(),inter=0,k;
+ for(var i=0;i<a.length;i++){
+  k=rest.indexOf(a[i]);
+  if(k>=0){rest.splice(k,1);inter++;}
+ }
+ return inter/Math.max(a.length,b.length);
+}
 function mealSimilarity(a,b){
  var A=mealWords(a),B=mealWords(b);
  if(!A.length||!B.length)return 0;
@@ -2894,9 +2929,19 @@ function pushMeal(date,estimate){
  // il giorno è finito a 3883 kcal invece di ~1980 e il verdetto della settimana si è
  // ribaltato da "deficit" a "mantenimento". Ora il confronto è semantico: se il piatto
  // somiglia a uno già registrato di recente, NON si salva in silenzio — si CHIEDE.
- var simile=null;
+ // 09/09/2026 — due reti, con due portate diverse:
+ //   (1) la FIRMA-GRAMMATURE, su tutto il giorno: e' la parte della stima che si ripete davvero,
+ //       quindi non le serve una finestra temporale (e non deve averla: la bozza foto vive 7
+ //       giorni e il reinvio arriva molto dopo i 15 minuti);
+ //   (2) la somiglianza del TESTO dentro MEAL_DUP_WINDOW_MS, che resta come rete di riserva per i
+ //       pasti senza `componenti` — le stime vecchie non ce l'hanno, e quelle da testo con la
+ //       descrizione vaga nemmeno.
+ var simile=null,perFirma=false;
+ var sigNew=mealGramSig(estimate);
  S.aiDB.mealLog[date].forEach(function(m){
-  if(!m||!desc||simile)return;
+  if(!m||simile)return;
+  if(sigNew&&gramOverlap(sigNew,mealGramSig(m))>=MEAL_GRAM_OVERLAP){simile=m;perFirma=true;return;}
+  if(!desc)return;
   var t=Date.parse(m.loggedAt);
   if(!isFinite(t)||(now-t)>=MEAL_DUP_WINDOW_MS)return;
   if(m.foodDescription===desc||mealSimilarity(m.foodDescription,desc)>=MEAL_SIM_THRESHOLD)simile=m;
@@ -2905,10 +2950,17 @@ function pushMeal(date,estimate){
  // preventivo, non c'è niente da chiedere). Doppione SOMIGLIANTE: la domanda è d'obbligo,
  // perché due piatti uguali davvero esistono — Simone cucina la stessa cosa a pranzo e a
  // cena. Scartarlo da solo perderebbe un pasto vero, tenerlo raddoppia la giornata.
- var dup=simile&&simile.foodDescription===desc;
+ // Il doppio tap sullo stesso preventivo (testo IDENTICO a pochi minuti) resta scartato muto:
+ // non c'e' niente da chiedere. Fuori dalla finestra invece si chiede comunque, perche' due
+ // descrizioni identiche a ore di distanza possono essere due piatti veri.
+ var dup=simile&&desc&&simile.foodDescription===desc
+  &&(now-Date.parse(simile.loggedAt))<MEAL_DUP_WINDOW_MS;
  if(!dup&&simile){
   var quando=new Date(simile.loggedAt).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-  if(!confirm('Alle '+quando+' hai già registrato un pasto molto simile:\n\n"'
+  var indizio=perFirma
+   ?'le stesse identiche grammature ('+mealGramSig(simile).join('/')+' g)'
+   :'una descrizione molto simile';
+  if(!confirm('Alle '+quando+' hai già registrato un pasto con '+indizio+':\n\n"'
    +(simile.foodDescription||'').slice(0,140)+'"\n\nÈ un SECONDO piatto?\n\n'
    +'OK = sì, aggiungilo · Annulla = era lo stesso, non registrarlo'))return false;
  }
@@ -2941,6 +2993,24 @@ function macrosToScoreLevel(macros){
 //       significano ~1,2 kg di carne.
 // Il prompt ora impone di SCOMPORRE prima e sommare dopo: i componenti diventano l'evidenza
 // su cui reconcileMealKcal puo' fare il controllo (prima non c'era niente da controllare).
+//
+// RITARATE il 09/09/2026, dopo la prima misura falsificabile: le regole di agosto avevano
+// superato il bersaglio. Erano state spinte in alto per chiudere la SOTTOSTIMA (i grassi di
+// cottura invisibili) e hanno prodotto l'errore opposto: media per pasto 582 -> 633 -> 764 kcal
+// (22/06-10/08 · 11-30/08 · 31/08-07/09), +31% in due mesi senza che il cibo cambiasse. Il
+// foglio dava +8210 kcal di surplus fra il 31/08 e il 07/09 (= +1,7 kg previsti) mentre la
+// bilancia il 09/09 diceva 72,5 kg, cioe' -0,3 kg dal 30/08: modello fuori di ~1000 kcal/gg.
+// L'errore NON era nella voce "grassi di cottura invisibili" (181 kcal/gg contro 164): era il
+// PASTO INTERO, cioe' le grammature assunte al passo 1.
+// Tre cose sono state tolte, tutte inerzie al rialzo, nessuna inversione:
+//   (a) la fascia "un pasto sta di norma su 600-1000 kcal" faceva da pavimento a 600 anche per
+//       una colazione o un piatto leggero — ora la fascia parte da dove parte davvero;
+//   (b) i grassi di cottura erano tarati sul ristorante (15-30 g per un saltato) e applicati a
+//       tutto, mentre Simone cucina a casa quasi sempre;
+//   (c) "porzioni abbondanti, non ridurre alla porzione standard" era una spinta a senso unico
+//       senza il suo contrappeso.
+// L'obiettivo e' una stima CENTRATA, non bassa: il difetto del 03/08 (5363 kcal / 256 g di
+// proteine) non va riaperto, e i tetti di plausibilita' restano tutti al loro posto.
 var MEAL_RULES=
  "Sei un nutrizionista che stima un pasto REALE gia' mangiato, non una porzione da manuale.\n"+
  "Lavori in tre passi: SCOMPONI, poi assegna i macro, poi somma e verifica. Non partire dal totale.\n"+
@@ -2949,9 +3019,11 @@ var MEAL_RULES=
  "I grassi INVISIBILI (olio di cottura, frittura, burro, ghee, panna, salse, maionese, dressing, "+
  "mantecature) si mettono SOLO se il metodo di cottura li implica. La cottura la deduci dalla foto "+
  "o dal testo, mai per abitudine:\n"+
- "- fritto, saltato in padella, mantecato, gratinato, salsato o condito: SI'. Un saltato o un "+
- "fritto porta 15-30 g di olio che nella foto non si vedono; un curry o un piatto mantecato "+
- "spesso 20-40 g.\n"+
+ "- fritto, saltato in padella, mantecato, gratinato, salsato o condito: SI', ma QUANTO dipende "+
+ "da chi ha cucinato. A CASA: un saltato porta 5-15 g di olio, un piatto mantecato o salsato "+
+ "10-20 g. AL RISTORANTE o da takeaway: le stesse cotture 15-30 g, un curry o un fritto anche "+
+ "20-40 g. Se dalla foto o dal testo non capisci dove e' stato cucinato, e' CASA: Simone mangia "+
+ "fuori di rado.\n"+
  "- bollito, in camicia, al vapore, alla griglia o al forno senza condimento visibile, crudo: "+
  "ZERO grassi aggiunti. Metti solo il grasso PROPRIO dell'alimento (il tuorlo di un uovo, il "+
  "grasso della carne, la polpa dell'avocado): quello c'e' comunque.\n"+
@@ -2974,15 +3046,24 @@ var MEAL_RULES=
  "- i grassi di un pasto stanno di norma sotto 60 g. Oltre 80 g in un solo pasto e' quasi sempre "+
  "una grammatura di olio, formaggio o frutta secca sbagliata: torna al passo 1 e correggila. I "+
  "grassi moltiplicano per 9, quindi un errore li' costa il doppio dello stesso errore sui carbo.\n"+
- "- un pasto sta di norma su 600-1000 kcal (la fascia alta e' quella dei piatti da ristorante "+
- "asiatici o mediorientali: pad thai, fried rice, curry, kao soi, mezze, shawarma). Sopra 1200 kcal "+
- "solo se e' davvero abbondante o sono piu' piatti insieme; sopra 1800 kcal quasi mai.\n"+
- "\nPorzioni: stima COME SERVITA — piatto pieno, ristorante e takeaway hanno porzioni abbondanti, "+
- "non ridurre alla porzione standard consigliata. Se il pasto contiene piu' piatti o un dolce, "+
- "sommali tutti. **Simone finisce sempre il piatto**: conta tutto quello che vedi come mangiato, "+
- "non ipotizzare avanzi ne' porzioni lasciate a meta' (confermato da lui il 04/08).\n"+
- "Punta alla stima CENTRALE realistica, non all'estremo: le regole sui grassi invisibili e sulle "+
- "porzioni correggono gia' la sottostima, non vanno sommate a un ulteriore margine di sicurezza.\n"+
+ "- un pasto di casa sta di norma su 400-800 kcal; una colazione o un pasto leggero su 250-450. "+
+ "La fascia 800-1200 e' quella dei piatti da ristorante asiatici o mediorientali (pad thai, fried "+
+ "rice, curry, kao soi, mezze, shawarma) o di piu' piatti messi insieme. Sopra 1200 kcal solo se "+
+ "e' davvero abbondante; sopra 1800 kcal quasi mai. Se finisci sopra la fascia senza che il pasto "+
+ "abbia qualcosa di eccezionale, hai gonfiato una grammatura: torna al passo 1 e correggila.\n"+
+ "\nPorzioni: stima COME SERVITA, non la porzione da manuale. Ristorante e takeaway hanno porzioni "+
+ "abbondanti; a casa la porzione e' NORMALE — e a casa Simone mangia quasi sempre. Se il pasto "+
+ "contiene piu' piatti o un dolce, sommali tutti. **Simone finisce sempre il piatto**: conta tutto "+
+ "quello che vedi come mangiato, non ipotizzare avanzi ne' porzioni lasciate a meta' (confermato "+
+ "da lui il 04/08).\n"+
+ "Punta alla stima CENTRALE realistica, non all'estremo. Queste regole SONO gia' la correzione "+
+ "della sottostima: non sommarci sopra un tuo margine di sicurezza. Se esiti fra due grammature "+
+ "plausibili prendi quella di mezzo, mai la piu' alta, e mai il piatto piu' grande compatibile "+
+ "con la foto.\n"+
+ "Taratura misurata (09/09/2026): fra il 31/08 e il 07/09 queste stime hanno sovrastimato del "+
+ "25-30%, verificato sul peso reale e non a intuito, e l'errore stava nelle GRAMMATURE del pasto "+
+ "intero, non nei grassi di cottura. Non compensare con un ribasso a occhio sul totale: assumi "+
+ "grammature normali al passo 1 e i totali tornano da soli.\n"+
  "\nconfidence: \"alta\" solo se riconosci tutti i componenti e le grammature sono leggibili dalla "+
  "foto o dichiarate nel testo; \"bassa\" se stai indovinando la ricetta o i condimenti. Non mettere "+
  "\"alta\" per abitudine: e' il segnale con cui Simone decide se fidarsi.\n";
@@ -3033,6 +3114,46 @@ function reconcileMealKcal(est){
  if(n(est.calories)>MEAL_MAX_KCAL)warn.push(Math.round(n(est.calories))+' kcal in un solo pasto');
  if(warn.length){est.implausibile=warn.join(' · ');est.confidence='bassa';}
  return est;
+}
+// Tetti di plausibilita' per una GIORNATA INTERA (09/09/2026). Quelli per-pasto qui sopra non
+// bastano, ed e' il 06/09 a dimostrarlo: nessuno dei 5 pasti era fuori scala da solo, il giorno
+// chiuso a 4739 kcal / 213 g di proteine / 235 g di grassi si'. Una taratura sbagliata non
+// produce un pasto assurdo — produce cinque pasti ognuno un po' troppo grande, e per costruzione
+// nessun controllo per-pasto lo puo' vedere. Il totale del giorno e' l'unico posto dove la somma
+// degli errori piccoli diventa visibile.
+// I numeri, non a occhio: BMR Mifflin a 72,5 kg = 1696, mantenimento stimato 1,5-1,7 x BMR =
+// 2500-2900 kcal. Un giorno oltre 3400 kcal e' o un'abbuffata vera o una stima gonfiata; 220 g
+// di proteine sono 3 g/kg e 180 g di grassi sono 1620 kcal di soli grassi. Misurato sui 72
+// giorni di storico: marca 3 giorni su 72 — 14/08 (4137 kcal · 248 g prot · 208 g grassi),
+// 01/09 (3872 · 225 · 184) e 06/09 (4739 kcal), cioe' esattamente i tre indifendibili. Alzare
+// ancora i tetti li perderebbe, abbassarli comincerebbe a marcare giornate vere: un allarme
+// che scatta spesso e' un allarme che Simone smette di leggere.
+// Stessa invariante dei tetti per-pasto: SI MARCA, NON SI CLAMPA — un numero corretto in
+// silenzio sembra buono e non lo e'. E si marca PRIMA del salvataggio, quando c'e' ancora modo
+// di rivedere una grammatura; il 06/09 il conto e' arrivato a cose fatte.
+var DAY_MAX_KCAL=3400,DAY_MAX_PROT=220,DAY_MAX_FAT=180;
+// `pending` = le stime gia' calcolate ma non ancora nel mealLog (la schermata foto ne ha una, la
+// survey nutrizione un batch intero). Vanno contate: avvisare dopo il salvataggio sarebbe
+// esattamente il ritardo che si sta cercando di togliere.
+function dayPlausibility(date,pending){
+ var t=calcDailyMacrosFromPhotos(date)||{protein_g:0,carbs_g:0,fats_g:0,calories:0};
+ var p=t.protein_g||0,f=t.fats_g||0,k=t.calories||0;
+ (pending||[]).forEach(function(e){
+  if(!e)return;
+  p+=+e.protein_g||0;f+=+e.fats_g||0;k+=+e.calories||0;
+ });
+ var warn=[];
+ if(k>DAY_MAX_KCAL)warn.push(Math.round(k)+' kcal');
+ if(p>DAY_MAX_PROT)warn.push(Math.round(p)+' g di proteine');
+ if(f>DAY_MAX_FAT)warn.push(Math.round(f)+' g di grassi');
+ return warn.length?warn.join(' · ')+' in un giorno solo':'';
+}
+function dayPlausibilityHtml(date,pending){
+ var w=dayPlausibility(date,pending);
+ if(!w)return '';
+ return '<div style="background:#1a0e0e;border:1px solid #f8717140;border-radius:10px;padding:9px 12px;margin-bottom:12px;color:#f87171;font-size:11px;line-height:1.45">'
+  +'⚠︎ <b>Giornata fuori scala</b>: '+w+'. Nessun pasto lo e\' da solo — se il conto non ti torna '
+  +'sono le grammature, guardale prima di salvare.</div>';
 }
 async function estimateMealFromText(description){
  // Le regole vanno in `system` (04/08): e' la loro casa naturale — persona + vincoli fissi — e il
@@ -3185,6 +3306,7 @@ function rMealPhoto(){
   +'<div class="lbl" style="margin-bottom:5px">Data del pasto</div>'
   +'<input type="date" id="meal-date" value="'+ps.date+'" max="'+today+'" onchange="S.mealPhotoState.date=this.value;S.mealPhotoState.estimate=null;render()" style="width:100%;background:#18181b;border:1px solid #27272a;border-radius:10px;padding:10px;color:#fafafa;font-size:14px">'
   +'</div>'
+  +dayPlausibilityHtml(ps.date,ps.estimate?[ps.estimate]:null)
   +existingHtml
   +(ps.estimate?estimateHtml:'')
   +(!ps.estimate?'<div style="margin-bottom:14px">'
