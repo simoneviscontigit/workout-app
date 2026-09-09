@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-09-09 · stima pasti ritarata'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-09b · storico ricalcolato'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -3011,6 +3011,17 @@ function macrosToScoreLevel(macros){
 //       senza il suo contrappeso.
 // L'obiettivo e' una stima CENTRATA, non bassa: il difetto del 03/08 (5363 kcal / 256 g di
 // proteine) non va riaperto, e i tetti di plausibilita' restano tutti al loro posto.
+// Qui stava il paragrafo "Taratura misurata (09/09/2026)", tolto il 09/09 stesso. Diceva al
+// modello che le stime avevano sovrastimato del 25-30% e subito dopo di non compensare con un
+// ribasso a occhio: gli chiedeva di sapere un numero e di non usarlo. Il modello lo usava. La
+// prova: ri-stimando lo storico CON quel paragrafo il taglio veniva -22% identico su ogni fascia
+// di taglia, dalla colazione da 80 g al curry da 700 - uno sconto a tabellino, non una
+// ri-valutazione. Senza, il taglio cresce con la taglia del pasto (-3% a 80-250 g, -13% sopra i
+// 600) e il totale non cambia (-8,6% contro -8,9%): non comprava accuratezza, solo il rischio.
+// La correzione VERA della sovrastima sta gia' nel PASSO 1 (fascia pasto di casa 400-800, grassi
+// di cottura sdoppiati casa/ristorante) e nella riga qui sopra che vieta il margine di sicurezza.
+// Non riaggiungerlo: una taratura con dentro una data e una percentuale invecchia in silenzio, e
+// lo storico e' stato ricalcolato con QUESTE regole - rimetterlo darebbe due righelli sul grafico.
 var MEAL_RULES=
  "Sei un nutrizionista che stima un pasto REALE gia' mangiato, non una porzione da manuale.\n"+
  "Lavori in tre passi: SCOMPONI, poi assegna i macro, poi somma e verifica. Non partire dal totale.\n"+
@@ -3060,10 +3071,6 @@ var MEAL_RULES=
  "della sottostima: non sommarci sopra un tuo margine di sicurezza. Se esiti fra due grammature "+
  "plausibili prendi quella di mezzo, mai la piu' alta, e mai il piatto piu' grande compatibile "+
  "con la foto.\n"+
- "Taratura misurata (09/09/2026): fra il 31/08 e il 07/09 queste stime hanno sovrastimato del "+
- "25-30%, verificato sul peso reale e non a intuito, e l'errore stava nelle GRAMMATURE del pasto "+
- "intero, non nei grassi di cottura. Non compensare con un ribasso a occhio sul totale: assumi "+
- "grammature normali al passo 1 e i totali tornano da soli.\n"+
  "\nconfidence: \"alta\" solo se riconosci tutti i componenti e le grammature sono leggibili dalla "+
  "foto o dichiarate nel testo; \"bassa\" se stai indovinando la ricetta o i condimenti. Non mettere "+
  "\"alta\" per abitudine: e' il segnale con cui Simone decide se fidarsi.\n";
