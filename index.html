@@ -310,13 +310,26 @@ const DB={
    muscles:'Obliqui, Core',primary:'core laterale',attrezzo:'dischi',band:'5kg',restSec:60,stima:true},
   {id:'c37',cat:'core',zona:'F',name:'Pallof Press al Cavo',video:'core-pallof-press-cavo.mp4',
    desc:'Di fianco al cavo all\'altezza del petto, mani unite sullo sterno, piedi larghi. Spingi le braccia AVANTI e tieni due secondi: il cavo cerca di ruotarti e tu non ti giri. Il lavoro e\' quello che NON succede. Torna al petto controllato. Reps PER LATO.',
-   muscles:'Core anti-rotazione, Obliqui',primary:'anti-rotazione',attrezzo:'cavo',reps:10,repsMax:15,sets:3,band:'15kg',restSec:45,stima:true},
+   // 4 serie, non 3 (09/09/2026, richiesta di Simone del 26/08 rimasta aperta tre giri del
+   // coach): le reps sono PER LATO e con un numero dispari di serie un fianco ne prende una
+   // in piu' dell'altro. Su un anti-rotazione l'asimmetria e' esattamente cio' che non deve
+   // esserci. Il numero di serie non e' un campo che il coach possa scrivere — `changes`
+   // tocca band/reps/repsMax/time — quindi restava fermo qui finche' non lo cambiava un umano.
+   muscles:'Core anti-rotazione, Obliqui',primary:'anti-rotazione',attrezzo:'cavo',reps:10,repsMax:15,sets:4,band:'15kg',restSec:45,stima:true},
   {id:'c38',cat:'core',zona:'F',name:'Bird Dog',video:'core-bird-dog.mp4',
    desc:'A quattro zampe, schiena neutra. Estendi braccio destro e gamba sinistra fino alla linea del corpo, due secondi fermo, poi cambia. Il bacino NON si inclina: immagina un bicchiere pieno sulla lombare. Lento — se dondoli stai usando lo slancio. Una rep = un lato.',
    muscles:'Erettori spinali, Core anti-rotazione',primary:'anti-rotazione',reps:12,repsMax:20,sets:3,restSec:45},
   {id:'c39',cat:'core',zona:'F',name:'Superman a terra',video:'core-superman-a-terra.mp4',
-   desc:'A pancia in giu\', braccia avanti. Solleva insieme petto, braccia e gambe di pochi centimetri contraendo la bassa schiena e i glutei, due secondi in alto, giu\' lento. Collo neutro: guarda il pavimento, non avanti. Poche reps fatte bene battono venti a strappi. A TERRA, non su panca 45\u00b0.',
-   muscles:'Erettori spinali, Catena posteriore',primary:'erettori',reps:12,repsMax:20,sets:3,restSec:45},
+   // CARICATO dal 09/09/2026. Il 06/09 Simone ha chiuso 24/24/24 e il passo successivo
+   // toccava il tetto 25 delle reps a corpo libero: oltre, allungare la serie smette di
+   // essere progressione e diventa resistenza. La tenuta di due secondi era gia' prescritta
+   // qui sotto, quindi "aggiungerla" non sarebbe stato un carico nuovo \u2014 la leva vera e' un
+   // disco nelle mani. Con una `band` l'esercizio esce da `a_corpo_libero` (coach_llm:985,
+   // che lo decide sui fatti) e torna a progredire in kg: passo 2,5 (`dischi` non e' in
+   // STEP_ATTREZZO e cade sul default), quindi 2,5 -> 5 -> 7,5. Le reps rientrano a 12-20,
+   // il range di partenza: col disco le stesse 24 non ci sono piu'.
+   desc:'A pancia in giu\', braccia avanti, un disco leggero tenuto FRA LE MANI. Solleva insieme petto, braccia e gambe di pochi centimetri contraendo la bassa schiena e i glutei, due secondi in alto, giu\' lento. Collo neutro: guarda il pavimento, non avanti. Poche reps fatte bene battono venti a strappi. A TERRA, non su panca 45\u00b0. Se il disco ti fa perdere la tenuta in alto, e\' troppo: si scala, non si strappa.',
+   muscles:'Erettori spinali, Catena posteriore',primary:'erettori',attrezzo:'dischi',reps:12,repsMax:20,sets:3,band:'2.5kg',restSec:45,stima:true},
  ],
  // ─ Finisher cardio: un blocco corto a fine seduta, ruota per giorno (09/08/2026).
  //   Volutamente breve (3×30s): con recupero percepito basso il cardio serve come spesa,
@@ -935,6 +948,12 @@ function dropSkipState(){
  try{if(localStorage.getItem('sk')!==null){localStorage.removeItem('sk');d=true;}}catch(e){}
  if(d){console.log('[skip] stato skip rimosso: gli esercizi sono tutti nel pool');sv('ai',S.aiDB);}
 }
+// Serie del core a tempo: 2 giri, non 1. Con 4 esercizi invece di 9 il volume andrebbe
+// sotto, e l'intensita' da sola non basta a compensare un dimezzamento del lavoro.
+// I caricabili tengono le serie della loro riga (3): la progressione ha bisogno di almeno
+// tre serie confrontabili per dire qualcosa. Vive qui fuori dal 09/09/2026 perche' i
+// lettori sono due — la costruzione della seduta e `skipExercise`.
+var CORE_SETS_TEMPO=2;
 // opts.home = seduta A CASA: stesso split, stessi slot, pool a corpo libero (HOME_DB).
 // Core e finisher cardio non cambiano — sono già senza attrezzi in entrambi i rami.
 function genWorkout(splitIdx,opts){
@@ -1106,7 +1125,8 @@ function genWorkout(splitIdx,opts){
  // ECCEZIONE unilaterali (23/08/2026): un `perSide` produce GIA' due blocchi, uno per
  // lato. Con 2 giri diventano quattro, e un side plank da 60s per lato mangia quattro
  // minuti da solo. I due lati SONO il volume: un giro basta.
- var CORE_SETS_TEMPO=2;
+ // (la costante e' globale dal 09/09/2026: la usa anche `skipExercise`, che prima
+ // schiacciava a 1 giro qualunque core entrasse da "Cambia")
  // espansione: gli unilaterali a tempo diventano DUE blocchi, cosi' il secondo lato non
  // dipende dal fatto che l'atleta se lo ricordi. I caricabili per lato non si sdoppiano:
  // lo dice la loro `desc` ("reps PER LATO"), perche' sdoppiare un esercizio a reps
@@ -2222,15 +2242,37 @@ function skipExercise(){
  if(!rot){
   // Candidati: stessa categoria, non già in seduta in un altro slot, ammessi dal recupero.
   var inSession=S.wEx.filter(function(x,i){return i!==slot;});
-  var shape={isCore:ex.isCore,isTime:ex.isTime,isCardio:ex.isCardio,isExtra:ex.isExtra,perSide:ex.perSide};
+  // `isTime` e `perSide` NON stanno qui dentro (fix 09/09/2026). Erano proprieta' dello
+  // SLOT imposte all'esercizio nuovo, e la forma di un esercizio e' dell'esercizio: il
+  // 06/09 uno slot core a reps ha ruotato su `c17` Side Plank, che ha ereditato
+  // `isTime:false` ed e' andato in scheda come esercizio a ripetizioni — schermata con
+  // SET COMPLETATO al posto del countdown, richiesta reps al posto dell'hold, e nel
+  // foglio una riga `tipo=reps` con 8 ripetizioni su un esercizio a tempo (il coach l'ha
+  // vista e ha dovuto chiedere). Vale anche al contrario: un core a reps caduto in uno
+  // slot a tempo diventerebbe un hold, senza nessun posto dove scrivere le reps fatte.
+  // Restano dallo slot isCore/isCardio/isExtra: dicono in quale BLOCCO sta la riga, e il
+  // blocco non cambia perche' cambi l'esercizio dentro.
+  var shape={isCore:ex.isCore,isCardio:ex.isCardio,isExtra:ex.isExtra};
   // stessa sorgente della seduta: in casa le alternative sono a corpo libero, non della palestra
   var cands=((S.homeMode&&HOME_DB[ex.cat])||DB[ex.cat]||[]).filter(function(e){
    return e.id!==ex.id&&!inSession.find(function(x){return x.id===e.id;})&&recoveryAllows(e);
   }).map(function(e){
-   // stessa forma dello slot (core/tempo/cardio): altrimenti un core diventa un reps-based
-   var n=Object.assign({},applyAdaptation(withCoachOverride(e)),shape);
-   if(ex.isTime)n.time=ex.time||n.time;
-   if(ex.isCore)n.sets=1;
+   // la forma la detta l'esercizio NUOVO, con la stessa regola della costruzione della
+   // seduta: a tempo e' chi ha `time` e non ha `reps`.
+   var isT=!!e.time&&!e.reps;
+   var n=Object.assign({},applyAdaptation(withCoachOverride(e)),shape,
+                       {isTime:isT,perSide:!!e.perSide});
+   // i secondi del giro li tiene lo slot solo se ANCHE lui era a tempo: servono a non
+   // sfasare la durata del circuito. Se lo slot era a reps non c'e' niente da ereditare.
+   if(isT&&ex.isTime)n.time=ex.time||n.time;
+   // serie: stessa regola del blocco core. Un unilaterale a tempo che entra qui NON si
+   // sdoppia in due blocchi (l'espansione L1/L2 avviene alla costruzione, non a seduta
+   // in corso), quindi i due lati devono stare nei due giri — e la desc lo dice, perche'
+   // altrimenti il secondo lato dipende dal fatto che uno se lo ricordi.
+   if(ex.isCore){
+    n.sets=isT?(e.perSide?2:CORE_SETS_TEMPO):(e.sets||3);
+    if(isT&&e.perSide)n.desc='UN LATO PER GIRO (cambia lato al secondo giro). '+(n.desc||'');
+   }
    return n;
   });
   rot={list:[ex].concat(shuf(cands)),i:0};
