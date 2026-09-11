@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-09-11 · clip c43-c44-c45'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-11 · c46 al posto del plank con disco'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -252,11 +252,22 @@ const DB={
   // la rotazione sullo slot caricabile (finora c31 da solo, sempre lui) e la perde su
   // quello a corpo libero, dove c'e' c1 Hollow Body Hold — che e' capped uguale e su cui
   // la rotazione valeva poco.
-  {id:'c40',cat:'core',zona:'B',name:'Plank con disco',video:'core-plank-disco.mp4',time:30,
-   desc:'Plank su avambraccio, corpo in linea dalla testa ai talloni, glutei e addome contratti. Un disco appoggiato sulla parte alta della schiena, fra le scapole. E\' il plank reso progressivo: il tempo non cambia, cambia il disco. Se la lombare si inarca o il bacino sale, il disco e\' troppo. Fattelo appoggiare, non caricartelo da solo.',
-   muscles:'Core anti-estensione',primary:'core anteriore',attrezzo:'dischi',band:'5kg',restSec:60,stima:true},
+  // c40 Plank con disco RITIRATO l'11/09/2026 (decisione Simone, alla domanda del coach
+  // "quanti kg di disco il 10/09?" ha risposto "cambia esercizio"). Il difetto era nel
+  // disegno: il disco fra le scapole te lo deve appoggiare qualcuno, quindi il carico non
+  // e' scelto ma subito, e infatti il numero non e' mai finito nel foglio — il coach ha
+  // chiesto i kg tre volte senza mai riceverli. La zona B non poteva restare col solo c31
+  // (un caricabile per due slot = mezza zona scoperta una volta su tre, lo stesso buco che
+  // c43/c44 hanno appena tappato dall'altro lato). Id nuovo, non riscritto sul posto: un
+  // "30s con un disco ignoto" e un "12 reps a 15kg di cavo" non sono confrontabili, e
+  // riusare l'id farebbe leggere al coach una progressione fra due esercizi diversi.
+  // Storico di c40 intatto nel foglio.
+  {id:'c46',cat:'core',zona:'B',name:'Press Anti-Estensione al Cavo',video:'core-anti-estensione-cavo.mp4',
+   desc:'In ginocchio davanti al cavo alto, SPALLE alla macchina, impugnatura alle spalle. Spingi le braccia avanti e in alto fino a distenderle: il cavo tira indietro e cerca di inarcarti la schiena, tu tieni le costole basse e i glutei stretti. Il lavoro e\' quello che NON succede — se la lombare si inarca o il bacino va avanti, il peso e\' troppo. Torna controllato, due secondi. E\' il plank reso progressivo davvero: il carico lo scegli tu al pacco pesi, non te lo appoggia qualcuno sulla schiena.',
+   muscles:'Core anti-estensione',primary:'core anteriore',attrezzo:'cavo',reps:10,repsMax:15,sets:3,band:'15kg',restSec:60,stima:true},
   // c42 (04/09/2026) — la zona B aveva UN SOLO esercizio a corpo libero, c1 Hollow Body.
-  // Finche' il core girava solo in palestra non si vedeva: la zona la portavano c31 e c40,
+  // Finche' il core girava solo in palestra non si vedeva: la zona la portavano c31 e c40
+  // (oggi c46),
   // che sono caricabili. Con il ramo casa del core (che scarta le righe con `attrezzo`) la
   // zona B si presentava con un esercizio per due slot, cioe' un buco dichiarato ogni tre
   // sedute. Il Body Saw lo riempie ed e' l'unico anti-estensione a corpo libero che NON
@@ -679,8 +690,8 @@ const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
  c9:2,c39:2,                                          // c39 e' prono: la testa appoggia, non prima della fase 2
  c1:3,c2:3,c3:3,c4:3,c7:3,c10:3,c12:3,c13:3,c16:3,    // brace forte o gambe sospese
  c17:3,c19:3,c20:3,c22:3,c24:3,c26:3,c28:3,
- c33:3,c34:3,c36:3,c37:3,c40:3,                       // caricati ma senza apnea vera
- c30:9,c31:9,c32:9,c41:9};                            // carico pieno o appeso: mai in recupero
+ c33:3,c34:3,c36:3,c37:3,                             // caricati ma senza apnea vera
+ c30:9,c31:9,c32:9,c41:9,c46:9};                      // carico pieno o appeso: mai in recupero
 // c41 Side Bend con Manubrio a 9 come il c35 che sostituisce, e per un motivo in piu':
 // e' flessione laterale del rachide SOTTO CARICO, esattamente il gesto che in fase
 // post-operatoria non si concede. Il carry ci stava per il peso, questo per il movimento.
