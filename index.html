@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-09-11 · clip c43'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-11 · clip c43-c44-c45'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -348,10 +348,10 @@ const DB={
   // dichiarato ogni volta che il giorno pescava F. c39 Superman non copre piu' il lato
   // libero da quando e' diventato caricabile (09/09). Il ponte su una gamba estende l'anca
   // e obbliga il bacino a non ruotare: e' la zona F esatta, e non chiede niente.
-  {id:'c45',cat:'core',zona:'F',name:'Ponte Glutei su una gamba',
+  {id:'c45',cat:'core',zona:'F',name:'Ponte Glutei su una gamba',video:'core-ponte-glutei-una-gamba.mp4',
    desc:'Sdraiato, un piede a terra e ginocchio piegato, l\'altra gamba tesa in linea con la coscia. Spingi col tallone e alza il bacino fino alla linea spalle-anca-ginocchio, due secondi in alto, giu\' lento senza appoggiare. Il bacino resta ORIZZONTALE: se il lato scarico cade, hai perso l\'esercizio. Reps PER LATO — fai tutte quelle di un lato e poi cambia.',
    muscles:'Glutei, Erettori, Anti-rotazione',primary:'anti-rotazione',reps:10,repsMax:16,sets:3,perSide:true,restSec:45},
-  {id:'c44',cat:'core',zona:'C',name:'Reverse Crunch con disco',
+  {id:'c44',cat:'core',zona:'C',name:'Reverse Crunch con disco',video:'core-reverse-crunch-disco.mp4',
    desc:'Sdraiato, mani sotto i glutei, un disco leggero stretto FRA LE GINOCCHIA. Porta i glutei verso il soffitto arrotolando il bacino: sono gli addominali bassi che chiudono, non i flessori che tirano le ginocchia. Scendi lento senza toccare terra. Il disco resta stretto per tutta la serie — se scivola stai perdendo la tenuta, e quella e\' la serie finita.',
    muscles:'Retto basso',primary:'retto basso',attrezzo:'dischi',reps:10,repsMax:15,sets:3,band:'2.5kg',restSec:45,stima:true},
  ],
