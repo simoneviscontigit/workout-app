@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-09-11 · core solo carico + casa'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-11 · clip c43'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -340,7 +340,7 @@ const DB={
   // con la stessa stringa sono esattamente cio' che la regola anti-doppione vieta.
   // Attrezzo `dischi` -> passo di progressione 2,5kg (default, `dischi` non e' in
   // STEP_ATTREZZO). `stima:true`: i carichi di partenza sono dedotti, mai verificati.
-  {id:'c43',cat:'core',zona:'A',name:'Crunch con disco',
+  {id:'c43',cat:'core',zona:'A',name:'Crunch con disco',video:'core-crunch-disco.mp4',
    desc:'Sdraiato, ginocchia piegate, un disco tenuto FERMO sul petto con le braccia incrociate (non dietro la nuca: li\' tiri il collo). Arrotola le spalle verso il bacino staccando le scapole, un secondo di contrazione in cima, giu\' lento in 3s senza appoggiare la testa. E\' il crunch reso progressivo: non si allunga la serie, si aggiunge disco. Se per salire devi dare uno strappo con le braccia, il disco e\' troppo.',
    muscles:'Retto alto',primary:'retto alto',attrezzo:'dischi',reps:12,repsMax:18,sets:3,band:'5kg',restSec:45,stima:true},
   // c45 (11/09/2026) — stesso buco di c43/c44, dall'altro lato. Con il CORE CASA la zona F
