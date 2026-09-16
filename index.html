@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-16b · caricabili a 8-10 reps, carichi ricalcolati'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-16c · passo dei dischi dichiarato'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -900,7 +900,10 @@ function applyAdaptation(ex){
 // col tetto a 80, un pacco pesi no. Default elastici: un blob vecchio non deve finire in
 // palestra per omissione.
 function attrezzatura(){try{return (S.aiDB.coachPlan&&S.aiDB.coachPlan.global&&S.aiDB.coachPlan.global.attrezzatura)==='palestra'?'palestra':'elastici';}catch(e){return 'elastici';}}
-var STEP_ATTREZZO={manubri:2,bilanciere:2.5,macchina:5,cavo:5};
+// `dischi` (disco stretto al petto: c44, c50) aggiunto il 16/09/2026 — mancava e cadeva sul
+// return 2.5 di stepDi. Il carico e' UN disco, non due per lato: 1,25 e' il piu' piccolo della
+// rastrelliera. Copia IDENTICA in workout-coach/coach_llm.py (STEP_ATTREZZO): si cambiano insieme.
+var STEP_ATTREZZO={manubri:2,bilanciere:2.5,macchina:5,cavo:5,dischi:1.25};
 function stepDi(id){
  // Prima il coachPlan (puo' correggere), poi il DB. Fino al 22/08/2026 leggeva SOLO il
  // coachPlan e cadeva su 2,5 (il passo del bilanciere) per tutto cio' che il coach non
