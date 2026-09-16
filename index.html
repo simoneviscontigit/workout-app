@@ -262,9 +262,9 @@ const DB={
   // "30s con un disco ignoto" e un "12 reps a 15kg di cavo" non sono confrontabili, e
   // riusare l'id farebbe leggere al coach una progressione fra due esercizi diversi.
   // Storico di c40 intatto nel foglio.
-  {id:'c46',cat:'core',zona:'B',name:'Press Anti-Estensione al Cavo',video:'core-anti-estensione-cavo.mp4',
-   desc:'In ginocchio davanti al cavo alto, SPALLE alla macchina, impugnatura alle spalle. Spingi le braccia avanti e in alto fino a distenderle: il cavo tira indietro e cerca di inarcarti la schiena, tu tieni le costole basse e i glutei stretti. Il lavoro e\' quello che NON succede — se la lombare si inarca o il bacino va avanti, il peso e\' troppo. Torna controllato, due secondi. E\' il plank reso progressivo davvero: il carico lo scegli tu al pacco pesi, non te lo appoggia qualcuno sulla schiena.',
-   muscles:'Core anti-estensione',primary:'core anteriore',attrezzo:'cavo',reps:10,repsMax:15,sets:3,band:'15kg',restSec:60,stima:true},
+  // c46 Press Anti-Estensione al Cavo RITIRATO il 16/09/2026 (decisione Simone), cinque
+  // giorni dopo essere entrato al posto di c40. Non e' un difetto dell'esercizio: la zona B
+  // a carico e' stata rifatta da capo. Storico intatto nel foglio.
   // c42 (04/09/2026) — la zona B aveva UN SOLO esercizio a corpo libero, c1 Hollow Body.
   // Finche' il core girava solo in palestra non si vedeva: la zona la portavano c31 e c40
   // (oggi c46),
@@ -294,15 +294,16 @@ const DB={
   {id:'c30',cat:'core',zona:'A',name:'Crunch al Cavo in ginocchio',video:'core-crunch-al-cavo.mp4',
    desc:'In ginocchio davanti al cavo alto, corda dietro la nuca. Arrotola la colonna portando i gomiti verso le cosce — e\' il retto che chiude, non le anche che si piegano. Bacino FERMO: se scendi ruotando dall\'anca stai facendo un inchino con un peso. Risali controllato senza perdere la contrazione.',
    muscles:'Retto addominale',primary:'retto alto',attrezzo:'cavo',reps:12,repsMax:18,sets:3,band:'25kg',restSec:45,stima:true},
-  {id:'c31',cat:'core',zona:'B',name:'Ab Rollout con Bilanciere',video:'core-ab-rollout-bilanciere.mp4',
-   desc:'In ginocchio, mani sul bilanciere a larghezza spalle. Rotola in avanti tenendo il bacino in retroversione e la lombare PIATTA: il range e\' il carico, quindi vai avanti solo finche\' tieni. Appena la lombare si inarca sei andato oltre. Torna tirando con gli addominali, non con le spalle.',
-   muscles:'Core anteriore, Dorsali',primary:'core anteriore',attrezzo:'bilanciere',reps:8,repsMax:12,sets:3,band:'20kg',restSec:75,stima:true},
-  {id:'c32',cat:'core',zona:'C',name:'Hanging Knee Raise',video:'core-hanging-knee-raise.mp4',
-   desc:'Appeso alla sbarra, presa prona, spalle ATTIVE (non appeso morto). Porta le ginocchia verso il petto arrotolando il bacino in alto: se le ginocchia salgono e il bacino resta fermo stanno lavorando i flessori, non gli addominali bassi. Scendi lento, zero dondolio. Quando chiudi il max: stessa cosa a gambe tese (leg raise).',
-   muscles:'Addominali bassi',primary:'retto basso',attrezzo:'sbarra',reps:8,repsMax:15,sets:3,restSec:75,stima:true},
-  {id:'c33',cat:'core',zona:'D',name:'Cable Woodchopper',video:'core-cable-woodchopper.mp4',
-   desc:'Di fianco al cavo alto, piedi larghi, braccia tese. Tira in diagonale verso l\'anca opposta ruotando dal TORACE, non dalle braccia. Il bacino resta quasi fermo — ruota il busto, non i piedi. Fai tutte le reps da un lato e poi cambia. Reps indicate PER LATO.',
-   muscles:'Obliqui',primary:'obliqui',attrezzo:'cavo',reps:10,repsMax:15,sets:3,band:'15kg',restSec:45,stima:true},
+  // c31 Ab Rollout con Bilanciere RITIRATO il 16/09/2026 (decisione Simone: via tutta la
+  // zona B a carico). Al suo posto c47 Dead Bug al Cavo, che e' lo stesso anti-estensione
+  // senza lo stress lombare del rollout e con il carico scelto al pacco pesi invece che dal
+  // range. Storico intatto nel foglio.
+  // c32 Hanging Knee Raise RITIRATO il 16/09/2026 (decisione Simone). Era l'unico caricabile
+  // senza `band` — il carico era il corpo appeso alla sbarra — e per questo aveva una riga
+  // dedicata in CORE_CARICO_SENZA_BAND, che ora resta vuota. La zona C la tiene c44 Reverse
+  // Crunch con disco, che progredisce in kg. Storico intatto nel foglio.
+  // c33 Cable Woodchopper RITIRATO il 16/09/2026 (decisione Simone). La zona D la tiene
+  // c34 Russian Twist con Manubrio. Storico intatto nel foglio.
   {id:'c34',cat:'core',zona:'D',name:'Russian Twist con Manubrio',video:'core-russian-twist-manubrio.mp4',
    desc:'Seduto, busto a 45\u00b0 indietro, piedi sollevati se tieni. Manubrio con due mani: portalo di fianco all\'anca destra, poi alla sinistra ruotando le SPALLE, non solo le braccia. Lombare mai a curva: se cedi, appoggia i piedi. Una rep = un lato.',
    muscles:'Obliqui, Retto',primary:'obliqui',attrezzo:'manubri',reps:16,repsMax:24,sets:3,band:'10kg',restSec:45,stima:true},
@@ -316,31 +317,21 @@ const DB={
   {id:'c41',cat:'core',zona:'E',name:'Side Bend con Manubrio',video:'core-side-bend-manubrio.mp4',
    desc:'In piedi, un manubrio pesante in UNA mano lungo il fianco, l\'altra mano dietro la nuca. Inclina il busto verso il lato OPPOSTO al peso, poi risali fino a superare la verticale contraendo il fianco scarico. Il bacino resta fermo e il busto sul piano frontale: se ruoti o ti pieghi in avanti stai facendo un altro esercizio. Reps indicate PER LATO — fai tutte quelle di un lato e poi cambia.',
    muscles:'Obliqui, Quadrato dei lombi',primary:'core laterale',attrezzo:'manubri',reps:12,repsMax:16,sets:3,band:'27.5kg',perSide:true,restSec:45,stima:true},
-  {id:'c36',cat:'core',zona:'E',name:'Side Plank con disco',video:'core-side-plank-disco.mp4',time:30,perSide:true,
-   desc:'Side plank su avambraccio, corpo in linea, fianchi ALTI. Un disco appoggiato sul fianco alto (mano libera che lo tiene fermo). E\' il side plank reso progressivo: il tempo non cambia, cambia il disco. Se i fianchi scendono, il disco e\' troppo.',
-   muscles:'Obliqui, Core',primary:'core laterale',attrezzo:'dischi',band:'5kg',restSec:60,stima:true},
-  {id:'c37',cat:'core',zona:'F',name:'Pallof Press al Cavo',video:'core-pallof-press-cavo.mp4',
-   desc:'Di fianco al cavo all\'altezza del petto, mani unite sullo sterno, piedi larghi. Spingi le braccia AVANTI e tieni due secondi: il cavo cerca di ruotarti e tu non ti giri. Il lavoro e\' quello che NON succede. Torna al petto controllato. Reps PER LATO.',
-   // 4 serie, non 3 (09/09/2026, richiesta di Simone del 26/08 rimasta aperta tre giri del
-   // coach): le reps sono PER LATO e con un numero dispari di serie un fianco ne prende una
-   // in piu' dell'altro. Su un anti-rotazione l'asimmetria e' esattamente cio' che non deve
-   // esserci. Il numero di serie non e' un campo che il coach possa scrivere — `changes`
-   // tocca band/reps/repsMax/time — quindi restava fermo qui finche' non lo cambiava un umano.
-   muscles:'Core anti-rotazione, Obliqui',primary:'anti-rotazione',attrezzo:'cavo',reps:10,repsMax:15,sets:4,band:'15kg',restSec:45,stima:true},
+  // c36 Side Plank con disco RITIRATO il 16/09/2026 (decisione Simone). La zona E la tiene
+  // c41 Side Bend con Manubrio, che carica molto di piu' e non chiede di tenere fermo un
+  // disco in equilibrio su un fianco. Storico intatto nel foglio.
+  // c37 Pallof Press al Cavo RITIRATO il 16/09/2026 (decisione Simone: via tutta la zona F a
+  // carico). L'anti-rotazione sotto carico passa a c50 Renegade Row. Storico intatto nel
+  // foglio — comprese le 4 serie che c37 aveva di proposito, per non lasciare un fianco con
+  // una serie in piu' dell'altro.
   {id:'c38',cat:'core',zona:'F',name:'Bird Dog',video:'core-bird-dog.mp4',
    desc:'A quattro zampe, schiena neutra. Estendi braccio destro e gamba sinistra fino alla linea del corpo, due secondi fermo, poi cambia. Il bacino NON si inclina: immagina un bicchiere pieno sulla lombare. Lento — se dondoli stai usando lo slancio. Una rep = un lato.',
    muscles:'Erettori spinali, Core anti-rotazione',primary:'anti-rotazione',reps:12,repsMax:20,sets:3,restSec:45},
-  {id:'c39',cat:'core',zona:'F',name:'Superman a terra',video:'core-superman-a-terra.mp4',
-   // CARICATO dal 09/09/2026. Il 06/09 Simone ha chiuso 24/24/24 e il passo successivo
-   // toccava il tetto 25 delle reps a corpo libero: oltre, allungare la serie smette di
-   // essere progressione e diventa resistenza. La tenuta di due secondi era gia' prescritta
-   // qui sotto, quindi "aggiungerla" non sarebbe stato un carico nuovo \u2014 la leva vera e' un
-   // disco nelle mani. Con una `band` l'esercizio esce da `a_corpo_libero` (coach_llm:985,
-   // che lo decide sui fatti) e torna a progredire in kg: passo 2,5 (`dischi` non e' in
-   // STEP_ATTREZZO e cade sul default), quindi 2,5 -> 5 -> 7,5. Le reps rientrano a 12-20,
-   // il range di partenza: col disco le stesse 24 non ci sono piu'.
-   desc:'A pancia in giu\', braccia avanti, un disco leggero tenuto FRA LE MANI. Solleva insieme petto, braccia e gambe di pochi centimetri contraendo la bassa schiena e i glutei, due secondi in alto, giu\' lento. Collo neutro: guarda il pavimento, non avanti. Poche reps fatte bene battono venti a strappi. A TERRA, non su panca 45\u00b0. Se il disco ti fa perdere la tenuta in alto, e\' troppo: si scala, non si strappa.',
-   muscles:'Erettori spinali, Catena posteriore',primary:'erettori',attrezzo:'dischi',reps:12,repsMax:20,sets:3,band:'2.5kg',restSec:45,stima:true},
+  // c39 Superman a terra RITIRATO il 16/09/2026 (decisione Simone). Era diventato caricabile
+  // il 09/09 (disco fra le mani) proprio per non fermarsi al tetto delle reps a corpo libero;
+  // oggi esce del tutto insieme al resto della zona F a carico. NB: con c39 fuori, la zona F a
+  // CORPO LIBERO (ramo casa) resta con c38 Bird Dog e c45 Ponte Glutei — due, quanti ne
+  // servono. Storico intatto nel foglio.
   // c43/c44 (11/09/2026) — il core in palestra e' diventato SOLO caricabile (decisione di
   // Simone): il lato a corpo libero di ogni zona esce dalla seduta di palestra e resta al
   // ramo casa. Le zone A e C avevano un caricabile solo (c30 Crunch al Cavo, c32 Hanging
@@ -351,9 +342,11 @@ const DB={
   // con la stessa stringa sono esattamente cio' che la regola anti-doppione vieta.
   // Attrezzo `dischi` -> passo di progressione 2,5kg (default, `dischi` non e' in
   // STEP_ATTREZZO). `stima:true`: i carichi di partenza sono dedotti, mai verificati.
-  {id:'c43',cat:'core',zona:'A',name:'Crunch con disco',video:'core-crunch-disco.mp4',
-   desc:'Sdraiato, ginocchia piegate, un disco tenuto FERMO sul petto con le braccia incrociate (non dietro la nuca: li\' tiri il collo). Arrotola le spalle verso il bacino staccando le scapole, un secondo di contrazione in cima, giu\' lento in 3s senza appoggiare la testa. E\' il crunch reso progressivo: non si allunga la serie, si aggiunge disco. Se per salire devi dare uno strappo con le braccia, il disco e\' troppo.',
-   muscles:'Retto alto',primary:'retto alto',attrezzo:'dischi',reps:12,repsMax:18,sets:3,band:'5kg',restSec:45,stima:true},
+  // c43 Crunch con disco RITIRATO il 16/09/2026 (decisione Simone). Era entrato l'11/09
+  // per dare alla zona A un SECONDO caricabile quando il circuito ne pescava due per zona.
+  // Da oggi la zona porta UN esercizio solo (vedi buildCoreCircuit), quindi il motivo per cui
+  // esisteva non c'e' piu': la zona A la tiene c30 Crunch al Cavo, che carica di piu' e non
+  // appoggia niente sul coccige (§4-octies). Storico di c43 intatto nel foglio.
   // c45 (11/09/2026) — stesso buco di c43/c44, dall'altro lato. Con il CORE CASA la zona F
   // si presentava con UN solo esercizio a corpo libero (c38 Bird Dog) per due slot: un gap
   // dichiarato ogni volta che il giorno pescava F. c39 Superman non copre piu' il lato
@@ -365,6 +358,30 @@ const DB={
   {id:'c44',cat:'core',zona:'C',name:'Reverse Crunch con disco',video:'core-reverse-crunch-disco.mp4',
    desc:'Sdraiato, mani sotto i glutei, un disco leggero stretto FRA LE GINOCCHIA. Porta i glutei verso il soffitto arrotolando il bacino: sono gli addominali bassi che chiudono, non i flessori che tirano le ginocchia. Scendi lento senza toccare terra. Il disco resta stretto per tutta la serie — se scivola stai perdendo la tenuta, e quella e\' la serie finita.',
    muscles:'Retto basso',primary:'retto basso',attrezzo:'dischi',reps:10,repsMax:15,sets:3,band:'2.5kg',restSec:45,stima:true},
+  // ── ZONE B e F RIFATTE (16/09/2026) ───────────────────────────────────────
+  // Decisione di Simone: via tutti e quattro i caricabili di B e F (c31, c46, c37, c39) e
+  // si riparte da esercizi scelti guardando il movimento, non l'inventario. Insieme alla
+  // rimozione il circuito e' passato a UN esercizio per zona in palestra (buildCoreCircuit):
+  // e' per questo che le altre zone reggono con un caricabile solo e queste due ne hanno due
+  // — con un pool di due su uno slot, la zona alterna a ogni comparsa invece di ripetersi.
+  // `stima:true` su tutti: i carichi di partenza sono dedotti, mai verificati sul campo.
+  {id:'c47',cat:'core',zona:'B',name:'Dead Bug al Cavo',
+   desc:'Supino, testa verso il cavo BASSO, braccia tese sopra il petto che tengono l\'impugnatura. Il cavo tira all\'indietro e cerca di staccarti la lombare da terra: tu la tieni incollata, costole basse, e da li\' scendi con una gamba tesa fino a sfiorare il pavimento, poi cambi. Le braccia non si muovono mai. Il lavoro e\' quello che NON succede — se la schiena si inarca o le braccia cedono indietro, il peso e\' troppo. Una rep = una gamba. E\' l\'anti-estensione dell\'Ab Rollout senza il suo prezzo sulla lombare.',
+   muscles:'Core anti-estensione',primary:'core anteriore',attrezzo:'cavo',reps:10,repsMax:14,sets:3,band:'10kg',restSec:60,stima:true},
+  {id:'c48',cat:'core',zona:'B',name:'Plank Pull-Through',
+   desc:'Plank alto sulle mani, piedi larghi quanto le spalle, un manubrio appoggiato di fianco. Passa la mano opposta sotto il corpo, aggancia il manubrio e trascinalo dall\'altro lato, poi torna in appoggio e cambia mano. Il bacino NON deve ruotare: e\' quello il carico. Se i fianchi si aprono verso il soffitto a ogni passaggio, allarga i piedi o scala il manubrio. Una rep = un passaggio.',
+   muscles:'Core anti-estensione, Obliqui',primary:'core anteriore',attrezzo:'manubri',reps:12,repsMax:20,sets:3,band:'10kg',restSec:60,stima:true},
+  {id:'c49',cat:'core',zona:'F',name:'Renegade Row',
+   desc:'Plank alto con le mani sui manubri (esagonali se ci sono), piedi larghi. Rema un manubrio verso l\'anca tenendo l\'altro fianco INCOLLATO alla sua altezza: il busto non si apre, il bacino non ruota. Appoggia, cambia lato. Se per tirare devi girarti, il peso e\' troppo o i piedi sono troppo stretti. Una rep = un braccio. E\' l\'anti-rotazione che faceva il Pallof, ma sotto carico e con un lavoro di dorso in piu\'.',
+   muscles:'Core anti-rotazione, Dorsali',primary:'anti-rotazione',attrezzo:'manubri',reps:8,repsMax:12,sets:3,band:'10kg',restSec:75,stima:true},
+  // c50 (16/09/2026) — la panca lombare a 45\u00b0 E' CONFERMATA nella dotazione (risposta di
+  // Simone, 16/09). Fino a ieri non lo era, ed e' il motivo per cui c39 Superman prescriveva
+  // "a terra, non su panca 45\u00b0": \u00a74-quater esiste perche' un esercizio impossibile era
+  // rimasto in scheda undici giorni. Ora la zona F ha l'estensione lombare vera e caricabile
+  // che le mancava, e due esercizi in pool su uno slot: alterna col Renegade a ogni comparsa.
+  {id:'c50',cat:'core',zona:'F',name:'Back Extension con disco',
+   desc:'Panca a 45\u00b0, cuscino appena sotto le creste iliache — se appoggia sulle cosce non riesci a flettere l\'anca, se appoggia sulla pancia ti schiaccia. Un disco stretto al petto con le braccia incrociate. Scendi piegandoti dall\'ANCA con la schiena neutra, poi risali fino alla linea del corpo e fermati li\': non inarcare oltre, l\'iperestensione non aggiunge lavoro, aggiunge compressione. Un secondo in alto, giu\' lento in 3s. E\' il Superman reso progressivo: non si allungano le reps, si aggiunge disco.',
+   muscles:'Erettori spinali, Catena posteriore',primary:'erettori',attrezzo:'dischi',reps:10,repsMax:15,sets:3,band:'10kg',restSec:60,stima:true},
  ],
  // ─ Finisher cardio: un blocco corto a fine seduta, ruota per giorno (09/08/2026).
  //   Volutamente breve (3×30s): con recupero percepito basso il cardio serve come spesa,
@@ -558,9 +575,11 @@ const CORE_ZONE={
 };
 // Un esercizio del core e' "caricabile" se ha un `band`: e' quello che porta la
 // progressione (il coach ha una leva sui kg). Chi non ce l'ha tiene volume e varieta'.
-// c32 Hanging Knee Raise non ha band ma e' il caricabile della zona C lo stesso: appeso
-// alla sbarra il carico e' il corpo, e progredisce a reps con un tetto vero.
-const CORE_CARICO_SENZA_BAND=['c32'];
+// La lista VUOTA dal 16/09/2026: conteneva `c32` Hanging Knee Raise, l'unico caricabile il
+// cui carico era il corpo appeso alla sbarra, ed e' stato ritirato. Resta come punto di
+// aggancio: un esercizio che progredisce davvero ma non ha un `band` da scrivere va elencato
+// qui, altrimenti `corePool` lo tratta come corpo libero e non esce mai in palestra.
+const CORE_CARICO_SENZA_BAND=[];
 function coreCaricabile(e){return !!e.band||CORE_CARICO_SENZA_BAND.indexOf(e.id)>=0;}
 // Pool di una zona, separato nei due lati. Ordinato per id = ordine stabile e ripetibile:
 // la rotazione deve dipendere dal giorno, non dall'ordine in cui il DB e' scritto.
@@ -687,11 +706,25 @@ const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
  // Leg Raise in fase 1 sarebbero passati. Criterio: quanto quell'esercizio spinge su
  // pressione intra-addominale e testa in basso, non quanto e' "duro".
  c5:1,c8:1,c11:1,c14:1,c23:1,c38:1,                   // gia' in fase 1: collo neutro, niente apnea
- c9:2,c39:2,                                          // c39 e' prono: la testa appoggia, non prima della fase 2
+ c9:2,
  c1:3,c2:3,c3:3,c4:3,c7:3,c10:3,c12:3,c13:3,c16:3,    // brace forte o gambe sospese
  c17:3,c19:3,c20:3,c22:3,c24:3,c26:3,c28:3,
- c33:3,c34:3,c36:3,c37:3,                             // caricati ma senza apnea vera
- c30:9,c31:9,c32:9,c41:9,c46:9};                      // carico pieno o appeso: mai in recupero
+ c34:3,c44:3,c45:2,                                   // caricati ma senza apnea vera (c45 supino: la testa appoggia)
+ // c44 e c45 sono entrati l'11/09/2026 e fino al 16/09 NON erano elencati qui: cadevano sul
+ // default 1 di `recoveryAllows`, cioe' ammessi in fase 1 — un reverse crunch zavorrato nella
+ // fase piu' fragile del post-operatorio. Stesso difetto latente gia' visto sui `c*` (23/08) e
+ // sugli `h*` (04/09): la mappa non si aggiorna da sola e nessuna guardia segnala la chiave
+ // che manca, perche' il default e' un numero valido. Trovato il 16/09 rifacendo le zone B/F.
+ // ZONE B e F rifatte il 16/09/2026. Le fasi sono assegnate qui SUBITO, con la riga nuova:
+ // e' la chiave mancante a essere pericolosa, perche' `recoveryAllows` cade sul default 1,
+ // cioe' "ammesso nella fase piu' fragile del post-operatorio". Criterio invariato: quanto
+ // l'esercizio spinge su pressione intra-addominale e testa in basso, non quanto e' duro.
+ c47:3,c48:3,                                         // a terra, collo neutro: gemelli di c37 e c42
+ c49:9,c50:9,                                         // rematore in plank e estensione carica a testa in giu'
+ c30:9,c41:9};                                        // carico pieno: mai in recupero
+// Usciti da questa mappa il 16/09/2026 perche' ritirati dal DB: c31, c32, c33, c36, c37, c39,
+// c46. Una chiave che punta a un id inesistente non fa danno (`recoveryAllows` legge per id),
+// ma e' un inventario che mente: il posto dove si guarda "quali esercizi esistono" e' il DB.
 // c41 Side Bend con Manubrio a 9 come il c35 che sostituisce, e per un motivo in piu':
 // e' flessione laterale del rachide SOTTO CARICO, esattamente il gesto che in fase
 // post-operatoria non si concede. Il carry ci stava per il peso, questo per il movimento.
@@ -1010,11 +1043,18 @@ function buildCoreCircuit(idx,home,gaps,opts){
   // `rot*2+n` fa scorrere il pool di due posizioni a ogni comparsa della zona, cosi' i due
   // non sono mai la stessa coppia due volte di fila.
   var pool=corePool(z,!home,home);
-  for(var n=0;n<2;n++){
+  // DAL 16/09/2026 gli slot per zona NON sono piu' due dappertutto: in palestra e' UNO,
+  // a casa restano DUE. Il motivo e' il pool, non il gusto: dopo il giro di rimozioni del
+  // 16/09 le zone a carico hanno uno o due esercizi (A, C, D, E ne hanno uno), e un secondo
+  // slot avrebbe prodotto un buco dichiarato a ogni seduta. A casa il pool a corpo libero e'
+  // largo — venticinque righe — e due slot li riempie sempre: dimezzare il CORE CASA, che e'
+  // una seduta a se' di sei minuti, l'avrebbe svuotata.
+  var slots=home?2:1;
+  for(var n=0;n<slots;n++){
    // Pool vuoto o esercizio gia' preso (di solito: recoveryAllows ha filtrato tutto) → slot
    // scoperto DICHIARATO, non riempito con un esercizio di un'altra zona. Riempirlo vorrebbe
    // dire far mordere due volte lo stesso distretto, che e' esattamente cio' che lo split evita.
-   var ez=pool.length?pool[(((rot*2+n)%pool.length)+pool.length)%pool.length]:null;
+   var ez=pool.length?pool[(((rot*slots+n)%pool.length)+pool.length)%pool.length]:null;
    if(!ez||picks.find(function(x){return x!=='B'&&x.id===ez.id;})){
     gaps.push('core '+z+(home?' casa (corpo libero: ':' palestra (caricabili: ')+pool.length+')'+(recoveryPhase()?' (recupero)':''));
     continue;
@@ -1198,8 +1238,11 @@ function genWorkout(splitIdx,opts){
  // ─ CORE + FINISHER ─ la costruzione vive fuori da qui dall'11/09/2026: la usano anche
  // la seduta full-body a corpo libero e il CORE CASA. Vedi buildCoreCircuit/buildCardio.
  var cc=buildCoreCircuit(splitIdx,home,gaps),circuit=cc.circuit,core=cc.core;
- var cardio=buildCardio(splitIdx,avoid);
- return{split:split,all:exercises.concat(core).concat(cardio),circuit:circuit,gaps:gaps,home:home};
+ // FINISHER CARDIO TOLTO dalla seduta di palestra il 16/09/2026 (decisione Simone). Restava
+ // il blocco 3x30s di salti a fine seduta: la palestra chiude col core e basta. `buildCardio`
+ // NON e' morta — la usa ancora la FULL-BODY a corpo libero, dove il finisher metabolico e'
+ // il senso della seduta. Se un giorno il cardio deve tornare in palestra, torna da qui.
+ return{split:split,all:exercises.concat(core),circuit:circuit,gaps:gaps,home:home};
 }
 
 // ─── I DUE RAMI DI CASA (11/09/2026) ──────────────────────────────────────────
