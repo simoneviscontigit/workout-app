@@ -165,103 +165,161 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-16d · carico con ± · gambe fuori · pulizie'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-17a · tre modalita per esercizio · core rifatto'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
   {id:'p4',cat:'push',name:'Panca Piana Manubri',video:'gym-panca-piana-manubri.mp4',
    desc:'Panca piana, un manubrio per mano, polsi dritti sopra i gomiti. Scendi lento 3s finche\' i manubri sono all\'altezza del petto, senti lo stretch, poi spingi. Non far sbattere i manubri in cima. Il carico indicato e\' PER MANUBRIO.',
-   muscles:'Petto, Tricipiti',primary:'petto',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'20kg',restSec:90},
+   muscles:'Petto, Tricipiti',primary:'petto',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'20kg',restSec:90,
+   varianti:[{modo:'macchina',name:'Chest Press alla Macchina',band:'45kg',video:'',desc:'Schienale regolato in modo che le maniglie cadano all\'altezza del petto, non delle spalle. Spingi fino quasi a stendere e torna lento in 3 secondi fermandoti prima che i pesi si appoggino: la tensione non deve mai scaricarsi. Scapole schiacciate contro lo schienale per tutta la serie.'},
+             {modo:'cavo',name:'Chest Press ai Cavi',band:'15kg',video:'',desc:'Panca piana in mezzo ai due cavi bassi, impugnature in presa neutra sopra il petto. Spingi in avanti e verso il centro finche\' le mani quasi si toccano, poi apri lento controllando la trazione. Il cavo tira sempre: a differenza dei manubri non c\'e\' un punto in cima dove riposi.'}]},
   {id:'p6',cat:'push',name:'Croci ai Cavi',video:'gym-croci-ai-cavi.mp4',
    desc:'Cavi alti o medi, un\'impugnatura per mano, un passo avanti. Braccia quasi tese, gomiti morbidi e FISSI per tutto il movimento. Chiudi le mani davanti al petto in arco ampio, stringi 1s. Riapri lento 3s sentendo lo stretch. È adduzione: le braccia non spingono, si chiudono. Carico = per lato.',
-   muscles:'Petto (adduzione)',primary:'petto',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'15kg',restSec:60},
+   muscles:'Petto (adduzione)',primary:'petto',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'15kg',restSec:60,
+   varianti:[{modo:'manubri',name:'Croci con Manubri su panca piana',band:'10kg',video:'',desc:'Sdraiato, manubri sopra il petto, gomiti leggermente piegati e fissi cosi\' per tutta la serie. Apri lento fino a sentire lo stiramento all\'altezza delle spalle, mai sotto, e richiudi immaginando di abbracciare un tronco. Se i gomiti si piegano per aiutarti, e\' diventata una panca.'},
+             {modo:'macchina',name:'Pectoral Machine',band:'35kg',video:'',desc:'Seduto, schiena appoggiata, braccia sui cuscinetti all\'altezza delle spalle. Chiudi portando i gomiti verso il centro e fermati 1 secondo a contatto, poi riapri in 3 secondi senza far sbattere i pesi. E\' la croce senza il problema dell\'equilibrio: puoi spingere fino all\'ultima rep pulita.'}]},
   {id:'p7',cat:'push',name:'Panca Inclinata Manubri',video:'gym-panca-inclinata-manubri.mp4',
    desc:'Schienale a 30-45°, non di piu\': oltre diventa una shoulder press. Manubri all\'altezza delle spalle, spingi in diagonale alto-avanti. Chiudi in alto 1s, abbassa 3s. Colpisce il petto alto, la zona che le flessioni non prendono. Carico PER MANUBRIO.',
-   muscles:'Petto alto, Spalle ant.',primary:'petto',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'16kg',restSec:90},
+   muscles:'Petto alto, Spalle ant.',primary:'petto',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'16kg',restSec:90,
+   varianti:[{modo:'macchina',name:'Chest Press Inclinata alla Macchina',band:'35kg',video:'',desc:'Schienale in posizione inclinata, maniglie all\'altezza della clavicola. Spingi in alto e in avanti, non solo in avanti: il petto alto lavora sulla diagonale. Torna lento fino a sentire l\'apertura, senza appoggiare i pesi.'},
+             {modo:'cavo',name:'Croci ai Cavi dal basso',band:'12kg',video:'',desc:'Cavi in basso, impugnature nelle mani, un passo avanti e busto leggermente inclinato in avanti. Porta le mani verso l\'alto e verso il centro fino all\'altezza degli occhi, come se lanciassi qualcosa in alto. E\' la stessa diagonale della panca inclinata, ma la tensione e\' massima in cima invece che in basso.'}]},
   {id:'r5',cat:'push',name:'Tricep Overhead ai Cavi',video:'gym-tricep-overhead-ai-cavi.mp4',
    desc:'Cavo BASSO con corda, dai le spalle alla macchina, braccia sopra la testa e gomiti FISSI puntati avanti. Estendi verso l\'alto aprendo la corda in cima. Il lungo capo del tricipite è massimamente allungato in questa posizione: e\' li\' che serve il controllo, non il carico.',
-   muscles:'Tricipiti (lungo capo)',primary:'tricipiti',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'25kg',restSec:75},
+   muscles:'Tricipiti (lungo capo)',primary:'tricipiti',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'25kg',restSec:75,
+   varianti:[{modo:'manubri',name:'Estensioni sopra la testa con Manubrio',band:'14kg',video:'',desc:'Seduto con schienale, un manubrio pesante tenuto a due mani dietro la nuca, gomiti stretti e puntati al soffitto. Stendi le braccia senza aprire i gomiti, poi scendi lento fino a sentire lo stiramento dietro il braccio. Il busto resta eretto: se ti inarchi per spingere, il peso e\' troppo.'},
+             {modo:'macchina',name:'Estensioni Tricipiti alla Macchina',band:'30kg',video:'',desc:'Seduto alla macchina tricipiti, gomiti appoggiati e fermi sul cuscino. Stendi fino in fondo e contrai 1 secondo, poi torna in 3 secondi. Il vantaggio e\' che i gomiti non possono scappare in fuori: tutto quello che spingi va dove deve.'}]},
   {id:'p10',cat:'push',name:'French Press Manubri',video:'gym-french-press-manubri.mp4',
    desc:'Sdraiato sulla panca, un manubrio per mano, braccia perpendicolari al suolo e palmi che si guardano. Piega solo i gomiti e porta i manubri ai lati della testa, gomiti fermi e puntati al soffitto. Risali senza spostare le braccia indietro. Scendi lento 3s: e\' l\'eccentrica che allena il lungo capo. Coi manubri, se la serie finisce, si aprono le braccia e cadono di lato — col bilanciere no, ed e\' il motivo per cui qui non c\'e\'. Carico per manubrio.',
-   muscles:'Tricipiti (lungo capo)',primary:'tricipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'10kg',stima:true,restSec:75},
+   muscles:'Tricipiti (lungo capo)',primary:'tricipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'10kg',stima:true,restSec:75,
+   varianti:[{modo:'cavo',name:'French Press ai Cavi su panca',band:'20kg',video:'',desc:'Panca piana davanti al cavo basso, corda presa a due mani sopra la testa, gomiti puntati al soffitto e fermi. Stendi le braccia allargando le due estremita\' della corda, poi torna lento resistendo. Il cavo tira anche in cima: il tricipite non riposa mai.'},
+             {modo:'macchina',name:'Tricep Extension alla Macchina',band:'25kg',video:'',desc:'Gomiti bloccati sul cuscino, spingi fino alla distensione completa e contrai 1 secondo. Torna in 3 secondi senza lasciare che i pesi si appoggino. Qui il carico si scala di 5kg alla volta: e\' l\'attrezzo giusto quando i manubri saltano troppo.'}]},
   {id:'p11',cat:'push',name:'Pushdown ai Cavi',video:'gym-pushdown-ai-cavi.mp4',
    desc:'Cavo alto, corda o barra. Gomiti incollati ai fianchi e FERMI: si muove solo l\'avambraccio. Estendi fino a bloccare, con la corda apri le mani in fondo. Busto leggermente avanti ma immobile — se ti sbilanci per chiudere la rep, il carico e\' troppo.',
-   muscles:'Tricipiti (capo laterale)',primary:'tricipiti',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'30kg',stima:true,restSec:60},
+   muscles:'Tricipiti (capo laterale)',primary:'tricipiti',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'30kg',stima:true,restSec:60,
+   varianti:[{modo:'manubri',name:'Kickback Tricipiti con Manubrio',band:'8kg',video:'',desc:'Busto in avanti a 45 gradi, braccio superiore incollato al fianco e parallelo al terreno. Stendi indietro fino a superare la linea del corpo e tieni 1 secondo, poi torna piegando SOLO il gomito. Se la spalla si muove hai perso l\'esercizio. Reps per lato.'},
+             {modo:'macchina',name:'Dip Machine',band:'40kg',video:'',desc:'Seduto, maniglie all\'altezza dei fianchi, busto eretto e leggermente in avanti. Spingi in basso fino a stendere le braccia, contrai e risali lento. E\' la stessa spinta del pushdown ma con il corpo bloccato: niente slancio di busto per finire la serie.'}]},
  ],
  pull:[
   {id:'r1',cat:'pull',name:'Rematore Bilanciere',video:'gym-rematore-bilanciere.mp4',
    desc:'Bilanciere, presa prona poco piu\' larga delle spalle, busto a 45° e SCHIENA PIATTA (se si arrotonda, scendi di carico). Tira i gomiti dietro verso l\'anca, non verso il soffitto. Contrai la schiena in cima 1s, abbassa 3s. Carico = bilanciere compreso (bar olimpica 20kg).',
-   muscles:'Dorsali, Romboidi',primary:'dorsali',attrezzo:'bilanciere',reps:8,repsMax:10,sets:4,band:'45kg',restSec:100},
+   muscles:'Dorsali, Romboidi',primary:'dorsali',attrezzo:'bilanciere',reps:8,repsMax:10,sets:4,band:'45kg',restSec:100,
+   varianti:[{modo:'manubri',name:'Rematore con due Manubri',band:'20kg',video:'',desc:'Busto in avanti a 45 gradi, schiena neutra, un manubrio per mano a braccia distese. Tira portando i gomiti indietro lungo i fianchi fino a sfiorare le costole, contrai le scapole 1 secondo, scendi lento. Il busto non si alza a ogni tirata: se si alza, e\' la schiena che tira, non il dorso.'},
+             {modo:'macchina',name:'Rematore alla Macchina',band:'45kg',video:'',desc:'Petto appoggiato al cuscino, maniglie prese in presa neutra o prona. Tira i gomiti indietro finche\' le scapole si toccano, 1 secondo di contrazione, poi rilascia in 3 secondi. Il petto appoggiato toglie di mezzo la schiena: e\' la versione del rematore che puoi caricare senza pagarla in lombare.'}]},
   {id:'r2',cat:'pull',name:'Pullover ai Cavi',video:'gym-pullover-ai-cavi.mp4',
    desc:'Cavo ALTO con barra dritta o corda, un passo indietro, busto leggermente inclinato avanti. Braccia tese sopra, tira in arco verso le cosce tenendo i gomiti quasi dritti — se si piegano diventa un pushdown per i tricipiti. Sono i dorsali che lavorano.',
-   muscles:'Dorsali, Core',primary:'dorsali',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'25kg',restSec:75},
+   muscles:'Dorsali, Core',primary:'dorsali',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'25kg',restSec:75,
+   varianti:[{modo:'manubri',name:'Pullover con Manubrio su panca',band:'16kg',video:'',desc:'Sdraiato di traverso o lungo la panca, un manubrio tenuto a due mani sopra il petto, gomiti quasi tesi. Porta il peso dietro la testa in un arco finche\' senti lo stiramento sotto le ascelle, poi torna tirando con i dorsali, non con le braccia. Costole basse: se la lombare si stacca, l\'arco e\' troppo lungo.'},
+             {modo:'macchina',name:'Pullover alla Macchina',band:'35kg',video:'',desc:'Seduto, gomiti sui cuscinetti, mani che accompagnano senza stringere. Tira in basso con l\'articolazione della spalla, non con le braccia, fino a chiudere sotto il petto e contrai 1 secondo. E\' l\'unico modo di isolare il dorsale senza che i bicipiti facciano la loro parte.'}]},
   {id:'r3',cat:'pull',name:'Curl Manubri',video:'gym-curl-manubri.mp4',
    desc:'In piedi, un manubrio per mano, presa supinata. Gomiti fissi ai fianchi — non muoverli mai, se le spalle si alzano stai barando. Curla supinando il polso in cima 1s. Abbassa lento 3 secondi. Carico PER MANUBRIO.',
-   muscles:'Bicipiti',primary:'bicipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'12kg',restSec:75},
+   muscles:'Bicipiti',primary:'bicipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'12kg',restSec:75,
+   varianti:[{modo:'cavo',name:'Curl ai Cavi bassi con barra',band:'25kg',video:'',desc:'In piedi davanti al cavo basso, barra dritta, gomiti incollati ai fianchi. Sali contraendo e ferma 1 secondo in alto, poi scendi in 3 secondi resistendo alla trazione. Il cavo non ti da\' il punto morto in alto che hanno i manubri: la tensione resta tutta la serie.'},
+             {modo:'macchina',name:'Curl alla Macchina',band:'25kg',video:'',desc:'Braccia appoggiate sul leggio, ascelle a contatto, gomiti fermi. Chiudi fino alla contrazione piena, 1 secondo, poi torna lento senza estendere di scatto. Il leggio impedisce lo slancio del busto: quello che sale, lo sale il bicipite.'}]},
   {id:'r4',cat:'pull',name:'Hammer Curl Manubri',video:'gym-hammer-curl-manubri.mp4',
    desc:'Manubri a presa neutra, pollice verso l\'alto per tutta l\'esecuzione. Gomiti fissi ai fianchi. Colpisce brachiale e brachioradiale. Movimento lento e controllato. Carico PER MANUBRIO, sta sempre >= al curl supinato.',
-   muscles:'Bicipiti, Brachiale',primary:'bicipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'14kg',restSec:75},
+   muscles:'Bicipiti, Brachiale',primary:'bicipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'14kg',restSec:75,
+   varianti:[{modo:'cavo',name:'Hammer Curl alla Corda',band:'25kg',video:'',desc:'Cavo basso con corda, presa neutra alle due estremita\', gomiti ai fianchi. Sali tenendo i pollici in alto e allarga leggermente in cima, 1 secondo di contrazione, poi scendi in 3 secondi. Presa neutra: lavora il brachiale, lo stesso di sotto il bicipite.'},
+             {modo:'macchina',name:'Curl presa neutra alla Macchina',band:'25kg',video:'',desc:'Stessa macchina del curl, impugnatura neutra se disponibile o mani a martello sulle maniglie. Gomiti fermi, salita piena, discesa in 3 secondi. Serve quando i manubri pesanti ti mollano la presa prima del braccio.'}]},
   {id:'r6',cat:'pull',name:'Lat Machine',video:'gym-lat-machine.mp4',
    desc:'Seduto, ginocchia bloccate sotto il cuscinetto, presa prona poco piu\' larga delle spalle. Busto fermo, inclinato indietro di pochi gradi e BASTA: se dondoli e\' diventato un rematore. Tira la barra al petto portando i gomiti giu\' e indietro, contrai i dorsali 1s, risali lento 3s in controllo. Con l\'elastico questo esercizio non funzionava: qui si\'.',
-   muscles:'Dorsali, Bicipiti',primary:'dorsali',attrezzo:'macchina',reps:8,repsMax:10,sets:4,band:'45kg',restSec:100},
+   muscles:'Dorsali, Bicipiti',primary:'dorsali',attrezzo:'macchina',reps:8,repsMax:10,sets:4,band:'45kg',restSec:100,
+   varianti:[{modo:'cavo',name:'Lat Machine alla corda, presa stretta',band:'40kg',video:'',desc:'Stessa postazione, corda o triangolo al posto della barra larga. Tira in basso verso lo sterno portando i gomiti lungo i fianchi, petto in fuori, 1 secondo di contrazione. La presa stretta accorcia la leva e lavora la parte bassa del dorsale.'},
+             {modo:'manubri',name:'Pullover con Manubrio su panca',band:'16kg',video:'',desc:'Sdraiato sulla panca, un manubrio a due mani sopra il petto, gomiti quasi tesi. Porta il peso dietro la testa fino allo stiramento e torna tirando con i dorsali. E\' la tirata verticale senza sbarra ne\' macchina: l\'angolo e\' lo stesso, il carico lo scegli tu.'}]},
   {id:'r7',cat:'pull',name:'Trazioni alla Sbarra',video:'gym-trazioni-sbarra.mp4',
    desc:'Presa prona poco piu\' larga delle spalle. Parti a braccia distese ma con le spalle ATTIVE, non appeso morto. Tira portando i gomiti verso i fianchi finche\' il mento supera la sbarra, scendi controllato in 3s. Se non chiudi le reps: negative lente, mai mezze trazioni.',
-   muscles:'Dorsali, Bicipiti, Core',primary:'dorsali',attrezzo:'corpo libero',reps:5,repsMax:9,sets:4,restSec:120},
+   muscles:'Dorsali, Bicipiti, Core',primary:'dorsali',attrezzo:'corpo libero',reps:5,repsMax:9,sets:4,restSec:120,
+   varianti:[{modo:'macchina',name:'Lat Machine presa larga',band:'45kg',video:'',desc:'Ginocchia bloccate sotto il cuscinetto, presa prona poco piu\' larga delle spalle. Tira la barra al petto portando i gomiti giu\' e indietro, contrai 1 secondo, risali in 3 secondi. E\' la trazione con il carico che decidi tu: usala quando la sbarra a corpo libero non ti da\' piu\' le reps pulite.'},
+             {modo:'manubri',name:'Rematore con due Manubri',band:'20kg',video:'',desc:'Busto in avanti a 45 gradi, un manubrio per mano. Tira i gomiti indietro lungo i fianchi fino alle costole, 1 secondo, scendi lento. Non e\' verticale come la trazione: e\' la stessa muscolatura presa dall\'altro angolo, e va bene quando la sbarra e\' occupata.'}]},
   {id:'r8',cat:'pull',name:'Rematore Manubrio Singolo',video:'gym-rematore-manubrio-singolo.mp4',
    desc:'Un ginocchio e una mano sulla panca, schiena parallela al suolo e neutra. Tira il manubrio verso l\'ANCA, non verso la spalla, portando il gomito oltre la linea della schiena. Non ruotare il busto per guadagnare centimetri. Carico per braccio.',
-   muscles:'Dorsali, Romboidi',primary:'dorsali',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'20kg',perSide:true,stima:true,restSec:90},
+   muscles:'Dorsali, Romboidi',primary:'dorsali',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'20kg',perSide:true,stima:true,restSec:90,
+   varianti:[{modo:'cavo',name:'Rematore a un braccio al Cavo basso',band:'25kg',video:'',desc:'In appoggio con la mano libera sulla panca o in affondo, impugnatura singola al cavo basso. Tira il gomito indietro lungo il fianco senza ruotare il busto, contrai 1 secondo, torna lento. Il cavo tiene la tensione anche a braccio steso, dove il manubrio non pesa piu\'. Reps per lato.'},
+             {modo:'macchina',name:'Rematore a un braccio alla Macchina',band:'30kg',video:'',desc:'Petto appoggiato, una maniglia sola per volta. Tira il gomito indietro fino a chiudere la scapola, 1 secondo, rilascia in 3 secondi. Il busto appoggiato impedisce la rotazione che su un manubrio pesante arriva sempre nelle ultime reps. Reps per lato.'}]},
   {id:'r9',cat:'pull',name:'Pulley Basso ai Cavi',video:'gym-pulley-basso-ai-cavi.mp4',
    desc:'Seduto, ginocchia morbide, schiena dritta. Tira l\'impugnatura all\'ombelico stringendo le scapole, gomiti radenti al busto. Il tronco resta fermo: se dondoli avanti e indietro stai usando la schiena bassa come leva. Ritorno lento fino allo stretch completo.',
-   muscles:'Dorsali, Trapezio medio',primary:'dorsali',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'45kg',stima:true,restSec:90},
+   muscles:'Dorsali, Trapezio medio',primary:'dorsali',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'45kg',stima:true,restSec:90,
+   varianti:[{modo:'manubri',name:'Rematore su panca inclinata con Manubri',band:'16kg',video:'',desc:'Petto appoggiato a una panca inclinata a 30-45 gradi, un manubrio per mano a braccia distese. Tira i gomiti indietro fino a chiudere le scapole, 1 secondo, scendi lento. Il petto appoggiato fa lo stesso lavoro del pulley: toglie di mezzo tutto quello che non e\' dorso.'},
+             {modo:'macchina',name:'Seated Row alla Macchina',band:'45kg',video:'',desc:'Seduto, petto contro il cuscino, presa neutra. Tira verso l\'ombelico portando i gomiti lungo i fianchi, contrai le scapole 1 secondo, rilascia in 3 secondi senza farti tirare in avanti le spalle. Stesso gesto del pulley, con la schiena bloccata.'}]},
   {id:'r10',cat:'pull',name:'Curl Bilanciere',video:'gym-curl-bilanciere.mp4',
    desc:'In piedi, presa supina a larghezza spalle, gomiti fermi ai fianchi. Sali senza slanciare il bacino e senza portare i gomiti in avanti. In cima stringi 1s, scendi in 3s fino a braccia quasi distese. Carico totale, bilanciere compreso.',
-   muscles:'Bicipiti',primary:'bicipiti',attrezzo:'bilanciere',reps:8,repsMax:10,sets:3,band:'25kg',stima:true,restSec:75},
+   muscles:'Bicipiti',primary:'bicipiti',attrezzo:'bilanciere',reps:8,repsMax:10,sets:3,band:'25kg',stima:true,restSec:75,
+   varianti:[{modo:'manubri',name:'Curl con due Manubri simultaneo',band:'12kg',video:'',desc:'In piedi, un manubrio per mano, gomiti ai fianchi. Sali insieme fino alla contrazione piena ruotando leggermente i polsi verso l\'alto, 1 secondo, scendi in 3 secondi. I due manubri permettono al polso di trovare la sua strada: usali quando la barra dritta ti da\' fastidio agli avambracci.'},
+             {modo:'macchina',name:'Curl alla Macchina',band:'25kg',video:'',desc:'Braccia sul leggio, ascelle a contatto, gomiti fermi. Salita piena, 1 secondo di contrazione, discesa in 3 secondi. Il carico sale di 5kg e il busto non puo\' aiutarti: e\' la versione onesta del curl.'}]},
   {id:'r11',cat:'pull',name:'Curl su Panca Inclinata',video:'gym-curl-panca-inclinata.mp4',
    desc:'Panca a 45-60\u00b0, braccia che pendono DIETRO la linea del corpo: e\' quello che mette il bicipite in allungamento, la parte che il curl in piedi non prende mai. Non portare le spalle avanti per aiutarti. Carico per manubrio, piu\' basso del solito ed e\' normale.',
-   muscles:'Bicipiti (capo lungo)',primary:'bicipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'10kg',stima:true,restSec:75},
+   muscles:'Bicipiti (capo lungo)',primary:'bicipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'10kg',stima:true,restSec:75,
+   varianti:[{modo:'cavo',name:'Curl al Cavo con braccio dietro il corpo',band:'15kg',video:'',desc:'In piedi di fianco al cavo basso, impugnatura singola, braccio che resta DIETRO la linea del busto per tutta la serie. Sali piegando solo il gomito, 1 secondo in contrazione, scendi lento. Il braccio arretrato allunga il capo lungo esattamente come la panca inclinata. Reps per lato.'},
+             {modo:'macchina',name:'Curl Scott alla Macchina',band:'20kg',video:'',desc:'Seduto al leggio, ascelle appoggiate, gomiti fermi. Scendi fino quasi a stendere e risali senza strappi: la parte bassa del movimento e\' quella che brucia, ed e\' quella che cerchi. Stop quando il gomito non riesce piu\' a restare fermo.'}]},
  ],
  shoulders:[
   {id:'s1',cat:'shoulders',name:'Shoulder Press Manubri',video:'gym-shoulder-press-manubri.mp4',
    desc:'Seduto con schienale alto, manubri all\'altezza delle orecchie. Premi sopra la testa bloccando i gomiti 1s in cima, senza inarcare la schiena. Abbassa lento 3s. Compound spalle. Carico PER MANUBRIO.',
-   muscles:'Deltoide, Tricipiti',primary:'spalle',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'14kg',restSec:100},
+   muscles:'Deltoide, Tricipiti',primary:'spalle',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'14kg',restSec:100,
+   varianti:[{modo:'macchina',name:'Shoulder Press alla Macchina',band:'30kg',video:'',desc:'Seduto, schienale verticale, maniglie all\'altezza delle orecchie. Spingi in alto quasi a stendere e torna lento fino all\'altezza delle orecchie senza appoggiare i pesi. Lo schienale toglie di mezzo la lombare: e\' la spinta sopra la testa da usare quando il core ha gia\' lavorato.'},
+             {modo:'cavo',name:'Shoulder Press ai Cavi bassi',band:'15kg',video:'',desc:'In piedi in mezzo ai due cavi bassi, impugnature all\'altezza delle spalle. Spingi in alto e leggermente verso il centro, poi torna lento resistendo. I cavi tirano in basso e indietro per tutta la salita: il deltoide non ha il punto morto che ha in cima coi manubri.'}]},
   {id:'s2',cat:'shoulders',name:'Alzate Laterali Manubri',video:'gym-alzate-laterali-manubri.mp4',
    desc:'Manubri ai fianchi, gomiti semi-flessi. Alza di lato fino all\'altezza delle spalle, pausa 1 secondo in alto, abbassa 3 secondi. Se per alzarli devi dare uno slancio col busto, il carico e\' troppo: qui contano le reps pulite, non i kg. Carico PER MANUBRIO.',
-   muscles:'Deltoide medio',primary:'deltoide-medio',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'8kg',restSec:60},
+   muscles:'Deltoide medio',primary:'deltoide-medio',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'8kg',restSec:60,
+   varianti:[{modo:'cavo',name:'Alzate Laterali al Cavo',band:'10kg',video:'',desc:'Cavo basso dietro la schiena, impugnatura nella mano esterna, busto fermo. Alza il braccio di lato fino all\'altezza della spalla guidando col gomito, poi scendi in 3 secondi. Il cavo carica anche i primi gradi, dove il manubrio non pesa ancora niente. Reps per lato.'},
+             {modo:'macchina',name:'Lateral Raise Machine',band:'25kg',video:'',desc:'Seduto, cuscinetti contro la parte esterna delle braccia, gomiti leggermente piegati. Alza di lato fino all\'altezza delle spalle e ferma 1 secondo, poi scendi lento. La macchina tiene la traiettoria: puoi arrivare al cedimento vero senza cominciare a dondolare.'}]},
   {id:'s3',cat:'shoulders',name:'Face Pull ai Cavi',video:'gym-face-pull-ai-cavi.mp4',
    desc:'Cavo all\'altezza del viso con corda, presa neutra. Tira verso il naso dividendo le mani verso le orecchie, gomiti SOPRA le spalle. Salute spalle + deltoide posteriore: reps alte di proposito, non e\' un lift di forza.',
-   muscles:'Deltoide post., Rotatori',primary:'deltoide-post',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'25kg',restSec:60,stima:true},
+   muscles:'Deltoide post., Rotatori',primary:'deltoide-post',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'25kg',restSec:60,stima:true,
+   varianti:[{modo:'manubri',name:'Rear Delt Fly con Manubri',band:'8kg',video:'',desc:'Busto in avanti a 45 gradi o petto su panca inclinata, manubri leggeri, gomiti morbidi. Apri di lato fino alla linea delle spalle guidando coi gomiti, 1 secondo di contrazione, scendi lento. Leggero di proposito: appena diventa una tirata, sono i dorsali che lavorano.'},
+             {modo:'macchina',name:'Reverse Pec Deck',band:'30kg',video:'',desc:'Seduto al contrario sulla pectoral machine, petto contro lo schienale, braccia quasi tese. Apri fino alla linea delle spalle stringendo le scapole, 1 secondo, torna in 3 secondi. Il petto appoggiato impedisce il trucco del busto: quello che apri, lo apre il deltoide posteriore.'}]},
   {id:'s4',cat:'shoulders',name:'Rear Delt Fly Manubri',video:'gym-rear-delt-fly.mp4',
    desc:'Seduto sulla panca col busto sulle cosce, oppure in piedi piegato a 90°. Manubri sotto il petto, gomiti quasi dritti e fissi: apri di lato fino ad allineare le scapole, mai piu\' su. Stringi 1s, torna lento 3s. Se ti raddrizzi per finire la rep stai tirando col dorso, non col deltoide. Carico per manubrio.',
-   muscles:'Deltoide post., Romboidi',primary:'deltoide-post',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'8kg',stima:true,restSec:60},
+   muscles:'Deltoide post., Romboidi',primary:'deltoide-post',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'8kg',stima:true,restSec:60,
+   varianti:[{modo:'cavo',name:'Face Pull ai Cavi',band:'25kg',video:'',desc:'Cavo alto con corda, un passo indietro, braccia tese. Tira verso la fronte allargando le due estremita\' e ruotando le mani verso l\'alto, gomiti alti sopra i polsi. Ferma 1 secondo e torna lento. Alto sulla corsa e leggero sul carico: qui il deltoide posteriore lavora insieme ai rotatori.'},
+             {modo:'macchina',name:'Reverse Pec Deck',band:'30kg',video:'',desc:'Seduto al contrario, petto contro lo schienale, braccia quasi tese. Apri fino alla linea delle spalle stringendo le scapole, 1 secondo, torna lento. E\' la versione con la traiettoria gia\' decisa: utile quando i manubri leggeri finiscono per diventare uno slancio.'}]},
   {id:'s5',cat:'shoulders',name:'Military Press Bilanciere',video:'gym-military-press-bilanciere.mp4',
    desc:'In piedi, presa poco piu\' larga delle spalle, bilanciere all\'altezza delle clavicole. Glutei e addome contratti: la schiena non si inarca per spingere. Porta la testa leggermente indietro e poi sotto il bilanciere, blocca in alto con le braccia alle orecchie. SENZA RACK il bilanciere va portato alle spalle da terra a ogni serie: se il carico non te lo permette in sicurezza, il carico e\' sbagliato. Se la spinta cede, butta AVANTI e togliti — non riabbassarlo sul collo.',
-   muscles:'Deltoide ant., Tricipiti, Core',primary:'spalle',attrezzo:'bilanciere',reps:6,repsMax:10,sets:4,band:'30kg',stima:true,restSec:120},
+   muscles:'Deltoide ant., Tricipiti, Core',primary:'spalle',attrezzo:'bilanciere',reps:6,repsMax:10,sets:4,band:'30kg',stima:true,restSec:120,
+   varianti:[{modo:'manubri',name:'Shoulder Press Manubri',band:'14kg',video:'',desc:'Seduto con schienale, manubri all\'altezza delle orecchie, gomiti leggermente avanti. Spingi in alto senza far sbattere i manubri in cima e scendi lento fino all\'altezza delle orecchie. Ogni braccio deve fare la sua parte: e\' il motivo per cui il carico e\' piu\' basso del bilanciere.'},
+             {modo:'macchina',name:'Shoulder Press alla Macchina',band:'30kg',video:'',desc:'Schienale verticale, maniglie all\'altezza delle orecchie. Spingi quasi a stendere, torna lento senza appoggiare i pesi. La lombare resta fuori dall\'esercizio: e\' la spinta sopra la testa quando il core e\' gia\' cotto o la spalla vuole una traiettoria fissa.'}]},
   {id:'s6',cat:'shoulders',name:'Alzate Laterali ai Cavi',video:'gym-alzate-laterali-cavi.mp4',
    desc:'Cavo basso, impugnatura nella mano opposta, un passo di lato. Sali fino all\'altezza della spalla col gomito leggermente piegato e FISSO, mignolo appena piu\' alto del pollice. Il cavo tiene tensione anche in basso, dove i manubri non ne hanno: carico piu\' leggero, stessa fatica.',
-   muscles:'Deltoide medio',primary:'deltoide-medio',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'10kg',perSide:true,stima:true,restSec:60},
+   muscles:'Deltoide medio',primary:'deltoide-medio',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'10kg',perSide:true,stima:true,restSec:60,
+   varianti:[{modo:'manubri',name:'Alzate Laterali Manubri',band:'8kg',video:'',desc:'In piedi, manubri lungo i fianchi, gomiti leggermente piegati. Alza di lato fino all\'altezza delle spalle guidando col gomito, mai col polso, poi scendi in 3 secondi. Busto fermo: se dondoli per alzare, il peso e\' troppo.'},
+             {modo:'macchina',name:'Lateral Raise Machine',band:'25kg',video:'',desc:'Seduto, cuscinetti contro le braccia, gomiti morbidi. Alza fino alla linea delle spalle, 1 secondo, scendi lento. Traiettoria fissa e carico a pacco: e\' la variante per arrivare al cedimento senza barare.'}]},
  ],
  legs:[
   {id:'l2',cat:'legs',name:'Bulgarian Split Squat Manubri',video:'Bulgarian split squat con elastico.mp4',
    desc:'Piede posteriore su panca, un manubrio per mano lungo i fianchi. Scendi col ginocchio anteriore a 90°, busto eretto, spingi col tallone avanti. Carico PER MANUBRIO. Reps per gamba.',
-   muscles:'Quadricipiti, Glutei',primary:'quadricipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'12kg',restSec:90},
+   muscles:'Quadricipiti, Glutei',primary:'quadricipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'12kg',restSec:90,
+   varianti:[{modo:'bilanciere',name:'Bulgarian Split Squat con Bilanciere',band:'30kg',video:'',desc:'Bilanciere sulle spalle, piede posteriore su panca, piede avanti abbastanza lontano da tenere il ginocchio dietro la punta. Scendi verticale fino a sfiorare terra col ginocchio dietro, risali spingendo col tallone avanti. Il bilanciere carica di piu\' del manubrio ma chiede piu\' equilibrio: prima serie leggera per trovare la posizione. Reps per lato.'},
+             {modo:'macchina',name:'Affondo bulgaro alla Smith machine',band:'30kg',video:'',desc:'Barra della Smith sulle spalle, piede posteriore su panca. Il binario toglie l\'equilibrio dall\'equazione, quindi tutto il carico va sulla gamba avanti: e\' la variante che regge piu\' peso di tutte. Scendi lento, risali senza rimbalzare. Reps per lato.'}]},
   {id:'l3',cat:'legs',name:'Squat Bilanciere',video:'gym-squat-bilanciere.mp4',
    desc:'⚠️ SOLO dentro il rack, con i pioli di sicurezza regolati appena sotto la profondita\' del tuo squat: se ti pianti, il bilanciere lo appoggi li\'. Barra sui trapezi, squat profondo con cosce parallele, talloni a terra, ginocchia sulla linea dei piedi. Carico = bilanciere compreso (bar olimpica 20kg). All\'inizio conta la tecnica, non i kg: il pattern col bilanciere e\' nuovo.',
-   muscles:'Quadricipiti, Glutei',primary:'quadricipiti',attrezzo:'bilanciere',reps:8,repsMax:10,sets:4,band:'40kg',restSec:120},
+   muscles:'Quadricipiti, Glutei',primary:'quadricipiti',attrezzo:'bilanciere',reps:8,repsMax:10,sets:4,band:'40kg',restSec:120,
+   varianti:[{modo:'macchina',name:'Pressa a 45 gradi',band:'90kg',video:'',desc:'Piedi a meta\' pedana, larghezza spalle, schiena e bacino incollati allo schienale. Scendi finche\' le ginocchia arrivano verso il petto SENZA che il bacino si arrotoli, poi spingi senza bloccare le ginocchia in cima. Il numero e\' piu\' alto dello squat perche\' la pressa e\' un\'altra leva: non confrontarli.'},
+             {modo:'manubri',name:'Squat con due Manubri',band:'20kg',video:'',desc:'Un manubrio per mano lungo i fianchi, piedi larghi quanto le spalle. Scendi tenendo il petto alto finche\' le cosce sono parallele, poi risali spingendo col tallone. I manubri lungo i fianchi bilanciano meno dello squat frontale ma non ti chiedono la mobilita\' di spalle del bilanciere.'}]},
   {id:'l5',cat:'legs',name:'Stacco Rumeno Bilanciere',video:'gym-stacco-rumeno-bilanciere.mp4',
    desc:'Bilanciere davanti alle cosce, presa prona. Spingi i FIANCHI indietro tenendo la schiena piatta e le ginocchia morbide (non e\' uno squat): la barra scorre lungo le gambe finche\' senti lo stretch dei femorali, poi risali contraendo i glutei. Schiena che si arrotonda = fermati e togli carico. Bilanciere compreso.',
-   muscles:'Femorali, Glutei',primary:'femorali',attrezzo:'bilanciere',reps:8,repsMax:10,sets:3,band:'40kg',restSec:90},
+   muscles:'Femorali, Glutei',primary:'femorali',attrezzo:'bilanciere',reps:8,repsMax:10,sets:3,band:'40kg',restSec:90,
+   varianti:[{modo:'manubri',name:'Stacco Rumeno con due Manubri',band:'20kg',video:'',desc:'Un manubrio per mano davanti alle cosce, ginocchia morbide e FERME. Manda il bacino indietro facendo scorrere i manubri sulle gambe fino a meta\' stinco, schiena neutra, poi risali contraendo i glutei. I manubri ti lasciano scendere un po\' di piu\' del bilanciere: fermati dove la schiena resta dritta.'},
+             {modo:'macchina',name:'Leg Curl alla Macchina',band:'35kg',video:'',desc:'Sdraiato o seduto, cuscinetto appena sopra i talloni. Chiudi fino alla contrazione piena, 1 secondo, torna in 3 secondi senza far cadere il peso. Non e\' un hinge: e\' il femorale preso dall\'altra funzione, e serve proprio quando la lombare ha gia\' dato abbastanza.'}]},
   {id:'l6',cat:'legs',name:'Affondi Camminati Manubri',video:'gym-affondi-camminati-manubri.mp4',
    desc:'Un manubrio per mano, braccia lungo i fianchi. Passo lungo, ginocchio posteriore che sfiora terra, busto verticale. Spingi col TALLONE della gamba avanti per rialzarti e porta subito avanti l\'altra. Se il ginocchio davanti supera di molto la punta del piede, allunga il passo.',
-   muscles:'Quadricipiti, Glutei',primary:'quadricipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'14kg',stima:true,restSec:90},
+   muscles:'Quadricipiti, Glutei',primary:'quadricipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'14kg',stima:true,restSec:90,
+   varianti:[{modo:'bilanciere',name:'Affondi camminati con Bilanciere',band:'30kg',video:'',desc:'Bilanciere sulle spalle, passi lunghi, busto eretto. Scendi finche\' il ginocchio dietro sfiora terra, poi spingi col tallone avanti per il passo successivo. Il bilanciere sulle spalle ti obbliga a tenere il busto piu\' eretto dei manubri: meno equilibrio da gestire con le mani, piu\' lavoro sul core.'},
+             {modo:'macchina',name:'Affondi statici alla Smith machine',band:'30kg',video:'',desc:'Barra sulle spalle, un piede avanti e uno indietro, posizione fissa per tutta la serie. Scendi verticale e risali senza spostare i piedi. Il binario rende impossibile sbilanciarsi: e\' la variante da usare quando le gambe sono gia\' stanche. Reps per lato.'}]},
   {id:'l7',cat:'legs',name:'Stacco da Terra Bilanciere',video:'gym-stacco-da-terra-bilanciere.mp4',
    desc:'Bilanciere sopra il centro del piede, presa poco fuori dalle gambe. Schiena neutra e petto alto PRIMA di staccare: il bacino non si alza per primo. Spingi il pavimento coi piedi, il bilanciere resta radente alle gambe. Appoggia e riparti da fermo, non rimbalzare.',
-   muscles:'Femorali, Glutei, Dorsali',primary:'femorali',attrezzo:'bilanciere',reps:5,repsMax:8,sets:4,band:'60kg',stima:true,restSec:150},
+   muscles:'Femorali, Glutei, Dorsali',primary:'femorali',attrezzo:'bilanciere',reps:5,repsMax:8,sets:4,band:'60kg',stima:true,restSec:150,
+   varianti:[{modo:'manubri',name:'Stacco da terra con due Manubri',band:'26kg',video:'',desc:'Manubri a terra ai lati dei piedi, presa salda, schiena neutra e petto alto. Stacca spingendo col pavimento e stendi anche e ginocchia insieme, poi riappoggia controllando. I manubri partono piu\' vicini al corpo del bilanciere: la leva e\' piu\' corta e la lombare paga meno.'},
+             {modo:'macchina',name:'Hip Thrust alla Macchina',band:'60kg',video:'',desc:'Schiena appoggiata al cuscino, cuscinetto sul bacino, piedi piantati larghi quanto le spalle. Spingi il bacino in alto fino alla linea spalle-anca-ginocchio, contrai i glutei 2 secondi, scendi lento. E\' l\'estensione d\'anca isolata: stessi muscoli dello stacco, zero carico sulla colonna.'}]},
   {id:'l8',cat:'legs',name:'Goblet Squat Manubrio',video:'gym-goblet-squat-manubrio.mp4',
    desc:'Un manubrio verticale tenuto al petto con entrambe le mani, gomiti dentro. Scendi finche\' i gomiti passano dentro le ginocchia, busto il piu\' verticale possibile. Il peso davanti fa da contrappeso: e\' il modo piu\' facile di tenere lo squat profondo e pulito.',
-   muscles:'Quadricipiti, Glutei, Core',primary:'quadricipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'26kg',stima:true,restSec:90},
+   muscles:'Quadricipiti, Glutei, Core',primary:'quadricipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'26kg',stima:true,restSec:90,
+   varianti:[{modo:'macchina',name:'Hack Squat alla Macchina',band:'60kg',video:'',desc:'Spalle sotto i cuscinetti, piedi a meta\' pedana, schiena incollata. Scendi in controllo fino a parallelo o poco sotto, poi spingi senza bloccare le ginocchia. Il binario tiene il busto fermo: tutto quello che scende va sui quadricipiti, che e\' il motivo per cui la userai quando cerchi le gambe e non l\'equilibrio.'},
+             {modo:'bilanciere',name:'Front Squat con Bilanciere',band:'30kg',video:'',desc:'Bilanciere davanti, appoggiato sui deltoidi anteriori con i gomiti ALTI. Scendi verticale tenendo i gomiti su: appena cadono, la barra rotola in avanti ed e\' la serie finita. Stessa posizione del goblet ma con un carico che il manubrio non regge.'}]},
   {id:'l9',cat:'legs',name:'Stacco a Gambe Tese Manubri',video:'gym-stacco-gambe-tese-manubri.mp4',
    desc:'Manubri davanti alle cosce, ginocchia appena morbide e FERME. Manda indietro il bacino facendo scorrere i manubri lungo le gambe, scendi finche\' senti tirare dietro la coscia — non piu\' giu\'. Schiena sempre neutra, risali stringendo i glutei. Carico per manubrio.',
-   muscles:'Femorali, Glutei',primary:'femorali',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'22kg',stima:true,restSec:90},
+   muscles:'Femorali, Glutei',primary:'femorali',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'22kg',stima:true,restSec:90,
+   varianti:[{modo:'bilanciere',name:'Stacco a Gambe Tese con Bilanciere',band:'40kg',video:'',desc:'Bilanciere davanti alle cosce, ginocchia quasi tese ma non bloccate. Scendi mandando il bacino indietro e la barra vicina alle gambe, fino a sentire il femorale tirare, poi risali contraendo i glutei. Se la schiena si arrotonda sei sceso troppo: il fondo lo decide il femorale, non il pavimento.'},
+             {modo:'macchina',name:'Good Morning alla Smith machine',band:'30kg',video:'',desc:'Barra sulle spalle, ginocchia morbide, piedi larghezza bacino. Manda il bacino indietro piegando il busto in avanti fino a circa 45 gradi, schiena neutra, poi risali contraendo. Il binario tiene la barra sulla verticale: con l\'hinge e\' un aiuto vero, perche\' l\'errore tipico e\' proprio andare in avanti.'}]},
  ],
  core:[
   {id:'c1', cat:'core',noLast:true,zona:'B',name:'Hollow Body Hold',    video:'core-hollow-body-hold.mp4',    time:60, desc:'Schiena piatta, lombare incollata. Braccia tese sopra la testa, gambe a 30cm. Spalle alzate. Nessun cedimento.',muscles:'Core completo'},
@@ -332,9 +390,20 @@ const DB={
   // `stima:true` su tutti: i carichi sono dedotti, mai verificati sul campo.
   // Niente sit-up zavorrato: il divieto per dolore a base colonna/coccige vale ancora
   // (§4-octies), quindi la zona A si carica al cavo — che sul coccige non appoggia nulla.
-  {id:'c30',cat:'core',zona:'A',name:'Crunch al Cavo in ginocchio',video:'core-crunch-al-cavo.mp4',
-   desc:'In ginocchio davanti al cavo alto, corda dietro la nuca. Arrotola la colonna portando i gomiti verso le cosce — e\' il retto che chiude, non le anche che si piegano. Bacino FERMO: se scendi ruotando dall\'anca stai facendo un inchino con un peso. Risali controllato senza perdere la contrazione.',
-   muscles:'Retto addominale',primary:'retto alto',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'30kg',restSec:45,stima:true},
+  // c30 Crunch al Cavo in ginocchio RITIRATO il 16/09/2026 (verdetto di Simone sulla pagina
+  // di review del core: "cerca alternativa"). Insieme a c43 e c34 e' il terzo crunch che esce
+  // in due giorni, e il segnale ormai e' leggibile: quel che tiene non e' il pattern crunch,
+  // e' l'esercizio dove il corpo sta in tensione e il carico e' un peso vero (c47, c48, c49,
+  // c50, c41). La zona A pero' RESTA (decisione di Simone, 16/09: sei zone, sostituti scelti
+  // da me), e la zona A e' flessione del busto: qualunque cosa ci metta flette. Il criterio
+  // allora e' "la flessione meno crunch possibile": busto lungo su una panca, carico al petto
+  // che si scala in un secondo, niente ginocchia a terra e niente coccige sul pavimento
+  // (il motivo per cui e' uscito c43). Storico di c30 intatto nel foglio.
+  {id:'c51',cat:'core',zona:'A',name:'Sit-up su panca inclinata con disco',video:'',
+   desc:'Panca inclinata in negativo (piedi in alto, se non c\'e\' un fermapiedi bastano le ginocchia piegate sotto il cuscino). Disco stretto al petto con le due mani. Sali arrotolando la colonna una vertebra alla volta — non a corpo rigido, non a strappo — fino a superare i 45°, poi scendi in 3 secondi senza appoggiare le spalle. Il disco resta al petto: se lo allontani per aiutarti col peso davanti, stai togliendo carico. L\'ultima rep pulita e\' quella dove la salita non parte dal collo.',
+   muscles:'Retto addominale',primary:'retto alto',attrezzo:'dischi',reps:8,repsMax:10,sets:3,band:'10kg',restSec:45,stima:true,
+   varianti:[{modo:'cavo',name:'Crunch al Cavo in ginocchio',band:'45kg',video:'',desc:'In ginocchio davanti al cavo alto, corda dietro la nuca. Arrotola la colonna portando i gomiti verso le cosce: e\' il retto che chiude, non le anche che si piegano. Bacino FERMO. E\' la flessione con il carico piu\' alto disponibile, ed e\' il motivo per cui resta fra le tre.'},
+             {modo:'macchina',name:'Crunch alla Macchina',band:'35kg',video:'',desc:'Seduto, cuscinetto sul petto o maniglie sopra le spalle, bacino fermo sul sedile. Chiudi il busto verso il bacino arrotolando le vertebre, 1 secondo in contrazione, torna in 3 secondi. Il sedile tiene fermo tutto il resto: nessun modo di aiutarsi con le anche.'}]},
   // c31 Ab Rollout con Bilanciere RITIRATO il 16/09/2026 (decisione Simone: via tutta la
   // zona B a carico). Al suo posto c47 Dead Bug al Cavo, che e' lo stesso anti-estensione
   // senza lo stress lombare del rollout e con il carico scelto al pacco pesi invece che dal
@@ -345,9 +414,21 @@ const DB={
   // Crunch con disco, che progredisce in kg. Storico intatto nel foglio.
   // c33 Cable Woodchopper RITIRATO il 16/09/2026 (decisione Simone). La zona D la tiene
   // c34 Russian Twist con Manubrio. Storico intatto nel foglio.
-  {id:'c34',cat:'core',zona:'D',name:'Russian Twist con Manubrio',video:'core-russian-twist-manubrio.mp4',
-   desc:'Seduto, busto a 45\u00b0 indietro, piedi sollevati se tieni. Manubrio con due mani: portalo di fianco all\'anca destra, poi alla sinistra ruotando le SPALLE, non solo le braccia. Lombare mai a curva: se cedi, appoggia i piedi. Una rep = un lato.',
-   muscles:'Obliqui, Retto',primary:'obliqui',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'12kg',restSec:45,stima:true},
+  // c34 Russian Twist con Manubrio RITIRATO il 16/09/2026 (verdetto di Simone: "cerca
+  // alternativa"). Stessi due difetti che avevano gia' fatto uscire c35 Suitcase Carry e c43
+  // Crunch con disco: si sta seduti sul coccige e il collo di bottiglia e' la presa, non
+  // l'obliquo — con un manubrio davvero pesante il problema diventa tenerlo, non ruotare.
+  // Al suo posto TORNA c33 Cable Woodchopper, ritirato stamattina. Non e' un ripensamento:
+  // c33 era uscito perche' la zona D doveva restare con UN esercizio solo e c34 era il
+  // titolare. Caduto c34, il titolare e' lui, ed e' anche l'unico modo di caricare la
+  // rotazione in piedi con un pacco pesi invece che con la presa. Stesso id di prima: e' lo
+  // stesso esercizio, e il coach deve poterne leggere lo storico in fila. Storico di c34
+  // intatto nel foglio.
+  {id:'c33',cat:'core',zona:'D',name:'Cable Woodchopper',video:'core-cable-woodchopper.mp4',
+   desc:'Cavo alto, impugnatura presa con due mani, piedi larghi quanto le spalle e di lato alla macchina. Tira in diagonale dall\'alto verso l\'anca opposta ruotando il BUSTO: le braccia restano quasi tese e non fanno il lavoro, il bacino resta fermo e i piedi non si staccano. Torna su lento resistendo alla trazione, senza farti riaprire di scatto. Reps PER LATO — fai tutte quelle di un lato, poi cambia.',
+   muscles:'Obliqui, Core anti-rotazione',primary:'obliqui',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'15kg',perSide:true,restSec:45,stima:true,
+   varianti:[{modo:'manubri',name:'Russian Twist con Manubrio',band:'12kg',video:'',desc:'Seduto, busto a 45 gradi indietro, piedi sollevati se tieni. Manubrio a due mani portato di fianco a un\'anca e poi all\'altra ruotando le SPALLE, non solo le braccia. Lombare mai a curva. Una rep = un lato. Qui il limite arriva spesso dalla presa prima che dall\'obliquo.'},
+             {modo:'macchina',name:'Rotary Torso alla Macchina',band:'30kg',video:'',desc:'Seduto, bacino bloccato dai cuscinetti, busto contro il supporto. Ruota il tronco fino a fine corsa controllando, 1 secondo, torna lento senza farti riportare di scatto. Il bacino bloccato e\' il punto: la rotazione la fa solo la colonna toracica. Reps per lato.'}]},
   // c35 Suitcase Carry RITIRATO il 30/08/2026 (decisione Simone). Il suo commento del
   // 29/08: "preferisco tenere il peso lungo il fianco e inclinare il corpo verso il lato
   // opposto; 30 passi con 27,5kg mi stancano prima la mano che il fianco". Cioe': faceva
@@ -357,7 +438,9 @@ const DB={
   // progressione fra due esercizi diversi. Id nuovo, storico di c35 intatto nel foglio.
   {id:'c41',cat:'core',zona:'E',name:'Side Bend con Manubrio',video:'core-side-bend-manubrio.mp4',
    desc:'In piedi, un manubrio pesante in UNA mano lungo il fianco, l\'altra mano dietro la nuca. Inclina il busto verso il lato OPPOSTO al peso, poi risali fino a superare la verticale contraendo il fianco scarico. Il bacino resta fermo e il busto sul piano frontale: se ruoti o ti pieghi in avanti stai facendo un altro esercizio. Reps indicate PER LATO — fai tutte quelle di un lato e poi cambia.',
-   muscles:'Obliqui, Quadrato dei lombi',primary:'core laterale',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'30kg',perSide:true,restSec:45,stima:true},
+   muscles:'Obliqui, Quadrato dei lombi',primary:'core laterale',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'30kg',perSide:true,restSec:45,stima:true,
+   varianti:[{modo:'cavo',name:'Side Bend al Cavo basso',band:'25kg',video:'',desc:'In piedi di fianco al cavo basso, impugnatura nella mano vicina, l\'altra dietro la nuca. Inclina il busto verso il lato OPPOSTO al cavo e risali superando la verticale. Rispetto al manubrio la tensione c\'e\' anche in cima, dove il peso appeso al braccio non tira piu\'. Reps per lato.'},
+             {modo:'macchina',name:'Side Bend alla panca lombare',band:'20kg',video:'',desc:'Di fianco sulla panca a 45 gradi, fianco sul cuscino, piedi bloccati, un disco stretto al petto. Scendi di lato fino a sentire l\'allungamento del fianco alto e risali fino alla linea del corpo. Il fianco lavora in tutto il suo arco, che in piedi non riesci a fare. Reps per lato.'}]},
   // c36 Side Plank con disco RITIRATO il 16/09/2026 (decisione Simone). La zona E la tiene
   // c41 Side Bend con Manubrio, che carica molto di piu' e non chiede di tenere fermo un
   // disco in equilibrio su un fianco. Storico intatto nel foglio.
@@ -365,9 +448,15 @@ const DB={
   // carico). L'anti-rotazione sotto carico passa a c50 Renegade Row. Storico intatto nel
   // foglio — comprese le 4 serie che c37 aveva di proposito, per non lasciare un fianco con
   // una serie in piu' dell'altro.
-  {id:'c38',cat:'core',zona:'F',name:'Bird Dog',video:'core-bird-dog.mp4',
-   desc:'A quattro zampe, schiena neutra. Estendi braccio destro e gamba sinistra fino alla linea del corpo, due secondi fermo, poi cambia. Il bacino NON si inclina: immagina un bicchiere pieno sulla lombare. Lento — se dondoli stai usando lo slancio. Una rep = un lato.',
-   muscles:'Erettori spinali, Core anti-rotazione',primary:'anti-rotazione',reps:12,repsMax:20,sets:3,restSec:45},
+  // c38 Bird Dog RITIRATO il 16/09/2026 (verdetto di Simone: "cerca alternativa"). E' la
+  // zona F del ramo CASA, non della palestra: senza `band` non entra mai nel core di
+  // palestra, che dal 11/09 pesca solo caricabili. Esce per il motivo che accomuna tutto il
+  // verdetto di oggi: a quattro zampe non costa niente alle spalle e il limite arriva dalla
+  // noia, non dal core. Al suo posto lo stesso anti-rotazione ma in plank alto, dove le
+  // spalle reggono il corpo e alzare una gamba diventa un carico vero. Storico nel foglio.
+  {id:'c53',cat:'core',zona:'F',name:'Plank con gamba alta',video:'',
+   desc:'Plank alto sulle mani, piedi larghi quanto le spalle. Alza una gamba tesa fino alla linea del corpo e tienila due secondi, poi appoggia e cambia. Il bacino NON deve ruotare ne\' salire: appena una gamba si stacca, il fianco di quel lato vuole aprirsi verso il soffitto ed e\' esattamente cio\' che devi impedire. Lento: se rimbalzi, e\' slancio. Una rep = una gamba.',
+   muscles:'Core anti-rotazione, Glutei, Spalle',primary:'anti-rotazione',reps:8,repsMax:12,sets:3,perSide:true,restSec:45},
   // c39 Superman a terra RITIRATO il 16/09/2026 (decisione Simone). Era diventato caricabile
   // il 09/09 (disco fra le mani) proprio per non fermarsi al tetto delle reps a corpo libero;
   // oggi esce del tutto insieme al resto della zona F a carico. NB: con c39 fuori, la zona F a
@@ -393,12 +482,28 @@ const DB={
   // dichiarato ogni volta che il giorno pescava F. c39 Superman non copre piu' il lato
   // libero da quando e' diventato caricabile (09/09). Il ponte su una gamba estende l'anca
   // e obbliga il bacino a non ruotare: e' la zona F esatta, e non chiede niente.
-  {id:'c45',cat:'core',zona:'F',name:'Ponte Glutei su una gamba',video:'core-ponte-glutei-una-gamba.mp4',
-   desc:'Sdraiato, un piede a terra e ginocchio piegato, l\'altra gamba tesa in linea con la coscia. Spingi col tallone e alza il bacino fino alla linea spalle-anca-ginocchio, due secondi in alto, giu\' lento senza appoggiare. Il bacino resta ORIZZONTALE: se il lato scarico cade, hai perso l\'esercizio. Reps PER LATO — fai tutte quelle di un lato e poi cambia.',
-   muscles:'Glutei, Erettori, Anti-rotazione',primary:'anti-rotazione',reps:10,repsMax:16,sets:3,perSide:true,restSec:45},
-  {id:'c44',cat:'core',zona:'C',name:'Reverse Crunch con disco',video:'core-reverse-crunch-disco.mp4',
-   desc:'Sdraiato, mani sotto i glutei, un disco leggero stretto FRA LE GINOCCHIA. Porta i glutei verso il soffitto arrotolando il bacino: sono gli addominali bassi che chiudono, non i flessori che tirano le ginocchia. Scendi lento senza toccare terra. Il disco resta stretto per tutta la serie — se scivola stai perdendo la tenuta, e quella e\' la serie finita.',
-   muscles:'Retto basso',primary:'retto basso',attrezzo:'dischi',reps:8,repsMax:10,sets:3,band:'2.5kg',restSec:45,stima:true},
+  // c45 Ponte Glutei su una gamba RITIRATO il 16/09/2026 (verdetto di Simone: "cerca
+  // alternativa"). Come c38 e' zona F del ramo CASA. Il ponte lavora molto piu' di gluteo
+  // che di erettori, e la zona F e' estensione: al suo posto l'estensione prona vera, che
+  // e' anche l'unico modo a corpo libero di far lavorare la catena posteriore alta.
+  // NB: e' il movimento del ritirato c39 Superman, che pero' era diventato CARICABILE (disco
+  // fra le mani) e come tale usciva in palestra. Questo e' a corpo libero e vive solo a casa:
+  // id nuovo, cosi' il coach non legge come progressione due esercizi con carichi diversi.
+  {id:'c54',cat:'core',zona:'F',name:'Superman a terra',video:'core-superman-a-terra.mp4',
+   desc:'Prono, braccia distese avanti, fronte a terra e collo neutro. Stacca insieme braccia, petto e gambe tese, due secondi in alto stringendo i glutei, poi giu\' lento senza appoggiare del tutto. Non guardare avanti: e\' il collo che si inarca, non la schiena che lavora. Se le gambe salgono e il petto no, stai facendo solo un calcio all\'indietro.',
+   muscles:'Erettori spinali, Glutei, Deltoide posteriore',primary:'estensione',reps:10,repsMax:16,sets:3,restSec:45},
+  // c44 Reverse Crunch con disco RITIRATO il 16/09/2026 (verdetto di Simone: "cerca
+  // alternativa"). Il disco fra le ginocchia pesa 2,5kg: e' il carico piu' leggero di tutto
+  // il core, e sale di 1,25 alla volta — su un esercizio che regge molto di piu', la
+  // progressione si misura in briciole. Al suo posto lo stesso movimento (retto basso,
+  // bacino che si arrotola) ma con un carico che si scala sul serio e con il corpo appeso
+  // alle braccia, che e' la forma che regge nel verdetto di oggi. Storico di c44 intatto
+  // nel foglio.
+  {id:'c52',cat:'core',zona:'C',name:'Leg Raise su panca con manubrio',video:'',
+   desc:'Sdraiato su una panca piana, mani che afferrano il bordo dietro la testa (le braccia tengono il busto ancorato: quella tensione fa parte dell\'esercizio). Un manubrio leggero stretto FRA I PIEDI, gambe quasi tese. Alza fino alla verticale e continua arrotolando il bacino, staccando i glutei dalla panca: i centimetri che contano sono gli ultimi, prima e\' solo flessione d\'anca. Scendi in 3 secondi fino a sfiorare la linea della panca, mai piu\' in basso e mai appoggiando. Se il manubrio scivola o la lombare si stacca, il peso e\' troppo.',
+   muscles:'Retto basso, Flessori dell\'anca',primary:'retto basso',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'4kg',restSec:45,stima:true,
+   varianti:[{modo:'macchina',name:'Leg Raise alla Sedia Romana',band:'4kg',video:'',desc:'Avambracci sui cuscinetti, schiena contro lo schienale, manubrio leggero stretto fra i piedi. Alza le gambe fino oltre la linea delle anche arrotolando il bacino, poi scendi in 3 secondi senza dondolare. Il corpo appeso alle braccia fa parte dell\'esercizio.'},
+             {modo:'cavo',name:'Reverse Crunch al Cavo',band:'15kg',video:'',desc:'Sdraiato con la testa lontana dal cavo basso, cavigliere ai piedi o corda agganciata alle scarpe, mani che tengono un appoggio dietro la testa. Porta le ginocchia al petto arrotolando il bacino contro la trazione, poi torna lento. Il cavo tira sempre: la parte alta del movimento resta carica.'}]},
   // ── ZONE B e F RIFATTE (16/09/2026) ───────────────────────────────────────
   // Decisione di Simone: via tutti e quattro i caricabili di B e F (c31, c46, c37, c39) e
   // si riparte da esercizi scelti guardando il movimento, non l'inventario. Insieme alla
@@ -408,13 +513,19 @@ const DB={
   // `stima:true` su tutti: i carichi di partenza sono dedotti, mai verificati sul campo.
   {id:'c47',cat:'core',zona:'B',name:'Dead Bug al Cavo',video:'core-dead-bug-cavo.mp4',
    desc:'Supino, testa verso il cavo BASSO, braccia tese sopra il petto che tengono l\'impugnatura. Il cavo tira all\'indietro e cerca di staccarti la lombare da terra: tu la tieni incollata, costole basse, e da li\' scendi con una gamba tesa fino a sfiorare il pavimento, poi cambi. Le braccia non si muovono mai. Il lavoro e\' quello che NON succede — se la schiena si inarca o le braccia cedono indietro, il peso e\' troppo. Una rep = una gamba. E\' l\'anti-estensione dell\'Ab Rollout senza il suo prezzo sulla lombare.',
-   muscles:'Core anti-estensione',primary:'core anteriore',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'10kg',restSec:60,stima:true},
+   muscles:'Core anti-estensione',primary:'core anteriore',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'10kg',restSec:60,stima:true,
+   varianti:[{modo:'manubri',name:'Dead Bug con Manubrio',band:'8kg',video:'',desc:'Supino, un manubrio tenuto a braccia tese sopra il petto, lombare incollata a terra. Scendi con una gamba tesa fino a sfiorare il pavimento e torna, poi cambia. Le braccia non si muovono mai: il peso in alto e\' quello che cerca di staccarti la schiena da terra. Una rep = una gamba.'},
+             {modo:'dischi',name:'Dead Bug con disco',band:'10kg',video:'',desc:'Stessa posizione, un disco tenuto a braccia tese sopra il petto. Il disco si regge meglio del manubrio a braccia stese e si scala di 1,25kg: usalo quando vuoi salire di poco. Lombare incollata, costole basse. Una rep = una gamba.'}]},
   {id:'c48',cat:'core',zona:'B',name:'Plank Pull-Through',video:'core-plank-pull-through.mp4',
    desc:'Plank alto sulle mani, piedi larghi quanto le spalle, un manubrio appoggiato di fianco. Passa la mano opposta sotto il corpo, aggancia il manubrio e trascinalo dall\'altro lato, poi torna in appoggio e cambia mano. Il bacino NON deve ruotare: e\' quello il carico. Se i fianchi si aprono verso il soffitto a ogni passaggio, allarga i piedi o scala il manubrio. Una rep = un passaggio.',
-   muscles:'Core anti-estensione, Obliqui',primary:'core anteriore',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'12kg',restSec:60,stima:true},
+   muscles:'Core anti-estensione, Obliqui',primary:'core anteriore',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'12kg',restSec:60,stima:true,
+   varianti:[{modo:'dischi',name:'Plank Pull-Through con disco',band:'10kg',video:'',desc:'Plank alto sulle mani, un disco appoggiato di fianco. Passa la mano opposta sotto il corpo, aggancia il disco per il bordo e trascinalo dall\'altro lato. Il disco striscia invece di rotolare: e\' piu\' costante del manubrio. Il bacino non ruota. Una rep = un passaggio.'},
+             {modo:'cavo',name:'Plank con trazione al cavo',band:'10kg',video:'',desc:'Plank alto con i piedi verso il cavo basso, una mano che tiene l\'impugnatura appoggiata a terra davanti. Il cavo tira all\'indietro e cerca di allungarti: tu tieni il corpo in linea e la lombare ferma. Tieni la posizione per le reps contando due secondi ciascuna, poi cambia mano.'}]},
   {id:'c49',cat:'core',zona:'F',name:'Renegade Row',video:'core-renegade-row.mp4',
    desc:'Plank alto con le mani sui manubri (esagonali se ci sono), piedi larghi. Rema un manubrio verso l\'anca tenendo l\'altro fianco INCOLLATO alla sua altezza: il busto non si apre, il bacino non ruota. Appoggia, cambia lato. Se per tirare devi girarti, il peso e\' troppo o i piedi sono troppo stretti. Una rep = un braccio. E\' l\'anti-rotazione che faceva il Pallof, ma sotto carico e con un lavoro di dorso in piu\'.',
-   muscles:'Core anti-rotazione, Dorsali',primary:'anti-rotazione',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'10kg',restSec:75,stima:true},
+   muscles:'Core anti-rotazione, Dorsali',primary:'anti-rotazione',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'10kg',restSec:75,stima:true,
+   varianti:[{modo:'cavo',name:'Rematore in plank al Cavo',band:'15kg',video:'',desc:'Plank alto con i piedi larghi, una mano a terra e l\'altra sull\'impugnatura del cavo basso davanti a te. Tira il gomito verso l\'anca senza che il bacino ruoti, poi torna lento. Il cavo tira in avanti e aggiunge un secondo lavoro anti-rotazione che il manubrio non ha. Una rep = un braccio.'},
+             {modo:'macchina',name:'Rematore a un braccio in appoggio',band:'25kg',video:'',desc:'Rematore alla macchina con petto appoggiato, una maniglia per volta, e l\'altra mano che NON si aggrappa: sta appoggiata leggera. Tira il gomito indietro tenendo le spalle quadrate, 1 secondo, rilascia lento. E\' la parte di dorso del renegade senza il plank, da usare quando le spalle sono gia\' cotte. Reps per lato.'}]},
   // c50 (16/09/2026) — la panca lombare a 45\u00b0 E' CONFERMATA nella dotazione (risposta di
   // Simone, 16/09). Fino a ieri non lo era, ed e' il motivo per cui c39 Superman prescriveva
   // "a terra, non su panca 45\u00b0": \u00a74-quater esiste perche' un esercizio impossibile era
@@ -422,7 +533,9 @@ const DB={
   // che le mancava, e due esercizi in pool su uno slot: alterna col Renegade a ogni comparsa.
   {id:'c50',cat:'core',zona:'F',name:'Back Extension con disco',video:'core-back-extension-disco.mp4',
    desc:'Panca a 45\u00b0, cuscino appena sotto le creste iliache — se appoggia sulle cosce non riesci a flettere l\'anca, se appoggia sulla pancia ti schiaccia. Un disco stretto al petto con le braccia incrociate. Scendi piegandoti dall\'ANCA con la schiena neutra, poi risali fino alla linea del corpo e fermati li\': non inarcare oltre, l\'iperestensione non aggiunge lavoro, aggiunge compressione. Un secondo in alto, giu\' lento in 3s. E\' il Superman reso progressivo: non si allungano le reps, si aggiunge disco.',
-   muscles:'Erettori spinali, Catena posteriore',primary:'erettori',attrezzo:'dischi',reps:8,repsMax:10,sets:3,band:'10kg',restSec:60,stima:true},
+   muscles:'Erettori spinali, Catena posteriore',primary:'erettori',attrezzo:'dischi',reps:8,repsMax:10,sets:3,band:'10kg',restSec:60,stima:true,
+   varianti:[{modo:'macchina',name:'Back Extension alla Macchina',band:'30kg',video:'',desc:'Seduto, schiena contro il cuscino, bacino bloccato. Estendi il busto all\'indietro fino alla linea del corpo, 1 secondo, torna in 3 secondi senza farti riportare di scatto. Il carico e\' a pacco pesi e non a testa in giu\': e\' la variante da usare quando la pressione alla testa da\' fastidio.'},
+             {modo:'bilanciere',name:'Good Morning con Bilanciere',band:'25kg',video:'',desc:'Bilanciere sulle spalle, ginocchia morbide, piedi larghezza bacino. Manda il bacino indietro piegando il busto fino a 45 gradi con la schiena NEUTRA, poi risali contraendo glutei ed erettori. Carico leggero e tecnica pulita: qui si sbaglia in fretta e lo paga la lombare.'}]},
  ],
  // ─ Finisher cardio: un blocco corto a fine seduta, ruota per giorno (09/08/2026).
  //   Volutamente breve (3×30s): con recupero percepito basso il cardio serve come spesa,
@@ -755,7 +868,8 @@ const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
  c9:2,
  c1:3,c2:3,c3:3,c4:3,c7:3,c10:3,c12:3,c13:3,c16:3,    // brace forte o gambe sospese
  c17:3,c19:3,c20:3,c22:3,c24:3,c26:3,c28:3,
- c34:3,c44:3,c45:2,                                   // caricati ma senza apnea vera (c45 supino: la testa appoggia)
+ c33:3,                                               // rotazione in piedi al cavo: caricata ma senza apnea vera
+ c53:2,c54:2,                                         // corpo libero, collo neutro: plank alto e prono
  // c44 e c45 sono entrati l'11/09/2026 e fino al 16/09 NON erano elencati qui: cadevano sul
  // default 1 di `recoveryAllows`, cioe' ammessi in fase 1 — un reverse crunch zavorrato nella
  // fase piu' fragile del post-operatorio. Stesso difetto latente gia' visto sui `c*` (23/08) e
@@ -767,7 +881,12 @@ const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
  // l'esercizio spinge su pressione intra-addominale e testa in basso, non quanto e' duro.
  c47:3,c48:3,                                         // a terra, collo neutro: gemelli di c37 e c42
  c49:9,c50:9,                                         // rematore in plank e estensione carica a testa in giu'
- c30:9,c41:9};                                        // carico pieno: mai in recupero
+ c51:9,c52:9,c41:9};                                  // carico pieno o gambe sospese: mai in recupero
+// 16/09/2026, secondo giro (verdetto di Simone sulla pagina di review): fuori c30, c34, c44,
+// c38, c45 — dentro c51 Sit-up su panca (A), c33 Cable Woodchopper che torna (D), c52 Leg
+// Raise su panca (C), c53 Plank con gamba alta e c54 Superman (F, ramo casa). Le chiavi si
+// scrivono INSIEME alla riga: e' la chiave mancante a essere pericolosa, perche' il default
+// di `recoveryAllows` e' 1, cioe' la fase piu' fragile del post-operatorio.
 // Usciti da questa mappa il 16/09/2026 perche' ritirati dal DB: c31, c32, c33, c36, c37, c39,
 // c46. Una chiave che punta a un id inesistente non fa danno (`recoveryAllows` legge per id),
 // ma e' un inventario che mente: il posto dove si guarda "quali esercizi esistono" e' il DB.
@@ -908,22 +1027,59 @@ function attrezzatura(){try{return (S.aiDB.coachPlan&&S.aiDB.coachPlan.global&&S
 // `dischi` (disco stretto al petto: c44, c50) aggiunto il 16/09/2026 — mancava e cadeva sul
 // return 2.5 di stepDi. Il carico e' UN disco, non due per lato: 1,25 e' il piu' piccolo della
 // rastrelliera. Copia IDENTICA in workout-coach/coach_llm.py (STEP_ATTREZZO): si cambiano insieme.
+// ─── TRE MODALITA' PER ESERCIZIO (16/09/2026) ────────────────────────────────
+// Decisione di Simone: ogni esercizio della palestra si puo' fare in tre modi (macchinario,
+// manubri, cavi — o bilanciere/dischi dove il cavo non esiste come gesto), e la scelta si fa
+// SUL SINGOLO ESERCIZIO, in palestra, quando scopri che la panca e' occupata. Non a inizio
+// seduta e non come ripiego dichiarato: sono tre modi pari.
+// La riga del catalogo E' la variante di default (name/desc/band/attrezzo/video sono suoi):
+// `varianti` porta SOLO le altre due. Una lista a parte che le contenesse tutte e tre sarebbe
+// un secondo inventario, e divergerebbe dal catalogo al primo carico corretto a mano.
+// La progressione e' SEPARATA per variante: 20kg di manubrio e 40kg alla macchina non sono
+// lo stesso numero, e un coach che li mediasse scriverebbe un carico che non esiste. Da qui
+// la chiave `id#modo` in loads/progression/coachPlan — con ripiego sulla chiave nuda `id`
+// finche' quella per variante non esiste, cosi' lo storico scritto prima di oggi (e il piano
+// che il coach scrive stanotte) continua a valere per la variante di default.
+var MODI_LABEL={macchina:'Macchina',manubri:'Manubri',cavo:'Cavi',bilanciere:'Bilanciere',dischi:'Disco','corpo libero':'Corpo libero'};
+function variantiDi(cat){
+ if(!cat)return [];
+ var base={modo:cat.attrezzo||'corpo libero',name:cat.name,band:cat.band||'',desc:cat.desc,video:cat.video||'',muscles:cat.muscles,stima:!!cat.stima};
+ return [base].concat((cat.varianti||[]).map(function(v){
+  return {modo:v.modo,name:v.name,band:v.band||'',desc:v.desc,video:v.video||'',muscles:v.muscles||cat.muscles,stima:v.stima!==false};
+ }));
+}
+function modoDi(e){var c=exById(baseExId(e.id));return e.attrezzo||(c&&c.attrezzo)||'';}
+// Chiave di progressione/carico. `legacy` e' la chiave nuda: vale SOLO per la variante di
+// default, cioe' esattamente il caso in cui lo storico di prima del 16/09 parla di questo.
+function chiaveVar(e){
+ var id=baseExId(e.id),cat=exById(id),modo=modoDi(e),def=(cat&&cat.attrezzo)||'';
+ return {k:modo?(id+'#'+modo):id, legacy:(modo===def?id:null), id:id, modo:modo};
+}
+function leggiPerVariante(mappa,e){
+ if(!mappa)return null;
+ var c=chiaveVar(e);
+ return mappa[c.k]||(c.legacy?mappa[c.legacy]:null)||null;
+}
 var STEP_ATTREZZO={manubri:2,bilanciere:2.5,macchina:5,cavo:5,dischi:1.25};
-function stepDi(id){
+function stepDi(id,modo){
  // Prima il coachPlan (puo' correggere), poi il DB. Fino al 22/08/2026 leggeva SOLO il
  // coachPlan e cadeva su 2,5 (il passo del bilanciere) per tutto cio' che il coach non
  // aveva ancora toccato: un manubrio nuovo saliva di 2,5kg invece che di 2, e un cavo
  // di 2,5 invece che di 5. L'attrezzo e' un fatto dell'esercizio, e sta nella sua riga.
- var a='';try{a=((S.aiDB.coachPlan.perExercise[id]||{}).attrezzo||'').toLowerCase();}catch(e){}
- if(!a){var e=exById(id);a=((e&&e.attrezzo)||'').toLowerCase();}
+ // Dal 16/09/2026 l'attrezzo puo' essere quello della VARIANTE scelta in palestra, che non
+ // e' quello del catalogo: chi conosce il modo lo passa, e allora comanda quello — un
+ // esercizio fatto alla macchina sale di 5kg anche se in catalogo e' di manubri.
+ var a=(modo||'').toLowerCase();
+ if(!a){try{a=((S.aiDB.coachPlan.perExercise[id]||{}).attrezzo||'').toLowerCase();}catch(e){}}
+ if(!a){var e=exById(baseExId(id));a=((e&&e.attrezzo)||'').toLowerCase();}
  for(var k in STEP_ATTREZZO){if(a.indexOf(k)>=0)return STEP_ATTREZZO[k];}
  return 2.5;
 }
-function nextBandStep(band,id){
+function nextBandStep(band,id,modo){
  // Elastici: +5kg (la banda più piccola). Palestra: un passo dell'attrezzo — +5 su un
  // manubrio è un salto del 25%, non una progressione.
  if(!band)return band;
- var st=attrezzatura()==='palestra'?stepDi(id):5;
+ var st=attrezzatura()==='palestra'?stepDi(id,modo):5;
  return band.replace(/\d+(?:[.,]\d+)?/g,function(m){
   var v=parseFloat(m.replace(',','.'))+st;
   return String(v%1===0?v:v.toFixed(1));
@@ -934,10 +1090,28 @@ function snapKg(kg){var v=parseFloat((''+kg).replace(/kg/i,'').replace(',','.'))
 // dell'attrezzo, e riarrotondarlo qui a multipli di 5 col tetto 80 vorrebbe dire
 // riscrivere 12kg di manubrio in 10 e uno squat da 100 in 80.
 function snapBand(band){if(!band||attrezzatura()==='palestra')return band;var m=(''+band).match(/\d+(?:[.,]\d+)?(?!.*\d)/);if(!m)return band;var s=snapKg(m[0]);return s==null?band:s+'kg';}
+// La variante che trovi in scheda e' l'ULTIMA che hai scelto (`aiDB.varLast`), non per
+// sempre quella del catalogo: se alla panca ci vai sempre alla macchina, la scheda deve
+// aprirsi li'. Resta una scelta di un tocco, e le tre modalita' sono sempre tutte e tre
+// sullo schermo. Vive dentro `withCoachOverride` perche' i punti in cui un esercizio nasce
+// sono quattro (seduta palestra, core, full-body, tasto "Cambia") e passano tutti di qui:
+// metterlo in uno solo vorrebbe dire una scheda che cambia identita' a seconda di come sei
+// arrivato all'esercizio.
+function conVariante(e){
+ var id=baseExId(e.id),cat=exById(id);
+ if(!cat||!cat.varianti||!cat.varianti.length)return e;
+ var last=(S.aiDB.varLast&&S.aiDB.varLast[id]&&S.aiDB.varLast[id].modo)||'';
+ if(!last||last===(e.attrezzo||cat.attrezzo||''))return e;
+ var vs=variantiDi(cat),v=null;
+ for(var i=0;i<vs.length;i++)if(vs[i].modo===last)v=vs[i];
+ if(!v)return e;
+ return Object.assign({},e,{name:v.name,desc:v.desc,video:v.video,muscles:v.muscles,attrezzo:v.modo,band:v.band,stima:v.stima});
+}
 function withCoachOverride(e){
+ e=conVariante(e);
  // Precedenza: coachPlan (Sumi) > progression (regola meccanica) > carico reale (chat/manuale) > DB
- var cp=(S.aiDB.coachPlan&&S.aiDB.coachPlan.perExercise&&S.aiDB.coachPlan.perExercise[e.id]);
- var pr=(S.aiDB.progression&&S.aiDB.progression[e.id]);
+ var cp=leggiPerVariante(S.aiDB.coachPlan&&S.aiDB.coachPlan.perExercise,e);
+ var pr=leggiPerVariante(S.aiDB.progression,e);
  var o=cp||pr;
  var ov={};
  if(o){
@@ -966,7 +1140,7 @@ function withCoachOverride(e){
  }
  // Nessuna band dal coach? Usa il tuo carico reale (chat o impostato a mano) al posto del range generico
  if(!ov.band){
-  var ld=S.aiDB.loads&&S.aiDB.loads[e.id];
+  var ld=leggiPerVariante(S.aiDB.loads,e);
   if(ld&&(ld.kg||ld.kg===0)){
    ov.band=(''+ld.kg).replace(/kg/i,'')+'kg';
    if(!ov.coachNote){ov.coachNote='tuo carico'+(ld.manual?'':' (da chat)')+' · '+(ld.date||'');ov.coachSrc='mech';}
@@ -998,7 +1172,13 @@ function computeProgression(session){
    var sets=r.reps,max=r.max||r.target||8,target=r.target||8,nSets=sets.length;
    var allTop=sets.every(function(x){return x>=max;});
    var allBelow=sets.every(function(x){return x<target;});
-   var prevProg=S.aiDB.progression[id]||{};
+   // La chiave e' `id#modo` (16/09/2026): la stessa panca fatta coi manubri e alla macchina
+   // sono due progressioni, non una media. `r.attrezzo` e' l'attrezzo con cui la seduta e'
+   // stata CHIUSA — lo scrive logReps a ogni serie, quindi vale anche se hai cambiato
+   // variante a meta' esercizio. Manca (sedute di prima del 16/09)? Allora il modo e' quello
+   // del catalogo, che e' esattamente la variante di default: la chiave nuda regge.
+   var ck=chiaveVar({id:id,attrezzo:r.attrezzo||''});
+   var prevProg=S.aiDB.progression[ck.k]||(ck.legacy?S.aiDB.progression[ck.legacy]:null)||{};
    var cur=prevProg.band||r.band||'';
    var hasBand=!!cur; // niente elastico → esercizio a corpo libero, progressione su reps invece che su carico
    var entry={name:r.name,date:dayKey(),lastReps:sets};
@@ -1024,8 +1204,8 @@ function computeProgression(session){
    } else if(allTop&&nSets>=2){
     if(pos!=null)entry.posAumento=pos;
     if(hasBand){
-     entry.band=nextBandStep(cur,id);
-     entry.note='+'+(attrezzatura()==='palestra'?stepDi(id):5)+'kg: chiuso il max ('+sets.join(',')+')';
+     entry.band=nextBandStep(cur,id,ck.modo);
+     entry.note='+'+(attrezzatura()==='palestra'?stepDi(id,ck.modo):5)+'kg: chiuso il max ('+sets.join(',')+')';
     } else {
      var curTarget=prevProg.reps||target,curMax=prevProg.repsMax||max;
      if(curMax>=25){
@@ -1041,7 +1221,12 @@ function computeProgression(session){
    } else {
     entry.band=cur;entry.note='In progressione ('+sets.join(',')+') — punta a chiudere il range';
    }
-   S.aiDB.progression[id]=Object.assign({},S.aiDB.progression[id],entry);
+   if(ck.modo)entry.attrezzo=ck.modo;
+   S.aiDB.progression[ck.k]=Object.assign({},prevProg,entry);
+   // Migrazione: la voce nuda dello stesso esercizio ha appena finito di servire (l'abbiamo
+   // letta come `prevProg` e riscritta sotto la chiave per variante). Lasciarla li' sarebbe
+   // un secondo inventario che da domani diverge in silenzio.
+   if(ck.legacy&&ck.legacy!==ck.k&&S.aiDB.progression[ck.legacy])delete S.aiDB.progression[ck.legacy];
   });
   sv('ai',S.aiDB);
  }catch(e){console.error('computeProgression:',e);}
@@ -1144,8 +1329,12 @@ function buildCoreCircuit(idx,home,gaps,opts){
   var base=applyAdaptation(withCoachOverride(Object.assign({},e,{
    isCore:true,isTime:isT,sets:isT?(e.perSide?1:giri):(e.sets||3)})));
   if(!isT||!e.perSide){core.push(base);return;}
-  core.push(Object.assign({},base,{id:e.id+'-L1',name:e.name+' · 1° lato',perSide:true}));
-  core.push(Object.assign({},base,{id:e.id+'-L2',name:e.name+' · 2° lato',perSide:true,desc:'CAMBIA LATO. '+base.desc}));
+  // `latoLabel`/`latoDesc` (16/09/2026): il lato e' una proprieta' dello SLOT, non del nome.
+  // Serve a `cambiaVariante`, che riscrive nome e descrizione con quelli della variante: senza
+  // questi due campi il secondo blocco perderebbe il "2° lato" e il "CAMBIA LATO", e faresti
+  // due volte lo stesso fianco senza accorgertene.
+  core.push(Object.assign({},base,{id:e.id+'-L1',name:e.name+' · 1° lato',latoLabel:' · 1° lato',perSide:true}));
+  core.push(Object.assign({},base,{id:e.id+'-L2',name:e.name+' · 2° lato',latoLabel:' · 2° lato',latoDesc:'CAMBIA LATO. ',perSide:true,desc:'CAMBIA LATO. '+base.desc}));
  });
  return{circuit:circuit,core:core,zone:zone};
 }
@@ -2324,9 +2513,10 @@ function rWorkout(){
   +'</div>'
   +'<div class="font-display" style="font-size:34px;font-weight:800;letter-spacing:-.2px;margin-bottom:10px;line-height:1">'+ex.name+'</div>'
   +(step.amrap?'<div class="tag-core">AMRAP · ULTIMA SERIE — MASSIME REPS PULITE</div>':'')
+  +variantiHtml(ex,step.exIdx,ac)
   +(ex.band?(bandNumOnly(ex.band)!==null
     ?'<div style="border:2px solid '+ac+';color:'+ac+';padding:6px 8px 6px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
-     +'<span style="font-weight:700;font-size:12px;letter-spacing:1.5px;text-transform:uppercase">'+(ex.attrezzo||(attrezzatura()==='palestra'?'Carico':'Elastico'))+(ex.stima?' · da tarare':'')+'</span>'
+     +'<span style="font-weight:700;font-size:12px;letter-spacing:1.5px;text-transform:uppercase">'+(haVarianti(ex)?'Carico':(ex.attrezzo||(attrezzatura()==='palestra'?'Carico':'Elastico')))+(ex.stima?' · da tarare':'')+'</span>'
      +'<span style="display:flex;align-items:center;gap:8px">'
      +'<button onclick="bumpLoad(\''+ex.id+'\',-1)" style="background:transparent;border:2px solid '+ac+';color:'+ac+';width:38px;height:38px;border-radius:10px;font-size:20px;font-weight:900;line-height:1;cursor:pointer">−</button>'
      +'<span style="font-family:monospace;font-size:22px;font-weight:900;min-width:82px;text-align:center">'+ex.band+'</span>'
@@ -2428,7 +2618,8 @@ function logReps(n){
  var step=S.wSteps[S.wStepIdx];var ex=step&&step.ex;
  // `band` riscritta a ogni serie, non solo alla prima: con − e + il carico puo' cambiare a
  // meta' esercizio, e nel foglio deve finire quello con cui hai davvero chiuso.
- if(ex){if(!S.wReps[ex.id])S.wReps[ex.id]={name:ex.name,target:ex.reps,max:ex.repsMax||ex.reps,band:ex.band||'',reps:[]};S.wReps[ex.id].band=ex.band||'';S.wReps[ex.id].reps.push(n);}
+ if(ex){if(!S.wReps[ex.id])S.wReps[ex.id]={name:ex.name,target:ex.reps,max:ex.repsMax||ex.reps,band:ex.band||'',reps:[]};
+  var rr=S.wReps[ex.id];rr.band=ex.band||'';rr.name=ex.name;rr.attrezzo=ex.attrezzo||'';rr.reps.push(n);}
  S.wAwaitReps=false;S.wRepsSotto=false;S.wSets++;advStep();
 }
 // ─── CARICO MODIFICABILE IN SCHEDA (16/09/2026) ──────────────────────────────
@@ -2448,17 +2639,60 @@ function baseExId(id){return (''+id).replace(/-L[12]$/,'');}    // c47-L1 e c47-
 // ha un passo: sommare a ogni addendo darebbe un carico che non esiste nel cassetto.
 function bandNumOnly(band){var m=(''+band).match(/^\s*(\d+(?:[.,]\d+)?)\s*kg\s*$/i);return m?parseFloat(m[1].replace(',','.')):null;}
 function bumpLoad(id,dir){
- var bid=baseExId(id),cur=null;
- (S.wEx||[]).forEach(function(x){if(baseExId(x.id)===bid&&cur===null)cur=bandNumOnly(x.band);});
+ var bid=baseExId(id),cur=null,rif=null;
+ (S.wEx||[]).forEach(function(x){if(baseExId(x.id)===bid&&cur===null&&bandNumOnly(x.band)!==null){cur=bandNumOnly(x.band);rif=x;}});
  if(cur===null)return;
- var st=attrezzatura()==='palestra'?stepDi(bid):5;
+ var ck=chiaveVar(rif);                          // il carico e' della VARIANTE che hai in mano
+ var st=attrezzatura()==='palestra'?stepDi(bid,ck.modo):5;
  var v=Math.round((cur+dir*st)*100)/100;
  if(v<st)v=st;                                   // sotto un passo non c'e' carico: il minimo e' il passo
  var band=v+'kg';
  (S.wEx||[]).forEach(function(x){if(baseExId(x.id)===bid){x.band=band;x.stima=false;}});
- var cat=exById(bid);
  if(!S.aiDB.loads)S.aiDB.loads={};
- S.aiDB.loads[bid]={kg:String(v),name:(cat&&cat.name)||bid,date:dayKey(),updatedAt:new Date().toISOString(),manual:true};
+ S.aiDB.loads[ck.k]={kg:String(v),name:(rif&&rif.name)||bid,attrezzo:ck.modo,date:dayKey(),updatedAt:new Date().toISOString(),manual:true};
+ sv('ai',S.aiDB);
+ render();
+}
+// I tre bottoni sopra il carico. Sempre tutti e tre: quello acceso e' quello che stai
+// facendo, gli altri due sono a un tocco. Non c'e' un "ripiego": sono tre modi pari.
+function haVarianti(ex){var c=exById(baseExId(ex.id));return !!(c&&c.varianti&&c.varianti.length);}
+function variantiHtml(ex,slot,ac){
+ var cat=exById(baseExId(ex.id));
+ if(!haVarianti(ex))return '';
+ var cur=modoDi(ex);
+ var chips=variantiDi(cat).map(function(v){
+  var sel=v.modo===cur;
+  return '<button onclick="cambiaVariante('+slot+',\''+v.modo+'\')" style="flex:1;background:'+(sel?ac:'transparent')+';border:2px solid '+(sel?ac:'#27272a')+';color:'+(sel?'#09090b':'#71717a')+';border-radius:10px;padding:9px 4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">'+(MODI_LABEL[v.modo]||v.modo)+'</button>';
+ }).join('');
+ return '<div style="display:flex;gap:6px;margin-bottom:8px">'+chips+'</div>';
+}
+// Cambio di modalita' a seduta in corso: la panca e' occupata, vai alla macchina. Cambia
+// l'ESERCIZIO (nome, descrizione, clip, attrezzo, carico della variante), non la struttura
+// della seduta: serie, riposi, tempi e lato restano quelli dello slot, quindi il numero di
+// step non cambia e resti esattamente dove sei — anche a meta' esercizio.
+function cambiaVariante(slot,modo){
+ var ex=S.wEx&&S.wEx[slot];if(!ex)return;
+ var bid=baseExId(ex.id),cat=exById(bid);if(!cat)return;
+ if(modoDi(ex)===modo)return;
+ var vs=variantiDi(cat),v=null;
+ for(var i=0;i<vs.length;i++)if(vs[i].modo===modo)v=vs[i];
+ if(!v)return;
+ // varLast PRIMA della ricostruzione: withCoachOverride legge di li' per sapere che
+ // identita' dare alla riga, e il carico giusto e' quello della variante nuova.
+ if(!S.aiDB.varLast)S.aiDB.varLast={};
+ S.aiDB.varLast[bid]={modo:modo,date:dayKey(),updatedAt:new Date().toISOString()};
+ var ne=S.wEx.slice();
+ ne.forEach(function(x,i){
+  if(baseExId(x.id)!==bid)return;               // un unilaterale del core ha due righe: cambiano insieme
+  var nx=applyAdaptation(withCoachOverride(Object.assign({},cat,{id:x.id})));
+  nx=Object.assign({},nx,{sets:x.sets,restSec:x.restSec,isCore:x.isCore,isCardio:x.isCardio,
+                          isExtra:x.isExtra,isTime:x.isTime,time:x.time,perSide:x.perSide,
+                          latoLabel:x.latoLabel,latoDesc:x.latoDesc});
+  if(x.latoLabel)nx.name=nx.name+x.latoLabel;
+  if(x.latoDesc)nx.desc=x.latoDesc+nx.desc;
+  ne[i]=nx;
+ });
+ S.wEx=ne;S.wSteps=buildSteps(ne);
  sv('ai',S.aiDB);
  render();
 }
