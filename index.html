@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-16c · passo dei dischi dichiarato'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-16d · carico con ± · gambe fuori · pulizie'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -681,7 +681,12 @@ const PLAN=[
  // conta — che e' lo stesso scambio volume->intensita' gia' fatto sul core il 23/08.
  // Reversibile in una riga se il giorno risultasse corto.
  {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4},            must:['r6','r1','r3'],    desc:'Dorsali (verticale + orizzontale) · Bicipiti'},
- {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:4},            must:['l3','l5'],    desc:'Quadricipiti · Femorali · Glutei'},
+ // LEGS fuori dalla rotazione il 16/09/2026: Simone ha cominciato a correre tutti i
+ // giorni e le gambe hanno gia' il loro stimolo quotidiano. E' un "al momento", non una
+ // cancellazione: gli `l*` restano nel catalogo (FULL-BODY ne pesca due, e la riga torna
+ // qui in un secondo se la corsa si ferma). Il ciclo passa da 6 a 5 giorni — nessun
+ // numero scritto a mano: la lunghezza e' `PLAN.length`.
+ // {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:4},            must:['l3','l5'],    desc:'Quadricipiti · Femorali · Glutei'},
  {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:2},must:['p6','s1'],desc:'Petto (adduzione) · Tricipiti · Spalle'},
  {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4,shoulders:1},must:['r4','s4'],    desc:'Dorsali · Bicipiti (hammer) · Delt. post.'},
  {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:2,legs:1,shoulders:1},must:['l3'],desc:'Corpo completo · Mix intelligente'},
@@ -1167,7 +1172,7 @@ function genWorkout(splitIdx,opts){
  opts=opts||{};
  var home=!!opts.home;
  var SRC=function(cat){return (home&&HOME_DB[cat])||DB[cat]||[];};
- var split=PLAN[splitIdx%6];
+ var split=PLAN[splitIdx%PLAN.length];
  var adapt=S.aiDB.adaptation||{};
  var avoid=adapt.avoidExercises||[];
  var suggest=adapt.suggestExercises||[];
@@ -1389,15 +1394,13 @@ function genFullBody(){
 }
 function buildSteps(all){
  var s=[];
- var coreIntroAdded=false;
  all.forEach(function(ex,ei){
   if(ex.isCore){
-   // Inserisci schermata intro + countdown 10s prima del primo esercizio core
-   if(!coreIntroAdded){
-    coreIntroAdded=true;
-    s.push({type:'core_intro'});
-    s.push({type:'rest',dur:10,isCoreEntry:true,nextName:''});
-   }
+   // 16/09/2026: via la schermata ADDOMINALI e il countdown di 10s che la seguiva. In
+   // palestra il core e' fatto di caricabili, cioe' di esercizi con serie e reps come gli
+   // altri: annunciare un "circuito" che non c'e' piu' era una porta su una stanza tolta.
+   // E il passaggio e' comunque coperto: l'esercizio prima chiude con un riposo che gia'
+   // dichiara il prossimo nome e aspetta il PRONTO.
    if(ex.isBreak){
     // Pausa 30s — step di rest speciale
     s.push({type:'rest',dur:30,isCoreBreak:true,nextName:all[ei+1]?all[ei+1].name:''});
@@ -1425,8 +1428,8 @@ function buildSteps(all){
     var ts=ex.sets||3;
     for(var k=1;k<=ts;k++){
      s.push({type:'work',ex:ex,exIdx:ei,setNum:k,totalSets:ts,amrap:(k===ts)});
-     if(k<ts)s.push({type:'rest',dur:(ex.restSec||60),isSetRest:true,isCoreRest:true,nextName:ex.name,nextBand:ex.band||null});
-     else if(ei<all.length-1&&!all[ei+1].isBreak)s.push({type:'rest',dur:(ex.restSec||60),isSetRest:false,isCoreRest:true,nextName:all[ei+1].name,nextBand:all[ei+1].band||null});
+     if(k<ts)s.push({type:'rest',dur:(ex.restSec||60),isSetRest:true,isCoreRest:true,nextName:ex.name});
+     else if(ei<all.length-1&&!all[ei+1].isBreak)s.push({type:'rest',dur:(ex.restSec||60),isSetRest:false,isCoreRest:true,nextName:all[ei+1].name});
     }
    }
   } else {
@@ -1434,8 +1437,8 @@ function buildSteps(all){
    for(var i=1;i<=ts2;i++){
     // Ultima serie a carico = AMRAP: sfonda il tetto del range così la regola di progressione (tutte le serie ≥ repsMax) scatta prima
     s.push({type:'work',ex:ex,exIdx:ei,setNum:i,totalSets:ts2,amrap:(i===ts2)});
-    if(i<ts2) s.push({type:'rest',dur:(ex.restSec||90),isSetRest:true,nextName:ex.name,nextBand:ex.band||null});
-    else if(ei<all.length-1) s.push({type:'rest',dur:60,isSetRest:false,nextName:all[ei+1].name,nextBand:all[ei+1].band||null});
+    if(i<ts2) s.push({type:'rest',dur:(ex.restSec||90),isSetRest:true,nextName:ex.name});
+    else if(ei<all.length-1) s.push({type:'rest',dur:60,isSetRest:false,nextName:all[ei+1].name});
    }
   }
  });
@@ -1799,7 +1802,7 @@ function updateFloatAI(){
 // carichi/progressione (quelli si muovono dalle reps loggate). Stessa persistenza di
 // finishSession: senza splitIdxUpdatedAt il merge da Drive rimetterebbe il giorno vecchio.
 async function skipDay(){
- var t=PLAN[S.splitIdx%6],nx=PLAN[(S.splitIdx+1)%6];
+ var t=PLAN[S.splitIdx%PLAN.length],nx=PLAN[(S.splitIdx+1)%PLAN.length];
  if(!confirm('Salti '+t.name+' e passi a '+nx.name+'?\n\nNessuna seduta viene registrata.'))return;
  S.splitIdx=(S.splitIdx||0)+1;
  S.aiDB.splitIdx=S.splitIdx;S.aiDB.splitIdxUpdatedAt=new Date().toISOString();
@@ -1847,12 +1850,12 @@ function rAlerts(){
  return out;
 }
 function rHome(){
- var t=PLAN[S.splitIdx%6];
+ var t=PLAN[S.splitIdx%PLAN.length];
  var last=S.history[S.history.length-1];
  var wk=S.history.filter(function(h){return new Date(h.date)>new Date(Date.now()-7*864e5);}).length;
  var cycle='';
  PLAN.forEach(function(sp,i){
-  var cur=i===S.splitIdx%6,done=i<S.splitIdx%6;
+  var cur=i===S.splitIdx%PLAN.length,done=i<S.splitIdx%PLAN.length;
   var bg=cur?'#F97316':done?'#27272a':'transparent',fg=cur?'#000':done?'#fafafa':'#52525b',bd=cur?'#F97316':'#27272a';
   cycle+='<div style="flex:1;border:2px solid '+bd+';background:'+bg+';color:'+fg+';text-align:center;padding:11px 0;font-weight:700;font-size:15px">'+('0'+(i+1))+'</div>';
  });
@@ -1863,7 +1866,7 @@ function rHome(){
  return '<div class="pg" style="padding:0 0 90px">'
   +'<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #27272a;padding:14px 16px">'
   +'<span class="lbl" style="font-size:12px">COACH // SIMONE</span>'
-  +'<button onclick="go(\'profile\')" style="background:none;border:none;color:#F97316;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:Space Grotesk">GIORNO 0'+((S.splitIdx%6)+1)+'/6 · PROFILO ›</button>'
+  +'<button onclick="go(\'profile\')" style="background:none;border:none;color:#F97316;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:Space Grotesk">GIORNO 0'+((S.splitIdx%PLAN.length)+1)+'/'+PLAN.length+' · PROFILO ›</button>'
   +'<button onclick="skipDay()" style="background:none;border:none;color:#71717a;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:Space Grotesk;padding-left:12px">SALTA ›</button>'
   +'</div>'
   +'<div class="marq-wrap"><span class="marq">'+marqTxt+marqTxt+'</span></div>'
@@ -1877,14 +1880,14 @@ function rHome(){
    ?'<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px"><div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:8px">'+S.nutReminderCount+' giorni senza nutrizione</div><div style="display:flex;gap:8px"><button class="btn" style="background:#27272a;color:#fff;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;startWorkout(S.wMode)">Fai dopo</button><button class="btn" style="background:#f59e0b;color:#000;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;openNutrition()">Compila</button></div></div>'
    :'')
   +'<button class="btn" style="background:#F97316;color:#fff;border:2px solid #fafafa;margin:0;padding:26px;font-size:28px" onclick="startWorkout()">Inizia</button>'
-  +'<button class="btn" style="background:transparent;color:#22c55e;border:2px solid #22c55e;margin:10px 0 0;padding:14px;font-size:14px;font-weight:700;letter-spacing:1px" onclick="startWorkout(\'fullbody\')">⌂ FULL-BODY · corpo libero, il giorno slitta</button>'
-  +'<button class="btn" style="background:transparent;color:#22d3ee;border:2px solid #22d3ee;margin:8px 0 0;padding:14px;font-size:14px;font-weight:700;letter-spacing:1px" onclick="startWorkout(\'corecasa\')">◆ CORE CASA · il giro di oggi</button>'
+  +'<button class="btn" style="background:transparent;color:#F97316;border:2px solid #F97316;margin:10px 0 0;padding:14px;font-size:14px;font-weight:700;letter-spacing:1px" onclick="startWorkout(\'fullbody\')">⌂ FULL-BODY · corpo libero, il giorno slitta</button>'
+  +'<button class="btn" style="background:transparent;color:#F97316;border:2px solid #F97316;margin:8px 0 0;padding:14px;font-size:14px;font-weight:700;letter-spacing:1px" onclick="startWorkout(\'corecasa\')">◆ CORE CASA · il giro di oggi</button>'
   +'<div style="display:flex;border:2px solid #27272a;margin-top:16px">'
   +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+S.history.length+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Sessioni</div></div>'
   +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+(last?last.duration+"'":'—')+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Ultima</div></div>'
-  +'<div style="flex:1;padding:16px"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+wk+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">/6 sett</div></div>'
+  +'<div style="flex:1;padding:16px"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+wk+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">/'+PLAN.length+' sett</div></div>'
   +'</div>'
-  +'<div class="lbl" style="font-size:11px;color:#a1a1aa;margin:18px 0 8px">Ciclo 6 giorni</div>'
+  +'<div class="lbl" style="font-size:11px;color:#a1a1aa;margin:18px 0 8px">Ciclo '+PLAN.length+' giorni</div>'
   +'<div style="display:flex;gap:6px">'+cycle+'</div>'
   +'<div style="display:flex;gap:6px;margin-top:16px">'
   // "Storico" e' sparito il 03/08/2026: storico e grafici si leggono in Sumi Legacy.
@@ -1967,7 +1970,7 @@ var SORE_MUSCLES=['Petto','Tricipiti','Spalle','Dorsali','Bicipiti','Quadricipit
 var SPLIT_MUSCLES={'push':['Petto','Tricipiti','Spalle'],'push2':['Petto','Tricipiti','Spalle'],'pull':['Dorsali','Bicipiti'],'pull2':['Dorsali','Bicipiti','Spalle'],'legs':['Quadricipiti','Glutei','Femorali'],'full':['Petto','Tricipiti','Dorsali','Bicipiti','Quadricipiti']};
 function buildPreWorkoutComment(){
  var ans=S.preWQAns||{};
- var todaySplit=PLAN[S.splitIdx%6];
+ var todaySplit=PLAN[S.splitIdx%PLAN.length];
  var doms=ans.domsActual||1;
  var recov=ans.recoveryFeel||2;
  var sore=ans.soreMuscles||[];
@@ -1995,7 +1998,7 @@ function rPreWorkoutCheck(){
  var lastSession=(S.history||[]).slice(-1)[0];
  var lastDate=sessionDay(lastSession&&lastSession.date)||'?';
  var lastSplit=lastSession&&lastSession.split?(lastSession.split.emoji+' '+lastSession.split.name):'?';
- var todaySplit=PLAN[S.splitIdx%6];
+ var todaySplit=PLAN[S.splitIdx%PLAN.length];
  var phase=S.preWQPhase||'doms';
  var wrap='<div style="position:fixed;inset:0;background:#09090b;z-index:200;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">'
   +'<div style="width:100%;max-width:360px">'
@@ -2111,7 +2114,7 @@ function startWorkout(mode){
  launchWorkout();
 }
 function startTrialWorkout(){
- var idx=(S.splitIdx+Math.floor(Math.random()*5)+1)%6;
+ var idx=(S.splitIdx+Math.floor(Math.random()*(PLAN.length-1))+1)%PLAN.length;
  var w=genWorkout(idx,{home:false});
  S.wSplit=w.split;S.wEx=w.all;S.wSteps=buildSteps(w.all);
  S.wStepIdx=0;S.wSets=0;S.wStartTime=Date.now();S.wReps={};S.wAwaitReps=false;S.wRepsSotto=false;
@@ -2226,24 +2229,7 @@ function rWorkout(){
  }
 
  // ── REST: transizione core (8s), pausa core (30s), riposo normale ───────────
- if(step.type==='core_intro'){
-  return '<div class="center" style="background:#09090b">'
-   +'<div style="font-size:60px;margin-bottom:12px"></div>'
-   +'<div style="font-size:30px;font-weight:900;margin-bottom:8px;letter-spacing:1px">ADDOMINALI</div>'
-   +'<div style="color:#52525b;font-size:13px;margin-bottom:32px">Preparati per il circuito core</div>'
-   +'<button class="btn" style="background:#f97316;width:auto;padding:16px 40px;font-size:16px" onclick="advStep()">PRONTO </button>'
-   +'</div>';
- }
  if(step.type==='rest'){
-  if(step.isCoreEntry){
-   // 10s countdown verde prima del primo esercizio core
-   return '<div class="center" style="background:#09090b">'
-    +'<div style="position:absolute;top:0;left:0;right:0"><div class="pb"><div class="pbf" style="width:'+Math.round(prog*100)+'%;background:#22c55e"></div></div></div>'
-    +'<div style="color:#22c55e;font-size:11px;letter-spacing:2px;margin-bottom:12px">ADDOMINALI — PRONTI IN</div>'
-    +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;color:#22c55e;line-height:1;margin-bottom:20px">'+S.wTimer+'</div>'
-    +'<button class="btn" style="background:#22c55e;width:auto;padding:14px 36px" onclick="skipRest()">INIZIA </button>'
-    +'</div>';
-  }
   if(step.isTransition){
    // 8 secondi tra esercizi core — schermata minimalista verde
    return '<div class="center" style="background:#09090b">'
@@ -2272,7 +2258,6 @@ function rWorkout(){
    +'<div id="wt-rest" style="font-size:92px;font-weight:900;font-family:monospace;line-height:1;margin-bottom:10px;color:'+sp.color+'">'+S.wTimer+'</div>'
    +'<div style="color:#52525b;font-size:12px;margin-bottom:4px">Prossimo:</div>'
    +'<div style="font-size:18px;font-weight:700;margin-bottom:14px;text-align:center">'+step.nextName+'</div>'
-   +(step.nextBand?'<div class="tag-band" style="margin-bottom:14px">Prepara elastico: '+step.nextBand+'</div>':'')
    +'<button class="btn" style="background:'+sp.color+';width:auto;padding:14px 36px;margin-bottom:12px" onclick="skipRest()">PRONTO </button>'
    +'<button class="back" onclick="wBack()">← Torna indietro</button>'
    +'</div>';
@@ -2325,7 +2310,7 @@ function rWorkout(){
    +'</div></div>':'')
   +(S.trialMode?'<div style="background:#422006;border:1px solid #92400e;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#fbbf24;font-size:11px;font-weight:700;text-align:center;letter-spacing:1px">SESSIONE PROVA — non registrata</div>':'')
   // A CASA: si vede che seduta è, e il giorno PULL dichiara il suo limite invece di fingersi pieno
-  +(S.wMode==='fullbody'?'<div style="background:#0c1a14;border:1px solid #14532d;border-radius:10px;padding:7px 12px;margin-bottom:10px;color:#86efac;font-size:11px;line-height:1.45"><b>⌂ FULL-BODY</b> · corpo libero, tutto il corpo — conta come seduta e alimenta la progressione, ma <b>non consuma lo split</b>: '+(PLAN[S.splitIdx%6]||{}).name+' resta in programma.<br><span style="color:#4ade80">'+HOME_WARN_PULL+'</span></div>':'')
+  +(S.wMode==='fullbody'?'<div style="background:#0c1a14;border:1px solid #14532d;border-radius:10px;padding:7px 12px;margin-bottom:10px;color:#86efac;font-size:11px;line-height:1.45"><b>⌂ FULL-BODY</b> · corpo libero, tutto il corpo — conta come seduta e alimenta la progressione, ma <b>non consuma lo split</b>: '+(PLAN[S.splitIdx%PLAN.length]||{}).name+' resta in programma.<br><span style="color:#4ade80">'+HOME_WARN_PULL+'</span></div>':'')
   +(S.wMode==='corecasa'?'<div style="background:#062b33;border:1px solid #155e75;border-radius:10px;padding:7px 12px;margin-bottom:10px;color:#67e8f9;font-size:11px;line-height:1.45"><b>◆ CORE CASA</b> · '+(sp.desc||'')+(S.wLivello?'<br><span style="color:#22d3ee">'+S.wLivello+'</span>':'')+'</div>':'')
   // se il pool non è bastato lo dice, invece di consegnare una seduta corta in silenzio
   +((S.wGaps&&S.wGaps.length)?'<div style="background:#1c1917;border:1px solid #3f3f46;border-radius:10px;padding:6px 12px;margin-bottom:10px;color:#a1a1aa;font-size:11px;text-align:center">Seduta corta: pool esaurito ('+S.wGaps.join(' · ')+')</div>':'')
@@ -2339,7 +2324,17 @@ function rWorkout(){
   +'</div>'
   +'<div class="font-display" style="font-size:34px;font-weight:800;letter-spacing:-.2px;margin-bottom:10px;line-height:1">'+ex.name+'</div>'
   +(step.amrap?'<div class="tag-core">AMRAP · ULTIMA SERIE — MASSIME REPS PULITE</div>':'')
-  +(ex.band?'<div style="border:2px solid '+ac+';color:'+ac+';padding:9px 12px;margin-bottom:8px;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase">'+(ex.attrezzo||(attrezzatura()==='palestra'?'Carico':'Elastico'))+' · '+ex.band+(ex.stima?' · da tarare':'')+'</div>':'')
+  +(ex.band?(bandNumOnly(ex.band)!==null
+    ?'<div style="border:2px solid '+ac+';color:'+ac+';padding:6px 8px 6px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+     +'<span style="font-weight:700;font-size:12px;letter-spacing:1.5px;text-transform:uppercase">'+(ex.attrezzo||(attrezzatura()==='palestra'?'Carico':'Elastico'))+(ex.stima?' · da tarare':'')+'</span>'
+     +'<span style="display:flex;align-items:center;gap:8px">'
+     +'<button onclick="bumpLoad(\''+ex.id+'\',-1)" style="background:transparent;border:2px solid '+ac+';color:'+ac+';width:38px;height:38px;border-radius:10px;font-size:20px;font-weight:900;line-height:1;cursor:pointer">−</button>'
+     +'<span style="font-family:monospace;font-size:22px;font-weight:900;min-width:82px;text-align:center">'+ex.band+'</span>'
+     +'<button onclick="bumpLoad(\''+ex.id+'\',1)" style="background:'+ac+';border:2px solid '+ac+';color:#09090b;width:38px;height:38px;border-radius:10px;font-size:20px;font-weight:900;line-height:1;cursor:pointer">+</button>'
+     +'</span>'
+     +'</div>'
+    :'<div style="border:2px solid '+ac+';color:'+ac+';padding:9px 12px;margin-bottom:8px;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase">'+(ex.attrezzo||(attrezzatura()==='palestra'?'Carico':'Elastico'))+' · '+ex.band+(ex.stima?' · da tarare':'')+'</div>')
+   :'')
   +(ex.coachNote?'<div style="border:2px solid #1e3a5f;background:#0a1420;padding:7px 11px;margin-bottom:8px;color:#7dd3fc;font-size:11px;line-height:1.4;letter-spacing:.5px"><b>'+(ex.coachSrc==='sumi'?'SUMI':'COACH')+'</b> · '+ex.coachNote+'</div>':'')
   +mediaHtml(ex)
   +'<div class="card" style="margin-top:10px">'
@@ -2394,7 +2389,6 @@ function startTimer(){
  clearInterval(TI);
  var step=S.wSteps[S.wStepIdx];if(!step)return;
  if(S.wAwaitReps)return; // nessun timer mentre selezioni le reps
- if(step.type==='core_intro'){return;} // nessun timer — l'utente preme PRONTO
  if(step.type==='rest'){
   S.wTimer=step.dur;
   TI=setInterval(function(){
@@ -2432,8 +2426,41 @@ function workoutDone(){
 }
 function logReps(n){
  var step=S.wSteps[S.wStepIdx];var ex=step&&step.ex;
- if(ex){if(!S.wReps[ex.id])S.wReps[ex.id]={name:ex.name,target:ex.reps,max:ex.repsMax||ex.reps,band:ex.band||'',reps:[]};S.wReps[ex.id].reps.push(n);}
+ // `band` riscritta a ogni serie, non solo alla prima: con − e + il carico puo' cambiare a
+ // meta' esercizio, e nel foglio deve finire quello con cui hai davvero chiuso.
+ if(ex){if(!S.wReps[ex.id])S.wReps[ex.id]={name:ex.name,target:ex.reps,max:ex.repsMax||ex.reps,band:ex.band||'',reps:[]};S.wReps[ex.id].band=ex.band||'';S.wReps[ex.id].reps.push(n);}
  S.wAwaitReps=false;S.wRepsSotto=false;S.wSets++;advStep();
+}
+// ─── CARICO MODIFICABILE IN SCHEDA (16/09/2026) ──────────────────────────────
+// Il numero del carico si corregge con − e + dalla schermata dell'esercizio. La correzione
+// e' VOLONTARIA e viene registrata come tale (`manual:true` in `aiDB.loads`): il coach la
+// legge come `carico_riportato` e nel suo prompt e' AUTORITA' — "questo Simone l'ha visto
+// sul ferro", non una stima da rivedere. Senza quel flag una correzione sarebbe
+// indistinguibile da un carico dedotto, e la notte dopo il coach la riscriverebbe.
+// Il passo e' quello dell'attrezzo (`stepDi`), non ±5 fissi: +5 su un manubrio da 12kg e'
+// un salto del 40%, non una progressione.
+// Vale per la seduta in corso: `x.band` cambia subito (la scheda non puo' mostrare un
+// numero diverso da quello che stai usando) e il dato parte verso il coach. La precedenza
+// di `withCoachOverride` non si tocca: alla seduta dopo, se il coach ha scritto una band,
+// vince lui — che e' giusto, perche' ha letto questa correzione prima di scriverla.
+function baseExId(id){return (''+id).replace(/-L[12]$/,'');}    // c47-L1 e c47-L2 = stesso esercizio
+// ± solo su una band con UN numero solo ("45kg"). Un aggregato di elastici ("15+10kg") non
+// ha un passo: sommare a ogni addendo darebbe un carico che non esiste nel cassetto.
+function bandNumOnly(band){var m=(''+band).match(/^\s*(\d+(?:[.,]\d+)?)\s*kg\s*$/i);return m?parseFloat(m[1].replace(',','.')):null;}
+function bumpLoad(id,dir){
+ var bid=baseExId(id),cur=null;
+ (S.wEx||[]).forEach(function(x){if(baseExId(x.id)===bid&&cur===null)cur=bandNumOnly(x.band);});
+ if(cur===null)return;
+ var st=attrezzatura()==='palestra'?stepDi(bid):5;
+ var v=Math.round((cur+dir*st)*100)/100;
+ if(v<st)v=st;                                   // sotto un passo non c'e' carico: il minimo e' il passo
+ var band=v+'kg';
+ (S.wEx||[]).forEach(function(x){if(baseExId(x.id)===bid){x.band=band;x.stima=false;}});
+ var cat=exById(bid);
+ if(!S.aiDB.loads)S.aiDB.loads={};
+ S.aiDB.loads[bid]={kg:String(v),name:(cat&&cat.name)||bid,date:dayKey(),updatedAt:new Date().toISOString(),manual:true};
+ sv('ai',S.aiDB);
+ render();
 }
 function setLoad(id){
  // Feedback per Sumi: NON cambia la scheda al volo. Sumi lo valuta e decide il carico.
@@ -4307,7 +4334,7 @@ function skipCoreCircuit(){
  var next=-1;
  for(var i=S.wStepIdx+1;i<S.wSteps.length;i++){
   var s=S.wSteps[i];
-  var isCore=(s.type==='work'&&s.ex&&s.ex.isCore)||s.isCoreBreak||s.isTransition||s.type==='core_intro'||s.isCoreEntry||s.isCoreRest;
+  var isCore=(s.type==='work'&&s.ex&&s.ex.isCore)||s.isCoreBreak||s.isTransition||s.isCoreRest;
   if(!isCore){next=i;break;}
  }
  if(next===-1){finishWorkout();}
