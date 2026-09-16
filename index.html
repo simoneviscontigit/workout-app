@@ -124,7 +124,7 @@ function sessionDay(iso){
 }
 
 // ─── EXERCISE DATABASE ───────────────────────────────────────────────────────
-const APP_BUILD='2026-09-11 · c46 al posto del plank con disco'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-16 · zone B e F rifatte, clip dei quattro nuovi'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -365,13 +365,13 @@ const DB={
   // e' per questo che le altre zone reggono con un caricabile solo e queste due ne hanno due
   // — con un pool di due su uno slot, la zona alterna a ogni comparsa invece di ripetersi.
   // `stima:true` su tutti: i carichi di partenza sono dedotti, mai verificati sul campo.
-  {id:'c47',cat:'core',zona:'B',name:'Dead Bug al Cavo',
+  {id:'c47',cat:'core',zona:'B',name:'Dead Bug al Cavo',video:'core-dead-bug-cavo.mp4',
    desc:'Supino, testa verso il cavo BASSO, braccia tese sopra il petto che tengono l\'impugnatura. Il cavo tira all\'indietro e cerca di staccarti la lombare da terra: tu la tieni incollata, costole basse, e da li\' scendi con una gamba tesa fino a sfiorare il pavimento, poi cambi. Le braccia non si muovono mai. Il lavoro e\' quello che NON succede — se la schiena si inarca o le braccia cedono indietro, il peso e\' troppo. Una rep = una gamba. E\' l\'anti-estensione dell\'Ab Rollout senza il suo prezzo sulla lombare.',
    muscles:'Core anti-estensione',primary:'core anteriore',attrezzo:'cavo',reps:10,repsMax:14,sets:3,band:'10kg',restSec:60,stima:true},
-  {id:'c48',cat:'core',zona:'B',name:'Plank Pull-Through',
+  {id:'c48',cat:'core',zona:'B',name:'Plank Pull-Through',video:'core-plank-pull-through.mp4',
    desc:'Plank alto sulle mani, piedi larghi quanto le spalle, un manubrio appoggiato di fianco. Passa la mano opposta sotto il corpo, aggancia il manubrio e trascinalo dall\'altro lato, poi torna in appoggio e cambia mano. Il bacino NON deve ruotare: e\' quello il carico. Se i fianchi si aprono verso il soffitto a ogni passaggio, allarga i piedi o scala il manubrio. Una rep = un passaggio.',
    muscles:'Core anti-estensione, Obliqui',primary:'core anteriore',attrezzo:'manubri',reps:12,repsMax:20,sets:3,band:'10kg',restSec:60,stima:true},
-  {id:'c49',cat:'core',zona:'F',name:'Renegade Row',
+  {id:'c49',cat:'core',zona:'F',name:'Renegade Row',video:'core-renegade-row.mp4',
    desc:'Plank alto con le mani sui manubri (esagonali se ci sono), piedi larghi. Rema un manubrio verso l\'anca tenendo l\'altro fianco INCOLLATO alla sua altezza: il busto non si apre, il bacino non ruota. Appoggia, cambia lato. Se per tirare devi girarti, il peso e\' troppo o i piedi sono troppo stretti. Una rep = un braccio. E\' l\'anti-rotazione che faceva il Pallof, ma sotto carico e con un lavoro di dorso in piu\'.',
    muscles:'Core anti-rotazione, Dorsali',primary:'anti-rotazione',attrezzo:'manubri',reps:8,repsMax:12,sets:3,band:'10kg',restSec:75,stima:true},
   // c50 (16/09/2026) — la panca lombare a 45\u00b0 E' CONFERMATA nella dotazione (risposta di
@@ -379,7 +379,7 @@ const DB={
   // "a terra, non su panca 45\u00b0": \u00a74-quater esiste perche' un esercizio impossibile era
   // rimasto in scheda undici giorni. Ora la zona F ha l'estensione lombare vera e caricabile
   // che le mancava, e due esercizi in pool su uno slot: alterna col Renegade a ogni comparsa.
-  {id:'c50',cat:'core',zona:'F',name:'Back Extension con disco',
+  {id:'c50',cat:'core',zona:'F',name:'Back Extension con disco',video:'core-back-extension-disco.mp4',
    desc:'Panca a 45\u00b0, cuscino appena sotto le creste iliache — se appoggia sulle cosce non riesci a flettere l\'anca, se appoggia sulla pancia ti schiaccia. Un disco stretto al petto con le braccia incrociate. Scendi piegandoti dall\'ANCA con la schiena neutra, poi risali fino alla linea del corpo e fermati li\': non inarcare oltre, l\'iperestensione non aggiunge lavoro, aggiunge compressione. Un secondo in alto, giu\' lento in 3s. E\' il Superman reso progressivo: non si allungano le reps, si aggiunge disco.',
    muscles:'Erettori spinali, Catena posteriore',primary:'erettori',attrezzo:'dischi',reps:10,repsMax:15,sets:3,band:'10kg',restSec:60,stima:true},
  ],
