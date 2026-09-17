@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-17e · catalogo a tre famiglie'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-17f · famiglie in parallelo'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -1091,11 +1091,16 @@ function withCoachOverride(e){
   ov.coachSrc=cp?'sumi':'mech';
  }
  // Nessuna band dal coach? Usa il tuo carico reale (chat o impostato a mano) al posto del range generico
+ var ldDer=false;
  if(!ov.band){
   var ld=leggiPerVariante(S.aiDB.loads,e);
   if(ld&&(ld.kg||ld.kg===0)){
    ov.band=(''+ld.kg).replace(/kg/i,'')+'kg';
-   if(!ov.coachNote){ov.coachNote='tuo carico'+(ld.manual?'':' (da chat)')+' · '+(ld.date||'');ov.coachSrc='mech';}
+   // Un carico DERIVATO (propagato da un'altra famiglia, 17/09/2026) non e' un carico che
+   // Simone ha visto sul ferro: e' una proporzione. Va detto — e resta "da tarare" finche'
+   // non lo verifica, sennò un numero mai provato si presenta come un fatto.
+   ldDer=!!ld.derivato;
+   if(!ov.coachNote){ov.coachNote=ld.derivato?('derivato da '+(MODI_LABEL[ld.derivato]||ld.derivato)+' · '+(ld.date||'')):('tuo carico'+(ld.manual?'':' (da chat)')+' · '+(ld.date||''));ov.coachSrc='mech';}
   }
  }
  // `stima:true` su una riga del DB vuol dire "carico di partenza DEDOTTO, mai verificato
@@ -1104,7 +1109,7 @@ function withCoachOverride(e){
  // un carico reale, quel numero non e' piu' una stima e l'etichetta deve sparire. Senza
  // questa riga resterebbe accesa per sempre, e un'etichetta che non si spegne mai smette
  // di dire qualcosa.
- if(e.stima&&ov.band)ov.stima=!!(cp&&cp.stima);
+ if(e.stima&&ov.band)ov.stima=ldDer||!!(cp&&cp.stima);
  if(ov.band)ov.band=snapBand(ov.band);
  if(!o&&!ov.band)return e;
  return Object.assign({},e,ov);
@@ -1175,6 +1180,9 @@ function computeProgression(session){
    }
    if(ck.modo)entry.attrezzo=ck.modo;
    S.aiDB.progression[ck.k]=Object.assign({},prevProg,entry);
+   // Avanzamento in parallelo: se questa variante ha cambiato carico, le altre due si
+   // spostano dello stesso rapporto (vedi propagaParallelo).
+   if(entry.band&&cur&&entry.band!==cur)propagaParallelo(baseExId(id),ck.modo,bandNumOnly(cur),bandNumOnly(entry.band));
    // Migrazione: la voce nuda dello stesso esercizio ha appena finito di servire (l'abbiamo
    // letta come `prevProg` e riscritta sotto la chiave per variante). Lasciarla li' sarebbe
    // un secondo inventario che da domani diverge in silenzio.
@@ -2590,6 +2598,75 @@ function baseExId(id){return (''+id).replace(/-L[12]$/,'');}    // c47-L1 e c47-
 // ± solo su una band con UN numero solo ("45kg"). Un aggregato di elastici ("15+10kg") non
 // ha un passo: sommare a ogni addendo darebbe un carico che non esiste nel cassetto.
 function bandNumOnly(band){var m=(''+band).match(/^\s*(\d+(?:[.,]\d+)?)\s*kg\s*$/i);return m?parseFloat(m[1].replace(',','.')):null;}
+// ─── AVANZAMENTO IN PARALLELO FRA LE TRE FAMIGLIE (17/09/2026) ───────────────
+// Le versioni di un esercizio sono tre FAMIGLIE (cavi · pesi liberi · macchina) e la
+// richiesta di Simone, fin dal primo messaggio sulle modalita', era: *«farli avanzare o
+// aggiustare in parallelo, cosi' sono autonomo a prescindere da cosa c'e' disponibile»*.
+// Il 16/09 erano state costruite progressioni INDIPENDENTI, che e' il contrario: la prima
+// volta che prendi la macchina perche' i manubri sono occupati, quella variante non ha
+// storico e riparte dalla STIMA iniziale — cioe' esattamente lo scenario per cui le tre
+// famiglie erano state chieste.
+//
+// Il vincolo vero («20kg di manubrio e 45 alla macchina non si convertono») e' reale ma
+// dice un'altra cosa: sono SCALE diverse, non avanzamenti scollegati. Quindi quello che si
+// propaga non e' il peso, e' il RAPPORTO. La macchina passa da 40 a 45 (+12,5%)? I manubri
+// da 12 vanno a 13,5, che snappato al loro passo (2kg) fa 14. In discesa e' identico:
+// 45 -> 40 porta i manubri a 10. Vale per QUALUNQUE sorgente — il ± in scheda, la
+// progressione meccanica di fine seduta, il carico detto in chat, il piano del coach.
+//
+// 🪤 Lo snap al passo mangerebbe gli aumenti piccoli: +5kg su 100 alla macchina sono +0,6kg
+// sui manubri, cioe' meno di mezzo passo, e arrotondando resterebbero 12 per sempre. Per
+// questo accanto al carico snappato si tiene `kgIdeale`, il numero esatto non arrotondato:
+// il rapporto si applica a quello, e gli aumenti si accumulano finche' scatta il passo.
+// Se qualcuno tocca quella variante a mano (scarto > un passo fra ideale e reale), l'ideale
+// si risincronizza sul vero: il numero che Simone ha visto sul ferro vince sempre.
+function bandDiVariante(baseId,modo){
+ // Carico effettivo di OGGI per quella variante, con la stessa precedenza di
+ // withCoachOverride: coachPlan > progression > loads > band del catalogo.
+ var e={id:baseId,attrezzo:modo};
+ var cp=leggiPerVariante(S.aiDB.coachPlan&&S.aiDB.coachPlan.perExercise,e);
+ var pr=leggiPerVariante(S.aiDB.progression,e);
+ var ld=leggiPerVariante(S.aiDB.loads,e);
+ var b=(cp&&cp.band)||(pr&&pr.band)||'';
+ if(!b&&ld&&(ld.kg||ld.kg===0))b=(''+ld.kg).replace(/kg/i,'')+'kg';
+ if(!b){var cat=exById(baseId),v=variantiDi(cat).filter(function(x){return x.modo===modo;})[0];b=(v&&v.band)||'';}
+ return bandNumOnly(b);
+}
+function propagaParallelo(baseId,modoSorgente,prima,dopo){
+ var fatti=[];
+ try{
+  if(attrezzatura()!=='palestra')return fatti;          // le varianti esistono solo in palestra
+  if(!(prima>0)||!(dopo>0)||prima===dopo)return fatti;
+  var cat=exById(baseId);if(!cat)return fatti;
+  var r=dopo/prima;
+  variantiDi(cat).forEach(function(v){
+   if(!v.modo||v.modo===modoSorgente)return;
+   var cur=bandDiVariante(baseId,v.modo);
+   if(!(cur>0))return;                                  // corpo libero: non c'e' un carico da scalare
+   var ck=chiaveVar({id:baseId,attrezzo:v.modo});
+   var st=stepDi(baseId,v.modo);
+   var ld=(S.aiDB.loads&&S.aiDB.loads[ck.k])||null;
+   var base=(ld&&parseFloat(ld.kgIdeale)>0)?parseFloat(ld.kgIdeale):cur;
+   if(Math.abs(base-cur)>st)base=cur;                   // toccata a mano: riparti dal vero
+   var ideale=base*r;
+   var kg=Math.max(st,Math.round(ideale/st)*st);kg=Math.round(kg*100)/100;
+   if(!S.aiDB.loads)S.aiDB.loads={};
+   S.aiDB.loads[ck.k]={kg:String(kg),kgIdeale:Math.round(ideale*100)/100,name:v.name,attrezzo:v.modo,
+                       date:dayKey(),updatedAt:new Date().toISOString(),derivato:modoSorgente};
+   // Allinea anche il layer che VINCE: se il coach ha un piano su questa variante, e'
+   // lui che la scheda mostra, e una propagazione scritta solo in `loads` sarebbe muta.
+   var perEx=S.aiDB.coachPlan&&S.aiDB.coachPlan.perExercise;
+   var cpE=perEx&&(perEx[ck.k]||(ck.legacy?perEx[ck.legacy]:null));
+   if(cpE&&cpE.band){cpE.band=kg+'kg';cpE.derivatoDa=modoSorgente;
+    cpE.note=((cpE.note||'').split(' · riallineato')[0]+' · riallineato da '+modoSorgente).trim().slice(0,200);}
+   var prE=S.aiDB.progression&&(S.aiDB.progression[ck.k]||(ck.legacy?S.aiDB.progression[ck.legacy]:null));
+   if(prE&&prE.band)prE.band=kg+'kg';
+   fatti.push(ck.k+' '+cur+'->'+kg);
+  });
+  if(fatti.length)console.log('[parallelo] '+baseId+'#'+modoSorgente+' '+prima+'->'+dopo+' ('+Math.round((r-1)*1000)/10+'%): '+fatti.join(', '));
+ }catch(err){console.error('propagaParallelo:',err);}
+ return fatti;
+}
 function bumpLoad(id,dir){
  var bid=baseExId(id),cur=null,rif=null;
  (S.wEx||[]).forEach(function(x){if(baseExId(x.id)===bid&&cur===null&&bandNumOnly(x.band)!==null){cur=bandNumOnly(x.band);rif=x;}});
@@ -2602,6 +2679,9 @@ function bumpLoad(id,dir){
  (S.wEx||[]).forEach(function(x){if(baseExId(x.id)===bid){x.band=band;x.stima=false;}});
  if(!S.aiDB.loads)S.aiDB.loads={};
  S.aiDB.loads[ck.k]={kg:String(v),name:(rif&&rif.name)||bid,attrezzo:ck.modo,date:dayKey(),updatedAt:new Date().toISOString(),manual:true};
+ // Le altre famiglie si spostano dello stesso RAPPORTO, in su come in giu': una correzione
+ // qui dice "questo gesto oggi vale tanto", e vale per il gesto, non per l'attrezzo.
+ propagaParallelo(bid,ck.modo,cur,v);
  sv('ai',S.aiDB);
  render();
 }
@@ -4611,7 +4691,12 @@ async function sendFloatAI(){
    if(detectedKg==null&&/^\s*\d+(?:[.,]\d+)?\s*$/.test(msg))detectedKg=parseFloat(msg.replace(',','.'));
    if(detectedKg!=null&&detectedKg>0){
     if(!S.aiDB.loads)S.aiDB.loads={};
-    S.aiDB.loads[loadEx.id]={kg:detectedKg,name:loadEx.name,date:dayKey(),updatedAt:new Date().toISOString()};
+    // 17/09/2026: la chiave e' quella della VARIANTE che hai in mano, non l'id nudo. Prima
+    // un carico detto in chat mentre eri alla macchina finiva sotto `p4`, cioe' sulla
+    // chiave legacy dei manubri: il numero della macchina riscriveva quello dei manubri.
+    var ckc=chiaveVar(loadEx),prec=bandDiVariante(baseExId(loadEx.id),ckc.modo);
+    S.aiDB.loads[ckc.k]={kg:detectedKg,name:loadEx.name,attrezzo:ckc.modo,date:dayKey(),updatedAt:new Date().toISOString()};
+    propagaParallelo(baseExId(loadEx.id),ckc.modo,prec,detectedKg);
    }
   }
   // Persist floatChat so it survives panel close/reopen
