@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-17c · clip delle 54 varianti'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-17d · catalogo a tre famiglie'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -203,15 +203,14 @@ const DB={
   {id:'r1',cat:'pull',name:'Rematore Bilanciere',video:'gym-rematore-bilanciere.mp4',
    desc:'Bilanciere, presa prona poco piu\' larga delle spalle, busto a 45° e SCHIENA PIATTA (se si arrotonda, scendi di carico). Tira i gomiti dietro verso l\'anca, non verso il soffitto. Contrai la schiena in cima 1s, abbassa 3s. Carico = bilanciere compreso (bar olimpica 20kg).',
    muscles:'Dorsali, Romboidi',primary:'dorsali',attrezzo:'bilanciere',reps:8,repsMax:10,sets:4,band:'45kg',restSec:100,
-   varianti:[{modo:'manubri',name:'Rematore con due Manubri',band:'20kg',video:'gym-rematore-con-due-manubri.mp4',desc:'Busto in avanti a 45 gradi, schiena neutra, un manubrio per mano a braccia distese. Tira portando i gomiti indietro lungo i fianchi fino a sfiorare le costole, contrai le scapole 1 secondo, scendi lento. Il busto non si alza a ogni tirata: se si alza, e\' la schiena che tira, non il dorso.'},
-             {modo:'macchina',name:'Rematore alla Macchina',band:'45kg',video:'gym-rematore-alla-macchina.mp4',desc:'Petto appoggiato al cuscino, maniglie prese in presa neutra o prona. Tira i gomiti indietro finche\' le scapole si toccano, 1 secondo di contrazione, poi rilascia in 3 secondi. Il petto appoggiato toglie di mezzo la schiena: e\' la versione del rematore che puoi caricare senza pagarla in lombare.'}]},
+   varianti:[{modo:'macchina',name:'Rematore alla Macchina',band:'45kg',video:'gym-rematore-alla-macchina.mp4',desc:'Petto appoggiato al cuscino, maniglie prese in presa neutra o prona. Tira i gomiti indietro finche\' le scapole si toccano, 1 secondo di contrazione, poi rilascia in 3 secondi. Il petto appoggiato toglie di mezzo la schiena: e\' la versione del rematore che puoi caricare senza pagarla in lombare.'}]},
   {id:'r2',cat:'pull',name:'Pullover ai Cavi',video:'gym-pullover-ai-cavi.mp4',
    desc:'Cavo ALTO con barra dritta o corda, un passo indietro, busto leggermente inclinato avanti. Braccia tese sopra, tira in arco verso le cosce tenendo i gomiti quasi dritti — se si piegano diventa un pushdown per i tricipiti. Sono i dorsali che lavorano.',
    muscles:'Dorsali, Core',primary:'dorsali',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'25kg',restSec:75,
    varianti:[{modo:'manubri',name:'Pullover con Manubrio su panca',band:'16kg',video:'gym-pullover-con-manubrio-su-panca.mp4',desc:'Sdraiato di traverso o lungo la panca, un manubrio tenuto a due mani sopra il petto, gomiti quasi tesi. Porta il peso dietro la testa in un arco finche\' senti lo stiramento sotto le ascelle, poi torna tirando con i dorsali, non con le braccia. Costole basse: se la lombare si stacca, l\'arco e\' troppo lungo.'},
              {modo:'macchina',name:'Pullover alla Macchina',band:'35kg',video:'gym-pullover-alla-macchina.mp4',desc:'Seduto, gomiti sui cuscinetti, mani che accompagnano senza stringere. Tira in basso con l\'articolazione della spalla, non con le braccia, fino a chiudere sotto il petto e contrai 1 secondo. E\' l\'unico modo di isolare il dorsale senza che i bicipiti facciano la loro parte.'}]},
   {id:'r3',cat:'pull',name:'Curl Manubri',video:'gym-curl-manubri.mp4',
-   desc:'In piedi, un manubrio per mano, presa supinata. Gomiti fissi ai fianchi — non muoverli mai, se le spalle si alzano stai barando. Curla supinando il polso in cima 1s. Abbassa lento 3 secondi. Carico PER MANUBRIO.',
+   desc:'In piedi, un manubrio per mano, presa supinata. Gomiti fissi ai fianchi — non muoverli mai, se le spalle si alzano stai barando. Curla supinando il polso in cima 1s. Abbassa lento 3 secondi. Carico PER MANUBRIO. Stesso gesto col bilanciere caricato (presa supina a larghezza spalle, carico totale barra compresa): e\' la STESSA versione, non un\'altra — pesi liberi e basta.',
    muscles:'Bicipiti',primary:'bicipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'12kg',restSec:75,
    varianti:[{modo:'cavo',name:'Curl ai Cavi bassi con barra',band:'25kg',video:'gym-curl-ai-cavi-bassi-con-barra.mp4',desc:'In piedi davanti al cavo basso, barra dritta, gomiti incollati ai fianchi. Sali contraendo e ferma 1 secondo in alto, poi scendi in 3 secondi resistendo alla trazione. Il cavo non ti da\' il punto morto in alto che hanno i manubri: la tensione resta tutta la serie.'},
              {modo:'macchina',name:'Curl alla Macchina',band:'25kg',video:'gym-curl-alla-macchina.mp4',desc:'Braccia appoggiate sul leggio, ascelle a contatto, gomiti fermi. Chiudi fino alla contrazione piena, 1 secondo, poi torna lento senza estendere di scatto. Il leggio impedisce lo slancio del busto: quello che sale, lo sale il bicipite.'}]},
@@ -222,12 +221,7 @@ const DB={
              {modo:'macchina',name:'Curl presa neutra alla Macchina',band:'25kg',video:'gym-curl-presa-neutra-alla-macchina.mp4',desc:'Stessa macchina del curl, impugnatura neutra se disponibile o mani a martello sulle maniglie. Gomiti fermi, salita piena, discesa in 3 secondi. Serve quando i manubri pesanti ti mollano la presa prima del braccio.'}]},
   {id:'r6',cat:'pull',name:'Lat Machine',video:'gym-lat-machine.mp4',
    desc:'Seduto, ginocchia bloccate sotto il cuscinetto, presa prona poco piu\' larga delle spalle. Busto fermo, inclinato indietro di pochi gradi e BASTA: se dondoli e\' diventato un rematore. Tira la barra al petto portando i gomiti giu\' e indietro, contrai i dorsali 1s, risali lento 3s in controllo. Con l\'elastico questo esercizio non funzionava: qui si\'.',
-   muscles:'Dorsali, Bicipiti',primary:'dorsali',attrezzo:'macchina',reps:8,repsMax:10,sets:4,band:'45kg',restSec:100,
-   varianti:[{modo:'cavo',name:'Lat Machine alla corda, presa stretta',band:'40kg',video:'gym-lat-machine-alla-corda-presa-stretta.mp4',desc:'Stessa postazione, corda o triangolo al posto della barra larga. Tira in basso verso lo sterno portando i gomiti lungo i fianchi, petto in fuori, 1 secondo di contrazione. La presa stretta accorcia la leva e lavora la parte bassa del dorsale.'}]},
-  {id:'r7',cat:'pull',name:'Trazioni alla Sbarra',video:'gym-trazioni-sbarra.mp4',
-   desc:'Presa prona poco piu\' larga delle spalle. Parti a braccia distese ma con le spalle ATTIVE, non appeso morto. Tira portando i gomiti verso i fianchi finche\' il mento supera la sbarra, scendi controllato in 3s. Se non chiudi le reps: negative lente, mai mezze trazioni.',
-   muscles:'Dorsali, Bicipiti, Core',primary:'dorsali',attrezzo:'corpo libero',reps:5,repsMax:9,sets:4,restSec:120,
-   varianti:[{modo:'macchina',name:'Lat Machine presa larga',band:'45kg',video:'gym-lat-machine-presa-larga.mp4',desc:'Ginocchia bloccate sotto il cuscinetto, presa prona poco piu\' larga delle spalle. Tira la barra al petto portando i gomiti giu\' e indietro, contrai 1 secondo, risali in 3 secondi. E\' la trazione con il carico che decidi tu: usala quando la sbarra a corpo libero non ti da\' piu\' le reps pulite.'}]},
+   muscles:'Dorsali, Bicipiti',primary:'dorsali',attrezzo:'cavo',reps:8,repsMax:10,sets:4,band:'45kg',restSec:100},
   {id:'r8',cat:'pull',name:'Rematore Manubrio Singolo',video:'gym-rematore-manubrio-singolo.mp4',
    desc:'Un ginocchio e una mano sulla panca, schiena parallela al suolo e neutra. Tira il manubrio verso l\'ANCA, non verso la spalla, portando il gomito oltre la linea della schiena. Non ruotare il busto per guadagnare centimetri. Carico per braccio.',
    muscles:'Dorsali, Romboidi',primary:'dorsali',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'20kg',perSide:true,stima:true,restSec:90,
@@ -237,16 +231,10 @@ const DB={
    muscles:'Dorsali, Trapezio medio',primary:'dorsali',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'45kg',stima:true,restSec:90,
    varianti:[{modo:'manubri',name:'Rematore su panca inclinata con Manubri',band:'16kg',video:'gym-rematore-su-panca-inclinata-con-manubri.mp4',desc:'Petto appoggiato a una panca inclinata a 30-45 gradi, un manubrio per mano a braccia distese. Tira i gomiti indietro fino a chiudere le scapole, 1 secondo, scendi lento. Il petto appoggiato fa lo stesso lavoro del pulley: toglie di mezzo tutto quello che non e\' dorso.'},
              {modo:'macchina',name:'Seated Row alla Macchina',band:'45kg',video:'gym-seated-row-alla-macchina.mp4',desc:'Seduto, petto contro il cuscino, presa neutra. Tira verso l\'ombelico portando i gomiti lungo i fianchi, contrai le scapole 1 secondo, rilascia in 3 secondi senza farti tirare in avanti le spalle. Stesso gesto del pulley, con la schiena bloccata.'}]},
-  {id:'r10',cat:'pull',name:'Curl Bilanciere',video:'gym-curl-bilanciere.mp4',
-   desc:'In piedi, presa supina a larghezza spalle, gomiti fermi ai fianchi. Sali senza slanciare il bacino e senza portare i gomiti in avanti. In cima stringi 1s, scendi in 3s fino a braccia quasi distese. Carico totale, bilanciere compreso.',
-   muscles:'Bicipiti',primary:'bicipiti',attrezzo:'bilanciere',reps:8,repsMax:10,sets:3,band:'25kg',stima:true,restSec:75,
-   varianti:[{modo:'manubri',name:'Curl con due Manubri simultaneo',band:'12kg',video:'gym-curl-con-due-manubri-simultaneo.mp4',desc:'In piedi, un manubrio per mano, gomiti ai fianchi. Sali insieme fino alla contrazione piena ruotando leggermente i polsi verso l\'alto, 1 secondo, scendi in 3 secondi. I due manubri permettono al polso di trovare la sua strada: usali quando la barra dritta ti da\' fastidio agli avambracci.'},
-             {modo:'macchina',name:'Curl alla Macchina',band:'25kg',video:'gym-curl-alla-macchina.mp4',desc:'Braccia sul leggio, ascelle a contatto, gomiti fermi. Salita piena, 1 secondo di contrazione, discesa in 3 secondi. Il carico sale di 5kg e il busto non puo\' aiutarti: e\' la versione onesta del curl.'}]},
   {id:'r11',cat:'pull',name:'Curl su Panca Inclinata',video:'gym-curl-panca-inclinata.mp4',
    desc:'Panca a 45-60\u00b0, braccia che pendono DIETRO la linea del corpo: e\' quello che mette il bicipite in allungamento, la parte che il curl in piedi non prende mai. Non portare le spalle avanti per aiutarti. Carico per manubrio, piu\' basso del solito ed e\' normale.',
    muscles:'Bicipiti (capo lungo)',primary:'bicipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'10kg',stima:true,restSec:75,
-   varianti:[{modo:'cavo',name:'Curl al Cavo con braccio dietro il corpo',band:'15kg',video:'gym-curl-al-cavo-con-braccio-dietro-il-corpo.mp4',desc:'In piedi di fianco al cavo basso, impugnatura singola, braccio che resta DIETRO la linea del busto per tutta la serie. Sali piegando solo il gomito, 1 secondo in contrazione, scendi lento. Il braccio arretrato allunga il capo lungo esattamente come la panca inclinata. Reps per lato.'},
-             {modo:'macchina',name:'Curl Scott alla Macchina',band:'20kg',video:'gym-curl-scott-alla-macchina.mp4',desc:'Seduto al leggio, ascelle appoggiate, gomiti fermi. Scendi fino quasi a stendere e risali senza strappi: la parte bassa del movimento e\' quella che brucia, ed e\' quella che cerchi. Stop quando il gomito non riesce piu\' a restare fermo.'}]},
+   varianti:[{modo:'cavo',name:'Curl al Cavo con braccio dietro il corpo',band:'15kg',video:'gym-curl-al-cavo-con-braccio-dietro-il-corpo.mp4',desc:'In piedi di fianco al cavo basso, impugnatura singola, braccio che resta DIETRO la linea del busto per tutta la serie. Sali piegando solo il gomito, 1 secondo in contrazione, scendi lento. Il braccio arretrato allunga il capo lungo esattamente come la panca inclinata. Reps per lato.'}]},
  ],
  shoulders:[
   {id:'s1',cat:'shoulders',name:'Shoulder Press Manubri',video:'gym-shoulder-press-manubri.mp4',
@@ -264,56 +252,25 @@ const DB={
    muscles:'Deltoide post., Rotatori',primary:'deltoide-post',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'25kg',restSec:60,stima:true,
    varianti:[{modo:'manubri',name:'Rear Delt Fly con Manubri',band:'8kg',video:'gym-rear-delt-fly-con-manubri.mp4',desc:'Busto in avanti a 45 gradi o petto su panca inclinata, manubri leggeri, gomiti morbidi. Apri di lato fino alla linea delle spalle guidando coi gomiti, 1 secondo di contrazione, scendi lento. Leggero di proposito: appena diventa una tirata, sono i dorsali che lavorano.'},
              {modo:'macchina',name:'Reverse Pec Deck',band:'30kg',video:'',desc:'Seduto al contrario sulla pectoral machine, petto contro lo schienale, braccia quasi tese. Apri fino alla linea delle spalle stringendo le scapole, 1 secondo, torna in 3 secondi. Il petto appoggiato impedisce il trucco del busto: quello che apri, lo apre il deltoide posteriore.'}]},
-  {id:'s4',cat:'shoulders',name:'Rear Delt Fly Manubri',video:'gym-rear-delt-fly.mp4',
-   desc:'Seduto sulla panca col busto sulle cosce, oppure in piedi piegato a 90°. Manubri sotto il petto, gomiti quasi dritti e fissi: apri di lato fino ad allineare le scapole, mai piu\' su. Stringi 1s, torna lento 3s. Se ti raddrizzi per finire la rep stai tirando col dorso, non col deltoide. Carico per manubrio.',
-   muscles:'Deltoide post., Romboidi',primary:'deltoide-post',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'8kg',stima:true,restSec:60,
-   varianti:[{modo:'cavo',name:'Face Pull ai Cavi',band:'25kg',video:'gym-face-pull-ai-cavi.mp4',desc:'Cavo alto con corda, un passo indietro, braccia tese. Tira verso la fronte allargando le due estremita\' e ruotando le mani verso l\'alto, gomiti alti sopra i polsi. Ferma 1 secondo e torna lento. Alto sulla corsa e leggero sul carico: qui il deltoide posteriore lavora insieme ai rotatori.'},
-             {modo:'macchina',name:'Reverse Pec Deck',band:'30kg',video:'',desc:'Seduto al contrario, petto contro lo schienale, braccia quasi tese. Apri fino alla linea delle spalle stringendo le scapole, 1 secondo, torna lento. E\' la versione con la traiettoria gia\' decisa: utile quando i manubri leggeri finiscono per diventare uno slancio.'}]},
-  {id:'s5',cat:'shoulders',name:'Military Press Bilanciere',video:'gym-military-press-bilanciere.mp4',
-   desc:'In piedi, presa poco piu\' larga delle spalle, bilanciere all\'altezza delle clavicole. Glutei e addome contratti: la schiena non si inarca per spingere. Porta la testa leggermente indietro e poi sotto il bilanciere, blocca in alto con le braccia alle orecchie. SENZA RACK il bilanciere va portato alle spalle da terra a ogni serie: se il carico non te lo permette in sicurezza, il carico e\' sbagliato. Se la spinta cede, butta AVANTI e togliti — non riabbassarlo sul collo.',
-   muscles:'Deltoide ant., Tricipiti, Core',primary:'spalle',attrezzo:'bilanciere',reps:6,repsMax:10,sets:4,band:'30kg',stima:true,restSec:120,
-   varianti:[{modo:'manubri',name:'Shoulder Press Manubri',band:'14kg',video:'gym-shoulder-press-manubri.mp4',desc:'Seduto con schienale, manubri all\'altezza delle orecchie, gomiti leggermente avanti. Spingi in alto senza far sbattere i manubri in cima e scendi lento fino all\'altezza delle orecchie. Ogni braccio deve fare la sua parte: e\' il motivo per cui il carico e\' piu\' basso del bilanciere.'},
-             {modo:'macchina',name:'Shoulder Press alla Macchina',band:'30kg',video:'gym-shoulder-press-alla-macchina.mp4',desc:'Schienale verticale, maniglie all\'altezza delle orecchie. Spingi quasi a stendere, torna lento senza appoggiare i pesi. La lombare resta fuori dall\'esercizio: e\' la spinta sopra la testa quando il core e\' gia\' cotto o la spalla vuole una traiettoria fissa.'}]},
-  {id:'s6',cat:'shoulders',name:'Alzate Laterali ai Cavi',video:'gym-alzate-laterali-cavi.mp4',
-   desc:'Cavo basso, impugnatura nella mano opposta, un passo di lato. Sali fino all\'altezza della spalla col gomito leggermente piegato e FISSO, mignolo appena piu\' alto del pollice. Il cavo tiene tensione anche in basso, dove i manubri non ne hanno: carico piu\' leggero, stessa fatica.',
-   muscles:'Deltoide medio',primary:'deltoide-medio',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'10kg',perSide:true,stima:true,restSec:60,
-   varianti:[{modo:'manubri',name:'Alzate Laterali Manubri',band:'8kg',video:'gym-alzate-laterali-manubri.mp4',desc:'In piedi, manubri lungo i fianchi, gomiti leggermente piegati. Alza di lato fino all\'altezza delle spalle guidando col gomito, mai col polso, poi scendi in 3 secondi. Busto fermo: se dondoli per alzare, il peso e\' troppo.'},
-             {modo:'macchina',name:'Lateral Raise Machine',band:'25kg',video:'gym-lateral-raise-machine.mp4',desc:'Seduto, cuscinetti contro le braccia, gomiti morbidi. Alza fino alla linea delle spalle, 1 secondo, scendi lento. Traiettoria fissa e carico a pacco: e\' la variante per arrivare al cedimento senza barare.'}]},
  ],
  legs:[
-  {id:'l2',cat:'legs',name:'Bulgarian Split Squat Manubri',video:'Bulgarian split squat con elastico.mp4',
-   desc:'Piede posteriore su panca, un manubrio per mano lungo i fianchi. Scendi col ginocchio anteriore a 90°, busto eretto, spingi col tallone avanti. Carico PER MANUBRIO. Reps per gamba.',
+  {id:'l2',cat:'legs',name:'Bulgarian Split Squat',video:'gym-bulgarian-split-squat-con-bilanciere.mp4',
+   desc:'Piede posteriore su panca, piede avanti abbastanza lontano da tenere il ginocchio dietro la punta. Scendi verticale col ginocchio anteriore a 90°, busto eretto, risali spingendo col tallone avanti. Il carico e\' a scelta: un manubrio per mano lungo i fianchi (carico PER MANUBRIO) oppure il bilanciere sulle spalle, come nella clip — e\' la stessa versione, non due. Reps per gamba.',
    muscles:'Quadricipiti, Glutei',primary:'quadricipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'12kg',restSec:90,
-   varianti:[{modo:'bilanciere',name:'Bulgarian Split Squat con Bilanciere',band:'30kg',video:'gym-bulgarian-split-squat-con-bilanciere.mp4',desc:'Bilanciere sulle spalle, piede posteriore su panca, piede avanti abbastanza lontano da tenere il ginocchio dietro la punta. Scendi verticale fino a sfiorare terra col ginocchio dietro, risali spingendo col tallone avanti. Il bilanciere carica di piu\' del manubrio ma chiede piu\' equilibrio: prima serie leggera per trovare la posizione. Reps per lato.'},
-             {modo:'macchina',name:'Affondo bulgaro alla Smith machine',band:'30kg',video:'gym-affondo-bulgaro-alla-smith-machine.mp4',desc:'Barra della Smith sulle spalle, piede posteriore su panca. Il binario toglie l\'equilibrio dall\'equazione, quindi tutto il carico va sulla gamba avanti: e\' la variante che regge piu\' peso di tutte. Scendi lento, risali senza rimbalzare. Reps per lato.'}]},
+   varianti:[{modo:'macchina',name:'Affondo bulgaro alla Smith machine',band:'30kg',video:'gym-affondo-bulgaro-alla-smith-machine.mp4',desc:'Barra della Smith sulle spalle, piede posteriore su panca. Il binario toglie l\'equilibrio dall\'equazione, quindi tutto il carico va sulla gamba avanti: e\' la variante che regge piu\' peso di tutte. Scendi lento, risali senza rimbalzare. Reps per lato.'}]},
   {id:'l3',cat:'legs',name:'Squat Bilanciere',video:'gym-squat-bilanciere.mp4',
    desc:'⚠️ SOLO dentro il rack, con i pioli di sicurezza regolati appena sotto la profondita\' del tuo squat: se ti pianti, il bilanciere lo appoggi li\'. Barra sui trapezi, squat profondo con cosce parallele, talloni a terra, ginocchia sulla linea dei piedi. Carico = bilanciere compreso (bar olimpica 20kg). All\'inizio conta la tecnica, non i kg: il pattern col bilanciere e\' nuovo.',
    muscles:'Quadricipiti, Glutei',primary:'quadricipiti',attrezzo:'bilanciere',reps:8,repsMax:10,sets:4,band:'40kg',restSec:120,
-   varianti:[{modo:'macchina',name:'Pressa a 45 gradi',band:'90kg',video:'gym-pressa-a-45-gradi.mp4',desc:'Piedi a meta\' pedana, larghezza spalle, schiena e bacino incollati allo schienale. Scendi finche\' le ginocchia arrivano verso il petto SENZA che il bacino si arrotoli, poi spingi senza bloccare le ginocchia in cima. Il numero e\' piu\' alto dello squat perche\' la pressa e\' un\'altra leva: non confrontarli.'},
-             {modo:'manubri',name:'Squat con due Manubri',band:'20kg',video:'gym-squat-con-due-manubri.mp4',desc:'Un manubrio per mano lungo i fianchi, piedi larghi quanto le spalle. Scendi tenendo il petto alto finche\' le cosce sono parallele, poi risali spingendo col tallone. I manubri lungo i fianchi bilanciano meno dello squat frontale ma non ti chiedono la mobilita\' di spalle del bilanciere.'}]},
+   varianti:[{modo:'macchina',name:'Pressa a 45 gradi',band:'90kg',video:'gym-pressa-a-45-gradi.mp4',desc:'Piedi a meta\' pedana, larghezza spalle, schiena e bacino incollati allo schienale. Scendi finche\' le ginocchia arrivano verso il petto SENZA che il bacino si arrotoli, poi spingi senza bloccare le ginocchia in cima. Il numero e\' piu\' alto dello squat perche\' la pressa e\' un\'altra leva: non confrontarli.'}]},
   {id:'l5',cat:'legs',name:'Stacco Rumeno Bilanciere',video:'gym-stacco-rumeno-bilanciere.mp4',
    desc:'Bilanciere davanti alle cosce, presa prona. Spingi i FIANCHI indietro tenendo la schiena piatta e le ginocchia morbide (non e\' uno squat): la barra scorre lungo le gambe finche\' senti lo stretch dei femorali, poi risali contraendo i glutei. Schiena che si arrotonda = fermati e togli carico. Bilanciere compreso.',
    muscles:'Femorali, Glutei',primary:'femorali',attrezzo:'bilanciere',reps:8,repsMax:10,sets:3,band:'40kg',restSec:90,
-   varianti:[{modo:'manubri',name:'Stacco Rumeno con due Manubri',band:'20kg',video:'gym-stacco-rumeno-con-due-manubri.mp4',desc:'Un manubrio per mano davanti alle cosce, ginocchia morbide e FERME. Manda il bacino indietro facendo scorrere i manubri sulle gambe fino a meta\' stinco, schiena neutra, poi risali contraendo i glutei. I manubri ti lasciano scendere un po\' di piu\' del bilanciere: fermati dove la schiena resta dritta.'},
-             {modo:'macchina',name:'Leg Curl alla Macchina',band:'35kg',video:'gym-leg-curl-alla-macchina.mp4',desc:'Sdraiato o seduto, cuscinetto appena sopra i talloni. Chiudi fino alla contrazione piena, 1 secondo, torna in 3 secondi senza far cadere il peso. Non e\' un hinge: e\' il femorale preso dall\'altra funzione, e serve proprio quando la lombare ha gia\' dato abbastanza.'}]},
+   varianti:[{modo:'macchina',name:'Leg Curl alla Macchina',band:'35kg',video:'gym-leg-curl-alla-macchina.mp4',desc:'Sdraiato o seduto, cuscinetto appena sopra i talloni. Chiudi fino alla contrazione piena, 1 secondo, torna in 3 secondi senza far cadere il peso. Non e\' un hinge: e\' il femorale preso dall\'altra funzione, e serve proprio quando la lombare ha gia\' dato abbastanza.'}]},
   {id:'l6',cat:'legs',name:'Affondi Camminati Manubri',video:'gym-affondi-camminati-manubri.mp4',
    desc:'Un manubrio per mano, braccia lungo i fianchi. Passo lungo, ginocchio posteriore che sfiora terra, busto verticale. Spingi col TALLONE della gamba avanti per rialzarti e porta subito avanti l\'altra. Se il ginocchio davanti supera di molto la punta del piede, allunga il passo.',
    muscles:'Quadricipiti, Glutei',primary:'quadricipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'14kg',stima:true,restSec:90,
    varianti:[
              {modo:'macchina',name:'Affondi statici alla Smith machine',band:'30kg',video:'gym-affondi-statici-alla-smith-machine.mp4',desc:'Barra sulle spalle, un piede avanti e uno indietro, posizione fissa per tutta la serie. Scendi verticale e risali senza spostare i piedi. Il binario rende impossibile sbilanciarsi: e\' la variante da usare quando le gambe sono gia\' stanche. Reps per lato.'}]},
-  {id:'l7',cat:'legs',name:'Stacco da Terra Bilanciere',video:'gym-stacco-da-terra-bilanciere.mp4',
-   desc:'Bilanciere sopra il centro del piede, presa poco fuori dalle gambe. Schiena neutra e petto alto PRIMA di staccare: il bacino non si alza per primo. Spingi il pavimento coi piedi, il bilanciere resta radente alle gambe. Appoggia e riparti da fermo, non rimbalzare.',
-   muscles:'Femorali, Glutei, Dorsali',primary:'femorali',attrezzo:'bilanciere',reps:5,repsMax:8,sets:4,band:'60kg',stima:true,restSec:150,
-   varianti:[{modo:'macchina',name:'Hip Thrust alla Macchina',band:'60kg',video:'gym-hip-thrust-alla-macchina.mp4',desc:'Schiena appoggiata al cuscino, cuscinetto sul bacino, piedi piantati larghi quanto le spalle. Spingi il bacino in alto fino alla linea spalle-anca-ginocchio, contrai i glutei 2 secondi, scendi lento. E\' l\'estensione d\'anca isolata: stessi muscoli dello stacco, zero carico sulla colonna.'}]},
-  {id:'l8',cat:'legs',name:'Goblet Squat Manubrio',video:'gym-goblet-squat-manubrio.mp4',
-   desc:'Un manubrio verticale tenuto al petto con entrambe le mani, gomiti dentro. Scendi finche\' i gomiti passano dentro le ginocchia, busto il piu\' verticale possibile. Il peso davanti fa da contrappeso: e\' il modo piu\' facile di tenere lo squat profondo e pulito.',
-   muscles:'Quadricipiti, Glutei, Core',primary:'quadricipiti',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'26kg',stima:true,restSec:90,
-   varianti:[{modo:'macchina',name:'Hack Squat alla Macchina',band:'60kg',video:'gym-hack-squat-alla-macchina.mp4',desc:'Spalle sotto i cuscinetti, piedi a meta\' pedana, schiena incollata. Scendi in controllo fino a parallelo o poco sotto, poi spingi senza bloccare le ginocchia. Il binario tiene il busto fermo: tutto quello che scende va sui quadricipiti, che e\' il motivo per cui la userai quando cerchi le gambe e non l\'equilibrio.'},
-             {modo:'bilanciere',name:'Front Squat con Bilanciere',band:'30kg',video:'gym-front-squat-con-bilanciere.mp4',desc:'Bilanciere davanti, appoggiato sui deltoidi anteriori con i gomiti ALTI. Scendi verticale tenendo i gomiti su: appena cadono, la barra rotola in avanti ed e\' la serie finita. Stessa posizione del goblet ma con un carico che il manubrio non regge.'}]},
-  {id:'l9',cat:'legs',name:'Stacco a Gambe Tese Manubri',video:'gym-stacco-gambe-tese-manubri.mp4',
-   desc:'Manubri davanti alle cosce, ginocchia appena morbide e FERME. Manda indietro il bacino facendo scorrere i manubri lungo le gambe, scendi finche\' senti tirare dietro la coscia — non piu\' giu\'. Schiena sempre neutra, risali stringendo i glutei. Carico per manubrio.',
-   muscles:'Femorali, Glutei',primary:'femorali',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'22kg',stima:true,restSec:90,
-   varianti:[{modo:'bilanciere',name:'Stacco a Gambe Tese con Bilanciere',band:'40kg',video:'gym-stacco-a-gambe-tese-con-bilanciere.mp4',desc:'Bilanciere davanti alle cosce, ginocchia quasi tese ma non bloccate. Scendi mandando il bacino indietro e la barra vicina alle gambe, fino a sentire il femorale tirare, poi risali contraendo i glutei. Se la schiena si arrotonda sei sceso troppo: il fondo lo decide il femorale, non il pavimento.'}]},
  ],
  core:[
   {id:'c1', cat:'core',noLast:true,zona:'B',name:'Hollow Body Hold',    video:'core-hollow-body-hold.mp4',    time:60, desc:'Schiena piatta, lombare incollata. Braccia tese sopra la testa, gambe a 30cm. Spalle alzate. Nessun cedimento.',muscles:'Core completo'},
@@ -492,11 +449,9 @@ const DB={
   // bacino che si arrotola) ma con un carico che si scala sul serio e con il corpo appeso
   // alle braccia, che e' la forma che regge nel verdetto di oggi. Storico di c44 intatto
   // nel foglio.
-  {id:'c52',cat:'core',zona:'C',name:'Leg Raise su panca con manubrio',video:'core-leg-raise-panca.mp4',
-   desc:'Sdraiato su una panca piana, mani che afferrano il bordo dietro la testa (le braccia tengono il busto ancorato: quella tensione fa parte dell\'esercizio). Un manubrio leggero stretto FRA I PIEDI, gambe quasi tese. Alza fino alla verticale e continua arrotolando il bacino, staccando i glutei dalla panca: i centimetri che contano sono gli ultimi, prima e\' solo flessione d\'anca. Scendi in 3 secondi fino a sfiorare la linea della panca, mai piu\' in basso e mai appoggiando. Se il manubrio scivola o la lombare si stacca, il peso e\' troppo.',
-   muscles:'Retto basso, Flessori dell\'anca',primary:'retto basso',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'4kg',restSec:45,stima:true,
-   varianti:[{modo:'macchina',name:'Leg Raise alla Sedia Romana',band:'4kg',video:'core-leg-raise-alla-sedia-romana.mp4',desc:'Avambracci sui cuscinetti, schiena contro lo schienale, manubrio leggero stretto fra i piedi. Alza le gambe fino oltre la linea delle anche arrotolando il bacino, poi scendi in 3 secondi senza dondolare. Il corpo appeso alle braccia fa parte dell\'esercizio.'},
-             {modo:'cavo',name:'Reverse Crunch al Cavo',band:'15kg',video:'',desc:'Sdraiato con la testa lontana dal cavo basso, cavigliere ai piedi o corda agganciata alle scarpe, mani che tengono un appoggio dietro la testa. Porta le ginocchia al petto arrotolando il bacino contro la trazione, poi torna lento. Il cavo tira sempre: la parte alta del movimento resta carica.'}]},
+  {id:'c52',cat:'core',zona:'C',name:'Leg Raise alla Sedia Romana',video:'core-leg-raise-alla-sedia-romana.mp4',
+   desc:'Avambracci sui cuscinetti, schiena contro lo schienale, manubrio leggero stretto FRA I PIEDI, gambe quasi tese. Alza fino oltre la linea delle anche e continua arrotolando il bacino: i centimetri che contano sono gli ultimi, prima e\' solo flessione d\'anca. Scendi in 3 secondi senza dondolare. Il corpo appeso alle braccia fa parte dell\'esercizio: quella tensione tiene il busto fermo. Se cominci a oscillare per alzare le gambe, il peso e\' troppo.',
+   muscles:'Retto basso, Flessori dell\'anca',primary:'retto basso',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'4kg',restSec:45,stima:true},
   // ── ZONE B e F RIFATTE (16/09/2026) ───────────────────────────────────────
   // Decisione di Simone: via tutti e quattro i caricabili di B e F (c31, c46, c37, c39) e
   // si riparte da esercizi scelti guardando il movimento, non l'inventario. Insieme alla
@@ -827,9 +782,11 @@ const RECOVERY_PHASES=[
 // Il default e' 1, cioe' AMMESSO gia' nella fase piu' leggera: per un esercizio nuovo e
 // pesante il default sbaglia dalla parte pericolosa. Ogni id del DB va elencato qui.
 const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
- r1:3,r2:2,r3:1,r4:1,r5:2,r6:2,r7:3,r8:2,r9:2,r10:1,r11:1,
- s1:3,s2:1,s3:2,s4:1,s5:3,s6:1,
- l1:3,l2:2,l3:2,l5:3,l6:2,l7:3,l8:2,l9:3,
+ r1:3,r2:2,r3:1,r4:1,r5:2,r6:2,r8:2,r9:2,r11:1,
+ s1:3,s2:1,s3:2,
+ l1:3,l2:2,l3:2,l5:3,l6:2,
+ // 17/09/2026: via le chiavi di r7,r10,s4,s5,s6,l7,l8,l9 insieme alle loro righe
+ // (catalogo a tre famiglie). Una chiave orfana qui non fa danno, ma mente sul catalogo.
  k1:9,k2:9,k3:9,k4:9,
  c42:3,                                               // plank a leva lunga: brace forte come c1
  // RAMO CASA (04/09/2026). Fino a oggi NESSUNA riga `h*` era elencata qui: cadevano tutte
@@ -1017,10 +974,16 @@ function attrezzatura(){try{return (S.aiDB.coachPlan&&S.aiDB.coachPlan.global&&S
 // return 2.5 di stepDi. Il carico e' UN disco, non due per lato: 1,25 e' il piu' piccolo della
 // rastrelliera. Copia IDENTICA in workout-coach/coach_llm.py (STEP_ATTREZZO): si cambiano insieme.
 // ─── TRE MODALITA' PER ESERCIZIO (16/09/2026) ────────────────────────────────
-// Decisione di Simone: ogni esercizio della palestra si puo' fare in tre modi (macchinario,
-// manubri, cavi — o bilanciere/dischi dove il cavo non esiste come gesto), e la scelta si fa
-// SUL SINGOLO ESERCIZIO, in palestra, quando scopri che la panca e' occupata. Non a inizio
-// seduta e non come ripiego dichiarato: sono tre modi pari.
+// Decisione di Simone (17/09/2026, rovescia il modello del 16/09): le versioni di un
+// esercizio sono TRE FAMIGLIE — cavi · pesi liberi (manubri E bilanciere: UNA famiglia
+// sola) · macchina. Manubri e bilanciere non sono due versioni: e' lo stesso gesto con
+// due attrezzi intercambiabili, e la riga `attrezzo` dice solo quale dei due e' il
+// naturale per quel gesto (serve al passo di progressione: 2kg vs 2,5kg).
+// Se per quel gesto una famiglia NON esiste, la versione non si scrive: mai un ripiego
+// "simile" per riempire la terza casella (e' cosi' che il catalogo del 16/09 si era
+// riempito di doppioni — stesso esercizio sotto due nomi).
+// La scelta si fa SUL SINGOLO ESERCIZIO, in palestra, quando scopri che la panca e'
+// occupata. Non a inizio seduta e non come ripiego dichiarato: sono famiglie pari.
 // La riga del catalogo E' la variante di default (name/desc/band/attrezzo/video sono suoi):
 // `varianti` porta SOLO le altre due. Una lista a parte che le contenesse tutte e tre sarebbe
 // un secondo inventario, e divergerebbe dal catalogo al primo carico corretto a mano.
