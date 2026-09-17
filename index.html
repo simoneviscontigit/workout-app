@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-17a · tre modalita per esercizio · core rifatto'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-17b · clip dei tre core nuovi'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -399,7 +399,7 @@ const DB={
   // allora e' "la flessione meno crunch possibile": busto lungo su una panca, carico al petto
   // che si scala in un secondo, niente ginocchia a terra e niente coccige sul pavimento
   // (il motivo per cui e' uscito c43). Storico di c30 intatto nel foglio.
-  {id:'c51',cat:'core',zona:'A',name:'Sit-up su panca inclinata con disco',video:'',
+  {id:'c51',cat:'core',zona:'A',name:'Sit-up su panca inclinata con disco',video:'core-situp-panca-inclinata.mp4',
    desc:'Panca inclinata in negativo (piedi in alto, se non c\'e\' un fermapiedi bastano le ginocchia piegate sotto il cuscino). Disco stretto al petto con le due mani. Sali arrotolando la colonna una vertebra alla volta — non a corpo rigido, non a strappo — fino a superare i 45°, poi scendi in 3 secondi senza appoggiare le spalle. Il disco resta al petto: se lo allontani per aiutarti col peso davanti, stai togliendo carico. L\'ultima rep pulita e\' quella dove la salita non parte dal collo.',
    muscles:'Retto addominale',primary:'retto alto',attrezzo:'dischi',reps:8,repsMax:10,sets:3,band:'10kg',restSec:45,stima:true,
    varianti:[{modo:'cavo',name:'Crunch al Cavo in ginocchio',band:'45kg',video:'',desc:'In ginocchio davanti al cavo alto, corda dietro la nuca. Arrotola la colonna portando i gomiti verso le cosce: e\' il retto che chiude, non le anche che si piegano. Bacino FERMO. E\' la flessione con il carico piu\' alto disponibile, ed e\' il motivo per cui resta fra le tre.'},
@@ -454,7 +454,7 @@ const DB={
   // verdetto di oggi: a quattro zampe non costa niente alle spalle e il limite arriva dalla
   // noia, non dal core. Al suo posto lo stesso anti-rotazione ma in plank alto, dove le
   // spalle reggono il corpo e alzare una gamba diventa un carico vero. Storico nel foglio.
-  {id:'c53',cat:'core',zona:'F',name:'Plank con gamba alta',video:'',
+  {id:'c53',cat:'core',zona:'F',name:'Plank con gamba alta',video:'core-plank-gamba-alta.mp4',
    desc:'Plank alto sulle mani, piedi larghi quanto le spalle. Alza una gamba tesa fino alla linea del corpo e tienila due secondi, poi appoggia e cambia. Il bacino NON deve ruotare ne\' salire: appena una gamba si stacca, il fianco di quel lato vuole aprirsi verso il soffitto ed e\' esattamente cio\' che devi impedire. Lento: se rimbalzi, e\' slancio. Una rep = una gamba.',
    muscles:'Core anti-rotazione, Glutei, Spalle',primary:'anti-rotazione',reps:8,repsMax:12,sets:3,perSide:true,restSec:45},
   // c39 Superman a terra RITIRATO il 16/09/2026 (decisione Simone). Era diventato caricabile
@@ -499,7 +499,7 @@ const DB={
   // bacino che si arrotola) ma con un carico che si scala sul serio e con il corpo appeso
   // alle braccia, che e' la forma che regge nel verdetto di oggi. Storico di c44 intatto
   // nel foglio.
-  {id:'c52',cat:'core',zona:'C',name:'Leg Raise su panca con manubrio',video:'',
+  {id:'c52',cat:'core',zona:'C',name:'Leg Raise su panca con manubrio',video:'core-leg-raise-panca.mp4',
    desc:'Sdraiato su una panca piana, mani che afferrano il bordo dietro la testa (le braccia tengono il busto ancorato: quella tensione fa parte dell\'esercizio). Un manubrio leggero stretto FRA I PIEDI, gambe quasi tese. Alza fino alla verticale e continua arrotolando il bacino, staccando i glutei dalla panca: i centimetri che contano sono gli ultimi, prima e\' solo flessione d\'anca. Scendi in 3 secondi fino a sfiorare la linea della panca, mai piu\' in basso e mai appoggiando. Se il manubrio scivola o la lombare si stacca, il peso e\' troppo.',
    muscles:'Retto basso, Flessori dell\'anca',primary:'retto basso',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'4kg',restSec:45,stima:true,
    varianti:[{modo:'macchina',name:'Leg Raise alla Sedia Romana',band:'4kg',video:'',desc:'Avambracci sui cuscinetti, schiena contro lo schienale, manubrio leggero stretto fra i piedi. Alza le gambe fino oltre la linea delle anche arrotolando il bacino, poi scendi in 3 secondi senza dondolare. Il corpo appeso alle braccia fa parte dell\'esercizio.'},
