@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-17g · sei clip palestra'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-18a · spazio telefono + sonda'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -1735,6 +1735,9 @@ function mergeDown(dd){
 // ─── STORAGE ─────────────────────────────────────────────────────────────────
 async function loadData(){
  try{
+  // Prima di leggere: via l'annullamento scaduto. Sta in cima perche' lo spazio che libera
+  // serve gia' alle scritture di questo avvio (migrazioni, mergeDown, dropSkipState).
+  pruneRestoreBackup();
   var v;
   v=localStorage.getItem('wh');if(v)S.history=JSON.parse(v);
   v=localStorage.getItem('si');if(v)S.splitIdx=parseInt(v)||0;
@@ -1818,16 +1821,64 @@ const TEST_MODE=(typeof location!=='undefined'&&/vercel\.app$/i.test(location.ho
 // (banner rosso in home + un alert, una volta sola per sessione, perche' il primo va letto
 // e i successivi diventerebbero rumore da ignorare).
 var _ioAlerted=false;
-async function sv(k,v){
+// SPAZIO SU QUESTO TELEFONO (18/09/2026). Il tetto di localStorage su iOS si conta in UTF-16:
+// gli ~800 KB di JSON (`ai` 492 + `wh` 308) ne pesano il doppio, e `bkp-pre-restore` — copia
+// integrale di entrambi, scritta a ogni ripristino e finora mai ripulita — li raddoppia ancora.
+// Col tetto pieno `sv()` fallisce, il dato resta in RAM e il primo reload lo butta: e' cosi' che
+// il 15, 16 e 17/09 di nutrizione sono spariti mentre le sessioni restavano (`wh` e' piu' piccola
+// e passava). La rete di sicurezza di un ripristino serve per ore, non per sempre: dopo 48h e'
+// solo zavorra, e la zavorra qui non costa spazio: costa dati.
+var BKP_TTL_MS=48*60*60*1000;
+function dropRestoreBackup(){try{localStorage.removeItem('bkp-pre-restore');return true;}catch(e){return false;}}
+function pruneRestoreBackup(){
  try{
-  localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));
+  var raw=localStorage.getItem('bkp-pre-restore');if(!raw)return;
+  var at=Date.parse((JSON.parse(raw)||{}).at||'');
+  if(!at||(Date.now()-at)>BKP_TTL_MS)dropRestoreBackup();
+ }catch(e){dropRestoreBackup();} // illeggibile = inservibile come annullamento: via lo stesso
+}
+// Zavorra sacrificabile, in ordine di quanto costa perderla. Nessuna di queste chiavi e' un dato:
+// `bkp-pre-restore` e' un annullamento (e ce n'e' una copia intera su Drive), `syncOk` e' un
+// timestamp informativo. Tutto il resto NON si tocca, nemmeno per fare spazio.
+function freeSpace(){
+ var freed=false;
+ try{if(localStorage.getItem('bkp-pre-restore')&&dropRestoreBackup())freed=true;}catch(e){}
+ try{if(localStorage.getItem('syncOk')!=null){localStorage.removeItem('syncOk');freed=true;}}catch(e){}
+ return freed;
+}
+async function sv(k,v){
+ var _s=typeof v==='string'?v:JSON.stringify(v);
+ try{
+  localStorage.setItem(k,_s);
   S.ioError='';
   return true;
  }catch(e){
+  // Secondo tentativo dopo aver buttato la zavorra: un dato vero non si perde per lasciare posto
+  // a un annullamento scaduto. Se fallisce anche questo, il telefono e' pieno davvero.
+  if(freeSpace()){
+   try{localStorage.setItem(k,_s);S.ioError='';return true;}catch(_e){e=_e;}
+  }
   S.ioError='Salvataggio su questo telefono FALLITO ('+((e&&e.name)||'errore')+'). Quello che vedi e\' solo in memoria: non chiudere l\'app.';
   if(!_ioAlerted){_ioAlerted=true;try{alert(S.ioError);}catch(_e){}}
   return false;
  }
+}
+// SONDA DI SPAZIO (18/09/2026). `S.ioError` vive in RAM: dopo un reload torna vuoto e il banner si
+// spegne proprio mentre il guasto e' ancora li'. La memoria del guasto non puo' stare nello storage
+// — e' lui a essere pieno — quindi si RIMISURA a ogni avvio: si prova a scrivere 64 KB, l'ordine di
+// grandezza di una giornata di nutrizione coi pasti, e li si cancella subito. Se non ci stanno, il
+// prossimo salvataggio fallirebbe: lo si dice PRIMA di perdere il dato, non dopo.
+var PROBE_BYTES=64*1024;
+function storageHeadroomProbe(){
+ var filler=new Array(PROBE_BYTES+1).join('x'),ok=false;
+ function _try(){
+  try{localStorage.setItem('__probe',filler);localStorage.removeItem('__probe');return true;}
+  catch(e){try{localStorage.removeItem('__probe');}catch(_e){}return false;}
+ }
+ ok=_try();
+ if(!ok&&freeSpace())ok=_try();
+ if(!ok)S.ioError='Spazio esaurito su questo telefono: il prossimo salvataggio fallirebbe e resterebbe solo in memoria. Non compilare altro finche\' non e\' liberato.';
+ return ok;
 }
 // RIPRISTINO NON DISTRUTTIVO (03/09/2026). Prima questa funzione faceva
 // `sv('wh',data.history)` + `sv('ai',data.aiDB)`: SOSTITUZIONE PIENA dello stato locale
@@ -4711,7 +4762,7 @@ async function sendFloatAI(){
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
-loadData().then(function(){S.qStep=0;render();checkAndGenerateSummaries();});
+loadData().then(function(){S.qStep=0;storageHeadroomProbe();render();checkAndGenerateSummaries();});
 </script>
 </body>
 </html>
