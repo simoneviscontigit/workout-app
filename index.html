@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-19a · pull prima del push + home ripulita'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-19b · data sui consigli di Sumi'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -4435,6 +4435,25 @@ var WKUI=(function(){
  var REPORT_COLOR={good:'#22c55e',warn:'#f59e0b',bad:'#ef4444',accent:'#F97316'};
  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
  function reportColor(c){return REPORT_COLOR[c]||REPORT_COLOR.accent;}
+ // DATA DEL REFERTO accanto al titolo (19/09/2026). Sumi lo riscrive ogni notte, ma l'app
+ // mostra l'ultimo che le e' SCESO: se il telefono non fonde — perche' e' stato aperto
+ // offline, perche' il merge non e' mai partito — i consigli restano fermi a giorni prima
+ // e sembrano quelli di stamattina. Senza la data, un referto vecchio e uno fresco si
+ // leggono identici: e' quello che e' successo il 19/09, con i consigli fermi al 18.
+ // 🔑 Un dato che invecchia in silenzio deve portare addosso la propria eta'.
+ // Lo scarto si conta in GIORNI DI CALENDARIO, non in ore: il referto nasce sempre verso
+ // le 03:05, quindi a ore sarebbe "vecchio di 18 ore" alle nove di sera dello stesso giorno.
+ function freschezza(report){
+  var g=report&&report.generatedAt;
+  if(!g)return "<span style='font-size:10px;color:#71717a'>data ignota</span>";
+  var d=new Date(String(g).replace(' ','T'));   // niente offset: e' ora locale del Mac
+  if(isNaN(d.getTime()))return "<span style='font-size:10px;color:#71717a'>data ignota</span>";
+  var gg=Math.round((Date.parse(dayKey())-Date.parse(dayKey(d)))/86400000);
+  var quando=gg<=0?'oggi':gg===1?'ieri':gg+' giorni fa';
+  var col=gg<=0?'#22c55e':gg===1?'#a1a1aa':'#f59e0b';
+  var gm=('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);
+  return "<span style='font-size:10px;font-weight:700;letter-spacing:.04em;color:"+col+"'>"+gm+" · "+quando+"</span>";
+ }
 
  return {
   hasReport:function(report){return !!(report&&((report.consigli&&report.consigli.length)||(report.card&&report.card.length)));},
@@ -4449,7 +4468,9 @@ var WKUI=(function(){
      +"</div>";
    }).join('');
    return "<div style='margin-top:18px'>"
-    +"<div class='lbl' style='font-size:11px;color:#F97316;margin-bottom:10px'>▸ Consigli di Sumi</div>"
+    +"<div style='display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px'>"
+    +"<span class='lbl' style='font-size:11px;color:#F97316'>▸ Consigli di Sumi</span>"
+    +freschezza(report)+"</div>"
     +items+"</div>";
   },
   /* HOME §2 — cosa dicono i dati (card verdetto, colore = verdetto) */
@@ -4463,7 +4484,9 @@ var WKUI=(function(){
      +"</div>";
    }).join('');
    return "<div style='margin-top:18px'>"
-    +"<div class='lbl' style='font-size:11px;color:#a1a1aa;margin-bottom:10px'>Cosa dicono i dati</div>"
+    +"<div style='display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px'>"
+    +"<span class='lbl' style='font-size:11px;color:#a1a1aa'>Cosa dicono i dati</span>"
+    +freschezza(report)+"</div>"
     +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px'>"+cells+"</div></div>";
   }
  };
