@@ -221,7 +221,16 @@ const DB={
              {modo:'macchina',name:'Curl presa neutra alla Macchina',band:'25kg',video:'gym-curl-presa-neutra-alla-macchina.mp4',desc:'Stessa macchina del curl, impugnatura neutra se disponibile o mani a martello sulle maniglie. Gomiti fermi, salita piena, discesa in 3 secondi. Serve quando i manubri pesanti ti mollano la presa prima del braccio.'}]},
   {id:'r6',cat:'pull',name:'Lat Machine',video:'gym-lat-machine.mp4',
    desc:'Seduto, ginocchia bloccate sotto il cuscinetto, presa prona poco piu\' larga delle spalle. Busto fermo, inclinato indietro di pochi gradi e BASTA: se dondoli e\' diventato un rematore. Tira la barra al petto portando i gomiti giu\' e indietro, contrai i dorsali 1s, risali lento 3s in controllo. Con l\'elastico questo esercizio non funzionava: qui si\'.',
-   muscles:'Dorsali, Bicipiti',primary:'dorsali',attrezzo:'cavo',reps:8,repsMax:10,sets:4,band:'45kg',restSec:100},
+   // 19/09/2026 — TORNA `macchina`. Il 17/09 la riclassificazione sulle tre famiglie l'aveva
+   // messa fra i cavi (e le aveva tolto la variante cavo, quindi era rimasta senza varianti).
+   // La lat machine e' un pacco pesi con la sua colonna, e sopra tutto: la chiave che i dati
+   // usano e' `r6#macchina` — la scrive `computeProgression` dalle sedute (l'attrezzo del
+   // 15/09 e' `macchina`) e ci ha scritto il coach il 18/09 i 50kg riportati da Simone.
+   // Con `attrezzo:'cavo'` la scheda chiedeva `r6#cavo`, non lo trovava, e ripiegava sulla
+   // chiave nuda `r6` = 100kg del vecchio piano: i 50 esistevano ma non li leggeva nessuno.
+   // 🔑 Cambiare l'`attrezzo` di un esercizio gia' vissuto ne SPOSTA la chiave, e i dati
+   // scritti sotto la chiave vecchia non seguono: e' una migrazione, non un'etichetta.
+   muscles:'Dorsali, Bicipiti',primary:'dorsali',attrezzo:'macchina',reps:8,repsMax:10,sets:4,band:'45kg',restSec:100},
   {id:'r8',cat:'pull',name:'Rematore Manubrio Singolo',video:'gym-rematore-manubrio-singolo.mp4',
    desc:'Un ginocchio e una mano sulla panca, schiena parallela al suolo e neutra. Tira il manubrio verso l\'ANCA, non verso la spalla, portando il gomito oltre la linea della schiena. Non ruotare il busto per guadagnare centimetri. Carico per braccio.',
    muscles:'Dorsali, Romboidi',primary:'dorsali',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'20kg',perSide:true,stima:true,restSec:90,
@@ -1231,18 +1240,43 @@ function computeProgression(session){
 // Vale solo finche' la panca non viene rifatta: Simone non l'ha piu' eseguita dopo la
 // ritaratura, quindi qui non c'e' nessuna misura vera da perdere. Il marker in `_fix`
 // impedisce che una progressione legittima futura venga riabbassata.
-function fixProgressionP4(){
+// ONE-SHOT SULLE BAND FOSSILI DI `progression` (19/09/2026).
+// `progression` e' DEVICE-OWNED: `mergeDown` non la fonde, quindi correggerla sul blob dal
+// Mac non la raggiunge sul telefono — la seconda scrittura e' questa, e gira all'avvio.
+// Perche' una band puo' restare indietro per mesi senza che nessuno se ne accorga:
+// `computeProgression` fa `prevProg.band || r.band`, cioe' il numero vecchio VINCE su quello
+// della seduta, e si muove solo quando scatta un aumento. Un esercizio che non chiude mai il
+// massimo si porta dietro la sua prima etichetta per sempre.
+// Ogni voce ha il suo marker: si ritirano una alla volta, quando risultano consumate.
+var FIX_PROGRESSION=[
+ // La panca: il 17/09 `propagaParallelo` aveva etichettato «68kg» (un derivato mai sollevato)
+ // le reps del 14/09, fatte a 22 per mano. Il carico vero e' 24 per mano.
+ {marker:'p4_20260919',chiave:'p4',sopra:40,band:'24kg',
+  perche:'era un carico derivato (68kg), le reps del 14/09 sono a 24 per mano'},
+ // La lat machine: `30-40kg` e' l'etichetta dell'era elastici, mai piu' rinfrescata perche'
+ // r6 non ha piu' chiuso il massimo. Il carico vero e' quello riportato il 15/09.
+ {marker:'r6_20260919',chiave:'r6',sotto:50,band:'50kg',
+  perche:'era l\'etichetta dell\'era elastici (30-40kg), il carico riportato il 15/09 e\' 50kg alla macchina'},
+];
+function fixProgressioneFossile(){
  try{
-  if(!S.aiDB.progression||(S.aiDB._fix||{}).p4_20260919)return;
-  var pr=S.aiDB.progression.p4;
-  var kg=pr&&parseFloat(String(pr.band||'').replace(/kg/i,'').replace(',','.'));
-  if(pr&&kg>40){
-   pr.band='24kg';
-   pr.note=(pr.note||'')+' · band corretta il 19/09: era un carico derivato (68kg), le reps del 14/09 sono a 24 per mano';
-  }
-  S.aiDB._fix=Object.assign({},S.aiDB._fix||{},{p4_20260919:1});
-  sv('ai',S.aiDB);
- }catch(e){console.error('fixProgressionP4:',e);}
+  if(!S.aiDB.progression)return;
+  var fatti=S.aiDB._fix||{},tocco=false;
+  FIX_PROGRESSION.forEach(function(f){
+   if(fatti[f.marker])return;
+   var pr=S.aiDB.progression[f.chiave];
+   var kg=pr&&parseFloat(String(pr.band||'').replace(/kg/i,'').replace(',','.'));
+   // La guardia e' sul VALORE, non solo sul marker: se nel frattempo la band e' gia' quella
+   // giusta (o e' stata misurata davvero), non la si riscrive.
+   var fuori=(f.sopra!=null&&kg>f.sopra)||(f.sotto!=null&&kg<f.sotto);
+   if(pr&&fuori){
+    pr.band=f.band;
+    pr.note=(pr.note||'')+' · band corretta il 19/09: '+f.perche;
+   }
+   var segno={};segno[f.marker]=1;fatti=Object.assign({},fatti,segno);tocco=true;
+  });
+  if(tocco){S.aiDB._fix=fatti;sv('ai',S.aiDB);}
+ }catch(e){console.error('fixProgressioneFossile:',e);}
 }
 function dropSkipState(){
  var d=false;
@@ -1796,7 +1830,7 @@ async function loadData(){
   S.nutDraft=loadNutDraft(); // compilazione interrotta da un riavvio: la home la offre indietro
   if(typeof recoveryInit==='function')recoveryInit(); // modalità recupero: init una-tantum + auto-uscita g30
   dropSkipState(); // la lista dei banditi non esiste più: ripulisce i residui locali e, al primo sync, il blob
- fixProgressionP4(); // una-tantum 19/09/2026 — vedi sotto
+ fixProgressioneFossile(); // una-tantum 19/09/2026 (p4, r6) — vedi FIX_PROGRESSION
   // Migrazione: ripristina da array nutrition legacy (preferisci dati reali su skipped)
   if(S.aiDB.nutrition&&S.aiDB.nutrition.length){
    S.aiDB.nutrition.forEach(function(n){
@@ -1835,27 +1869,34 @@ async function loadData(){
   // Restore today's chat session
   if(S.aiDB.currentChat&&S.aiDB.currentChat.date===new Date().toDateString())S.floatChat=S.aiDB.currentChat.msgs||[];
   // Auto-fetch del coachPlan da Drive: le istruzioni del coach notturno (Sumi) arrivano da sole
-  fetch(DRIVE_URL+'?t='+Date.now(),{cache:'no-store',redirect:'follow'}).then(function(r){return r.json();}).then(function(dd){
-   if(dd&&dd.ok&&dd.proxyToken&&!getApiKey()){localStorage.setItem('workoutProxyToken',dd.proxyToken);} // ripristina proxy-token perso da wipe localStorage / reinstall
-   var r=dd&&dd.ok&&dd.aiDB;
-   if(r&&r.serverUpdatedAt&&newer(r.serverUpdatedAt,S.aiDB._lastServerSync)){
-    // Il server ha scritto dopo l'ultimo sync locale → merge completo (tabella maestra del contratto).
-    // Pull PRIMA di ogni push (invariante): loadData gira all'avvio, prima che l'utente possa syncare.
-    mergeDown(dd);
-    sv('ai',S.aiDB);
-    if(S.history&&S.history.length)sv('wh',S.history);
-    if(typeof S.splitIdx==='number')sv('si',String(S.splitIdx));
-   }else if(r){
-    // Fallback backward-safe: blob pre-contratto (senza serverUpdatedAt) → vecchio comportamento
-    // (blind coachPlan/metrics + profilo last-wins). Nessun merge se non c'e' il marker server.
-    if(r.coachPlan){S.aiDB.coachPlan=r.coachPlan;}
-    if(r.metrics){S.aiDB.metrics=r.metrics;} // SOLA LETTURA: l'app le mostra, non le calcola
-    if(r.profile&&r.profile.profileUpdatedAt&&newer(r.profile.profileUpdatedAt,S.aiDB.profile&&S.aiDB.profile.profileUpdatedAt))S.aiDB.profile=r.profile;
-    sv('ai',S.aiDB);
-   }
-   if(dd&&dd.ok&&typeof render==='function')render();
-  }).catch(function(){});
+  pullDown().then(function(ok){if(ok&&typeof render==='function')render();});
  }catch(e){}
+}
+// PULL — scarica il blob dal server e lo applica in locale secondo il contratto.
+// Estratta da loadData il 19/09/2026 perche' i chiamanti sono DUE: l'avvio e, da oggi,
+// ogni push (vedi syncToDrive). Ritorna una Promise<bool>: `true` = il server e' stato letto.
+function pullDown(){
+ return fetch(DRIVE_URL+'?t='+Date.now(),{cache:'no-store',redirect:'follow'})
+ .then(function(r){return r.json();}).then(function(dd){
+  if(dd&&dd.ok&&dd.proxyToken&&!getApiKey()){localStorage.setItem('workoutProxyToken',dd.proxyToken);} // ripristina proxy-token perso da wipe localStorage / reinstall
+  var r=dd&&dd.ok&&dd.aiDB;
+  if(!r)return false;
+  if(r.serverUpdatedAt&&newer(r.serverUpdatedAt,S.aiDB._lastServerSync)){
+   // Il server ha scritto dopo l'ultimo sync locale → merge completo (tabella maestra del contratto).
+   mergeDown(dd);
+   sv('ai',S.aiDB);
+   if(S.history&&S.history.length)sv('wh',S.history);
+   if(typeof S.splitIdx==='number')sv('si',String(S.splitIdx));
+  }else{
+   // Fallback backward-safe: blob pre-contratto (senza serverUpdatedAt) → vecchio comportamento
+   // (blind coachPlan/metrics + profilo last-wins). Nessun merge se non c'e' il marker server.
+   if(r.coachPlan){S.aiDB.coachPlan=r.coachPlan;}
+   if(r.metrics){S.aiDB.metrics=r.metrics;} // SOLA LETTURA: l'app le mostra, non le calcola
+   if(r.profile&&r.profile.profileUpdatedAt&&newer(r.profile.profileUpdatedAt,S.aiDB.profile&&S.aiDB.profile.profileUpdatedAt))S.aiDB.profile=r.profile;
+   sv('ai',S.aiDB);
+  }
+  return true;
+ }).catch(function(){return false;});
 }
 const DRIVE_URL='https://script.google.com/macros/s/AKfycbxtbx4x2KZZxgCvzOtibFtFTI8h0Bxg1-xalRboisHzyP_w8QD14Hb2-ZiAgTTDNQPP/exec';
 // Sandbox: sui domini di test (Vercel) NON scriviamo mai su Drive (solo lettura per caricare i dati veri).
@@ -1977,6 +2018,18 @@ async function syncToDrive(){ // NB: da qui in poi e' await-abile — chiamarla 
  // ANTI-WIPE: non sincronizzare mai uno storico vuoto sopra i dati su Drive
  // (evita che un telefono appena reinstallato/azzerato cancelli il backup).
  if(!(S.history&&S.history.length)){console.warn('sync saltato: storico locale vuoto');return;}
+ // PULL PRIMA DEL PUSH, DAVVERO (19/09/2026). Il POST fa `setContent`: sostituisce il blob
+ // INTERO, quindi tutto cio' che il Mac ha scritto e che questo telefono non ha ancora letto
+ // viene cancellato. Fino a oggi l'unico pull stava in `loadData`, cioe' all'avvio — e il
+ // commento la chiamava "invariante" pur non essendolo: se all'avvio la rete manca, il fetch
+ // cade nel catch vuoto e il push di fine seduta riporta su lo stato di ieri.
+ // 🔑 Successo il 19/09/2026: app aperta senza linea in palestra, POST riuscito a fine seduta,
+ // e i 6 cambi al piano scritti dal coach quella notte spariti dal blob — insieme al
+ // `serverUpdatedAt`, tornato indietro di due giorni. Nessun errore, da nessuna parte.
+ // Un GET fallito NON blocca il push: la seduta appena fatta vale piu' del rischio, ed e' il
+ // caso in cui anche il POST fallirebbe. Ma quando la rete c'e' al momento del salvataggio —
+ // che e' esattamente lo scenario del 19/09 — il piano del coach sopravvive.
+ await pullDown();
  try{
   // Round-trip: splitIdx vive anche in aiDB (solo aiDB sopravvive al POST del telefono, che
   // sovrascrive tutto il blob). Il timbro *UpdatedAt lo mette chi edita (finishSession).
