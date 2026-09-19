@@ -1013,7 +1013,15 @@ function leggiPerVariante(mappa,e){
  return mappa[c.k]||(c.legacy?mappa[c.legacy]:null)||null;
 }
 var STEP_ATTREZZO={manubri:2,bilanciere:2.5,macchina:5,cavo:5,dischi:1.25};
+// PASSO PER SINGOLO ESERCIZIO (19/09/2026). Vince sull'attrezzo: l'attrezzo dice come si
+// carica in generale, non cosa entra fisicamente in quel gesto. c52 Leg Raise alla Sedia
+// Romana tiene il manubrio FRA I PIEDI: +2kg (passo dei manubri) su 4kg e' un salto del 50%
+// e il piede non lo regge — la rastrelliera ha i manubri da 1kg, e il passo e' quello.
+// Copia IDENTICA in workout-coach/coach_llm.py (STEP_ESERCIZIO): si cambiano insieme.
+var STEP_ESERCIZIO={c52:1};
 function stepDi(id,modo){
+ var bid=baseExId(id);
+ if(STEP_ESERCIZIO[bid]!=null)return STEP_ESERCIZIO[bid];
  // Prima il coachPlan (puo' correggere), poi il DB. Fino al 22/08/2026 leggeva SOLO il
  // coachPlan e cadeva su 2,5 (il passo del bilanciere) per tutto cio' che il coach non
  // aveva ancora toccato: un manubrio nuovo saliva di 2,5kg invece che di 2, e un cavo
@@ -2573,10 +2581,14 @@ function rWorkout(){
   +'</div>'
   +'</div>'
   +'<button class="btn" style="background:'+ac+';margin-bottom:12px;padding:18px" onclick="workoutDone()">✓ SET COMPLETATO!</button>'
-  +'<div style="display:flex;gap:8px">'
-  +'<button class="btn-ghost" style="margin:0;flex:1;padding:14px" onclick="wBack()">Indietro</button>'
-  +'<button class="btn-ghost" style="margin:0;flex:1;padding:14px;border-color:'+ac+';color:'+ac+'" onclick="toggleFloatAI()">AI Coach</button>'
-  +'<button class="btn-ghost" style="margin:0;flex:1;padding:14px" onclick="skipExercise()">Cambia</button>'
+  +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+  +'<button class="btn-ghost" style="margin:0;flex:1 1 45%;padding:14px" onclick="wBack()">Indietro</button>'
+  +'<button class="btn-ghost" style="margin:0;flex:1 1 45%;padding:14px;border-color:'+ac+';color:'+ac+'" onclick="toggleFloatAI()">AI Coach</button>'
+  +'<button class="btn-ghost" style="margin:0;flex:1 1 45%;padding:14px" onclick="skipExercise()">Cambia</button>'
+  // "Cambia ordine" (19/09/2026): il macchinario e' occupato ma l'esercizio lo vuoi fare.
+  // Non cerca un'alternativa (quello e' "Cambia"): sposta QUESTO esercizio in fondo al suo
+  // blocco e ti manda avanti col prossimo.
+  +'<button class="btn-ghost" style="margin:0;flex:1 1 45%;padding:14px;font-size:13px" onclick="rimandaExercise()">Cambia ordine</button>'
   // "Cambia" aveva DUE vicoli ciechi muti (nessuna alternativa · tutte gia' in seduta):
   // premevi, la schermata si ridisegnava identica e non sapevi se il cambio era andato.
   // Da li' nasce il "ho cambiato esercizio" che nel foglio non risulta. Ora lo dice.
@@ -2835,6 +2847,12 @@ function skipExercise(){
   // proponeva Crunch al Cavo e Ab Rollout col bilanciere — roba che a casa non c'e'.
   var cands=((S.homeMode&&HOME_DB[ex.cat])||DB[ex.cat]||[]).filter(function(e){
    if(S.homeMode&&e.attrezzo)return false;
+   // CORE IN PALESTRA: solo CARICABILI (19/09/2026). Il pool della seduta li sceglie cosi'
+   // (`corePool(z,true,false)`), ma "Cambia" pescava da tutto `DB.core` e rispondeva con
+   // hollow body hold e mountain climber — in palestra il core progredisce in kg, il corpo
+   // libero vive nel CORE CASA. Stesso criterio del costruttore (`coreCaricabile`), non una
+   // seconda lista. Il cardio e' escluso: e' a corpo libero per definizione.
+   if(!S.homeMode&&ex.isCore&&!ex.isCardio&&!coreCaricabile(e))return false;
    return e.id!==ex.id&&!inSession.find(function(x){return x.id===e.id;})&&recoveryAllows(e);
   }).map(function(e){
    // la forma la detta l'esercizio NUOVO, con la stessa regola della costruzione della
@@ -2874,6 +2892,37 @@ function skipExercise(){
  S.wEx=ne;S.wSteps=buildSteps(ne);
  var fi=S.wSteps.findIndex(function(s){return s.type==='work'&&s.exIdx===slot&&s.setNum===1;});
  S.wStepIdx=Math.max(0,fi);
+ render();
+}
+// "CAMBIA ORDINE" (19/09/2026) — il macchinario e' occupato, l'esercizio lo vuoi FARE.
+// Sorella di "Cambia" e opposta come mestiere: "Cambia" cerca un ALTRO esercizio per lo
+// stesso slot, questa tiene l'esercizio e sposta il suo TURNO. Resta in rotazione: va in
+// fondo al suo blocco (principali con principali, cardio con cardio, core con core) e lo
+// riprendi quando il macchinario si libera. Gli addominali stanno in coda per costruzione,
+// quindi un esercizio principale non li scavalca mai: il blocco e' il confine.
+// Le serie GIA' fatte non si rifanno — l'esercizio si riporta dietro solo quelle che restano.
+function bloccoDi(x){return x&&x.isCardio?'cardio':(x&&x.isCore?'core':'main');}
+function rimandaExercise(){
+ clearInterval(TI);S.wAltMsg='';
+ var step=S.wSteps[S.wStepIdx];if(!step||step.type!=='work')return;
+ var slot=step.exIdx,ex=S.wEx[slot];if(!ex||ex.isBreak)return;
+ var blk=bloccoDi(ex),ultimo=-1;
+ S.wEx.forEach(function(x,i){if(i>slot&&bloccoDi(x)===blk&&!x.isBreak)ultimo=i;});
+ if(ultimo<0){S.wAltMsg='Ultimo del blocco: non c\'e\' nessuno dopo cui rimandarlo';render();return;}
+ var fatte=step.setNum-1,resta=(ex.sets||3)-fatte;
+ if(resta<1){S.wAltMsg='Serie gia\' finite: niente da rimandare';render();return;}
+ // La copia spostata porta solo le serie che restano: se torni piu' tardi la scheda dice
+ // 1/2, non 1/3 — altrimenti rifaresti una serie gia' scritta nel foglio.
+ var moved=Object.assign({},ex,{sets:resta});
+ var ne=S.wEx.slice();ne.splice(slot,1);ne.splice(ultimo,0,moved);
+ // `wAlt` e' indicizzato per SLOT e gli slot si spostano: senza rimappatura la rotazione
+ // delle alternative finirebbe addosso all'esercizio sbagliato.
+ var na={};for(var k in S.wAlt){var o=+k;na[(o===slot?ultimo:(o>slot&&o<=ultimo?o-1:o))]=S.wAlt[k];}
+ S.wAlt=na;
+ S.wEx=ne;S.wSteps=buildSteps(ne);
+ var fi=S.wSteps.findIndex(function(x){return x.type==='work'&&x.exIdx===slot&&x.setNum===1;});
+ S.wStepIdx=Math.max(0,fi);
+ S.wAltMsg=(ex.name||'Esercizio')+' spostato in fondo'+(fatte?' ('+resta+' serie che restano)':'');
  render();
 }
 function finishWorkout(){
