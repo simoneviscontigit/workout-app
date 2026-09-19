@@ -737,7 +737,22 @@ const PLAN=[
  // rumore. Quattro esercizi fatti freschi valgono piu' di cinque di cui l'ultimo non
  // conta — che e' lo stesso scambio volume->intensita' gia' fatto sul core il 23/08.
  // Reversibile in una riga se il giorno risultasse corto.
- {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4},            must:['r6','r1','r3'],    desc:'Dorsali (verticale + orizzontale) · Bicipiti'},
+ // 19/09/2026 — IL QUARTO SLOT DEL PULL DIVENTA CATENA POSTERIORE. Due difetti chiusi
+ // con una mossa sola, ed entrambi si leggono nei dati di Simone.
+ // (a) Il pool `pull` ha DUE soli `primary` (dorsali, bicipiti): su 4 slot uscivano sempre
+ //     2 + 2, e il secondo esercizio di bicipiti arrivava a braccia finite. Misurato su
+ //     `r11` Curl su Panca Inclinata: 3,1,1 il 15/09 e 1,1,1 il 19/09 — due sedute di fila
+ //     a una ripetizione. E quell'1 non era nemmeno un dato: era l'unico modo che l'app
+ //     lasciava a Simone per dire "non l'ho fatto" (da oggi c'e' il tasto NON FATTO).
+ // (b) LEGS e' fuori dalla rotazione dal 16/09 perche' Simone corre tutti i giorni, ma la
+ //     corsa allena quadricipiti e polpacci in resistenza e NON allena in forza femorali e
+ //     glutei — che sono il tessuto che protegge un corridore. Risultato: 2 esercizi di
+ //     gambe in 28 giorni. Non serve rimettere il giorno LEGS (4 slot quad-dominanti a chi
+ //     corre ogni giorno sono spreco): serve UN hinge, due volte a settimana, dove non
+ //     compete con niente. Il giorno di tirata e' il suo posto naturale.
+ // `l5` Stacco Rumeno e' l'unico hinge del catalogo palestra e ha gia' Leg Curl alla
+ // Macchina come variante: se la rastrelliera e' occupata, il gesto resta.
+ {id:'pull', name:'PULL',  emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:3,legs:1},            must:['r6','r1','l5'],    desc:'Dorsali (verticale + orizzontale) · Bicipiti · Catena posteriore'},
  // LEGS fuori dalla rotazione il 16/09/2026: Simone ha cominciato a correre tutti i
  // giorni e le gambe hanno gia' il loro stimolo quotidiano. E' un "al momento", non una
  // cancellazione: gli `l*` restano nel catalogo (FULL-BODY ne pesca due, e la riga torna
@@ -745,7 +760,7 @@ const PLAN=[
  // numero scritto a mano: la lunghezza e' `PLAN.length`.
  // {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:4},            must:['l3','l5'],    desc:'Quadricipiti · Femorali · Glutei'},
  {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:2},must:['p6','s1'],desc:'Petto (adduzione) · Tricipiti · Spalle'},
- {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:4,shoulders:1},must:['r4','s4'],    desc:'Dorsali · Bicipiti (hammer) · Delt. post.'},
+ {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:3,legs:1,shoulders:1},must:['r4','s4','l5'],    desc:'Dorsali · Bicipiti (hammer) · Delt. post. · Catena posteriore'},
  {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:2,legs:1,shoulders:1},must:['l3'],desc:'Corpo completo · Mix intelligente'},
 ];
 
@@ -898,7 +913,7 @@ function recoveryProfileCard(){
 const S={
  view:'home',history:[],nutrition:null,splitIdx:0,nutQueue:[],nutQueueIdx:0,nutTarget:null,
  wSplit:null,wEx:[],wSteps:[],wStepIdx:0,wTimer:0,wElapsed:0,wSets:0,wStartTime:0,wPaused:false,
- wAlt:{},wGaps:[],homeMode:false,wMode:'gym',wLivello:'', // wAlt: rotazione alternative per slot (vedi skipExercise) · wGaps: slot che il pool non ha riempito · homeMode: seduta senza palestra · wMode: 'gym' | 'fullbody' | 'corecasa' · wLivello: perche' il CORE CASA e' di quella misura
+ wAlt:{},wSkipAsk:null,wGaps:[],homeMode:false,wMode:'gym',wLivello:'', // wAlt: rotazione alternative per slot (vedi skipExercise) · wGaps: slot che il pool non ha riempito · homeMode: seduta senza palestra · wMode: 'gym' | 'fullbody' | 'corecasa' · wLivello: perche' il CORE CASA e' di quella misura
  qStep:0,qAns:{},pending:null,
  aiDB:{sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},mealTombstones:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},
  aiChat:[],aiLoading:false,aiErr:'',exFbAnswers:{},
@@ -2589,6 +2604,21 @@ function rWorkout(){
   // Non cerca un'alternativa (quello e' "Cambia"): sposta QUESTO esercizio in fondo al suo
   // blocco e ti manda avanti col prossimo.
   +'<button class="btn-ghost" style="margin:0;flex:1 1 45%;padding:14px;font-size:13px" onclick="rimandaExercise()">Cambia ordine</button>'
+  // "Non fatto": l'esercizio salta e lo DICE al foglio. Sta da solo sull'ultima riga, in
+  // grigio: e' la via d'uscita onesta, non un'azione da premere per sbaglio.
+  +'<button class="btn-ghost" style="margin:0;flex:1 1 100%;padding:12px;font-size:12px;color:#71717a;border-color:#3f3f46" onclick="nonFatto()">Non fatto</button>'
+  // Il motivo si sceglie subito: senza, al coach arriva un buco e un buco se lo spiega da se'.
+  +(S.wSkipAsk!==null&&S.wSkipAsk!==undefined
+    ?'<div style="flex-basis:100%;margin-top:10px">'
+     +'<div style="color:#a1a1aa;font-size:12px;font-weight:700;margin-bottom:7px;text-align:center">Perché non l\'hai fatto?</div>'
+     +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+     +MOTIVI_NON_FATTO.map(function(m,i){
+       return '<button class="btn-ghost" style="margin:0;flex:1 1 30%;padding:12px 4px;font-size:11px;font-weight:700;border-color:#f97316;color:#f97316" onclick="nonFattoConferma('+i+')">'+m+'</button>';
+      }).join('')
+     +'</div>'
+     +'<button class="btn-ghost" style="margin:8px 0 0;width:100%;padding:10px;font-size:11px;color:#52525b" onclick="nonFattoAnnulla()">Annulla</button>'
+     +'</div>'
+    :'')
   // "Cambia" aveva DUE vicoli ciechi muti (nessuna alternativa · tutte gia' in seduta):
   // premevi, la schermata si ridisegnava identica e non sapevi se il cambio era andato.
   // Da li' nasce il "ho cambiato esercizio" che nel foglio non risulta. Ora lo dice.
@@ -2630,7 +2660,7 @@ function startTimer(){
   }
  }
 }
-function advStep(){S.wStepIdx++;if(S.wStepIdx>=S.wSteps.length){finishWorkout();return;}render();}
+function advStep(){S.wSkipAsk=null;S.wStepIdx++;if(S.wStepIdx>=S.wSteps.length){finishWorkout();return;}render();}
 function workoutDone(){
  var step=S.wSteps[S.wStepIdx];var ex=step&&step.ex;
  // Esercizi a carico (a reps, non a tempo, non core): chiedi quante reps fatte
@@ -2722,8 +2752,12 @@ function propagaParallelo(baseId,modoSorgente,prima,dopo){
    var cpE=perEx&&(perEx[ck.k]||(ck.legacy?perEx[ck.legacy]:null));
    if(cpE&&cpE.band){cpE.band=kg+'kg';cpE.derivatoDa=modoSorgente;
     cpE.note=((cpE.note||'').split(' · riallineato')[0]+' · riallineato da '+modoSorgente).trim().slice(0,200);}
-   var prE=S.aiDB.progression&&(S.aiDB.progression[ck.k]||(ck.legacy?S.aiDB.progression[ck.legacy]:null));
-   if(prE&&prE.band)prE.band=kg+'kg';
+   // `progression` NON si tocca (19/09/2026). E' lo STORICO MISURATO, e un carico
+   // derivato non e' stato sollevato da nessuno. Fino a oggi questa riga ci scriveva
+   // dentro, e con il ripiego sulla chiave nuda finiva sulla progressione della variante
+   // di DEFAULT — quella con la storia vera: il 17/09 ha etichettato «68kg» le reps della
+   // panca fatte il 14/09 a 22 per mano. La proposta vive in `loads` (con `derivato:`) e
+   // nel piano; lo storico lo scrive solo l'attrezzo che hai davvero usato quel giorno.
    fatti.push(ck.k+' '+cur+'->'+kg);
   });
   if(fatti.length)console.log('[parallelo] '+baseId+'#'+modoSorgente+' '+prima+'->'+dopo+' ('+Math.round((r-1)*1000)/10+'%): '+fatti.join(', '));
@@ -2926,6 +2960,48 @@ function rimandaExercise(){
  var fi=S.wSteps.findIndex(function(x){return x.type==='work'&&x.exIdx>=slot&&x.setNum===1;});
  S.wStepIdx=Math.max(0,fi);
  S.wAltMsg=(ex.name||'Esercizio')+' spostato in fondo'+(fatte?' ('+resta+' serie che restano)':'');
+ render();
+}
+// "NON FATTO" (19/09/2026) — richiesta di Simone, e nasce da un dato falso nel foglio.
+// Il 15 e il 19/09 il Curl su Panca Inclinata risulta a 3,1,1 e 1,1,1: non erano ripetizioni,
+// erano l'unico modo che l'app gli lasciava per dire «le braccia erano finite, non l'ho
+// fatto». Il coach le ha lette come esecuzioni e ha risposto «mantieni e consolida»: un
+// segnale mancante non resta vuoto, si traveste da misura.
+// Come viaggia il segnale, senza toccare lo schema del foglio:
+//  · `reps` resta VUOTO -> `computeProgression` salta l'esercizio (niente reps, niente
+//    verdetto) e `build_serie.py` scrive la riga "assegnato, non tracciato";
+//  · il PERCHE' va nel `chatLog` come feedback dell'esercizio -> `feedback_chat` lo porta
+//    nella colonna `feedback` della riga di SERIE, che il coach legge gia' oggi.
+// Se qualche serie era stata fatta, quelle RESTANO: due serie vere piu' la nota valgono
+// piu' di un esercizio cancellato.
+var MOTIVI_NON_FATTO=['Gruppo già esausto','Dolore o fastidio','Altro'];
+function nonFatto(){
+ var step=S.wSteps[S.wStepIdx];if(!step||step.type!=='work')return;
+ clearInterval(TI);S.wAltMsg='';S.wSkipAsk=step.exIdx;render();
+}
+function nonFattoAnnulla(){S.wSkipAsk=null;render();}
+function nonFattoConferma(i){
+ var step=S.wSteps[S.wStepIdx];
+ if(!step||step.type!=='work'){S.wSkipAsk=null;render();return;}
+ var slot=step.exIdx,ex=S.wEx[slot],motivo=MOTIVI_NON_FATTO[i]||'Altro';
+ if(!S.wReps[ex.id])S.wReps[ex.id]={name:ex.name,target:ex.reps,max:ex.repsMax||ex.reps,band:ex.band||'',attrezzo:ex.attrezzo||'',reps:[]};
+ var r=S.wReps[ex.id],fatte=(r.reps||[]).length;
+ r.nonEseguito=motivo;
+ S.aiDB.chatLog=(S.aiDB.chatLog||[]).concat([{
+  date:new Date().toISOString(),contextType:'exercise',exercise:ex.id,exerciseName:ex.name,
+  userMsg:'NON ESEGUITO — '+motivo+(fatte?' (fermato dopo '+fatte+(fatte===1?' serie)':' serie)'):' (nessuna serie)'),
+  reply:'[non eseguito, segnato dalla scheda]'
+ }]);
+ sv('ai',S.aiDB);
+ S.wSkipAsk=null;S.wAwaitReps=false;
+ // Salta gli step rimasti di questo esercizio: il primo lavoro di un altro slot.
+ var nx=-1;
+ for(var i2=S.wStepIdx+1;i2<S.wSteps.length;i2++){
+  var s2=S.wSteps[i2];
+  if(s2.type==='work'&&s2.exIdx!==slot){nx=i2;break;}
+ }
+ if(nx<0){finishWorkout();return;}
+ S.wStepIdx=nx;S.wAltMsg=(ex.name||'Esercizio')+': segnato NON ESEGUITO ('+motivo.toLowerCase()+')';
  render();
 }
 function finishWorkout(){
