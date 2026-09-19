@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-18a · spazio telefono + sonda'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-19a · pull prima del push + home ripulita'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -2179,8 +2179,13 @@ function rHome(){
    ?'<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px"><div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:8px">'+S.nutReminderCount+' giorni senza nutrizione</div><div style="display:flex;gap:8px"><button class="btn" style="background:#27272a;color:#fff;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;startWorkout(S.wMode)">Fai dopo</button><button class="btn" style="background:#f59e0b;color:#000;margin:0;flex:1;font-size:13px" onclick="S.nutReminder=false;openNutrition()">Compila</button></div></div>'
    :'')
   +'<button class="btn" style="background:#F97316;color:#fff;border:2px solid #fafafa;margin:0;padding:26px;font-size:28px" onclick="startWorkout()">Inizia</button>'
-  +'<button class="btn" style="background:transparent;color:#F97316;border:2px solid #F97316;margin:10px 0 0;padding:14px;font-size:14px;font-weight:700;letter-spacing:1px" onclick="startWorkout(\'fullbody\')">⌂ FULL-BODY · corpo libero, il giorno slitta</button>'
-  +'<button class="btn" style="background:transparent;color:#F97316;border:2px solid #F97316;margin:8px 0 0;padding:14px;font-size:14px;font-weight:700;letter-spacing:1px" onclick="startWorkout(\'corecasa\')">◆ CORE CASA · il giro di oggi</button>'
+  // I due rami di casa stanno sulla STESSA riga dal 19/09/2026: sono alternative pari
+  // all'unico tasto sopra, e in colonna si leggevano come due passi in sequenza.
+  // `align-items:stretch` tiene la stessa altezza anche se uno dei due va a due righe.
+  +'<div style="display:flex;gap:8px;align-items:stretch;margin-top:10px">'
+  +'<button class="btn" style="flex:1;background:transparent;color:#F97316;border:2px solid #F97316;margin:0;padding:14px 8px;font-size:14px;font-weight:700;letter-spacing:1px;line-height:1.25" onclick="startWorkout(\'fullbody\')">FULL BODY<br><span style="font-weight:400;letter-spacing:0;font-size:12px;color:#a1a1aa">corpo libero</span></button>'
+  +'<button class="btn" style="flex:1;background:transparent;color:#F97316;border:2px solid #F97316;margin:0;padding:14px 8px;font-size:14px;font-weight:700;letter-spacing:1px;line-height:1.25" onclick="startWorkout(\'corecasa\')">HOME CORE<br><span style="font-weight:400;letter-spacing:0;font-size:12px;color:#a1a1aa">il giro di oggi</span></button>'
+  +'</div>'
   +'<div style="display:flex;border:2px solid #27272a;margin-top:16px">'
   +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+S.history.length+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Sessioni</div></div>'
   +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+(last?last.duration+"'":'—')+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Ultima</div></div>'
@@ -2188,23 +2193,24 @@ function rHome(){
   +'</div>'
   +'<div class="lbl" style="font-size:11px;color:#a1a1aa;margin:18px 0 8px">Ciclo '+PLAN.length+' giorni</div>'
   +'<div style="display:flex;gap:6px">'+cycle+'</div>'
-  +'<div style="display:flex;gap:6px;margin-top:16px">'
   // "Storico" e' sparito il 03/08/2026: storico e grafici si leggono in Sumi Legacy.
   // "Nutrizione" ora apre la lista dei 20 giorni (una sola superficie: da li' si compila
   // il singolo giorno o si parte con la coda dei mancanti), non piu' la coda diretta.
-  +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #27272a;color:#fff;margin:0;padding:16px;font-size:14px" onclick="go(\'history\')">Nutrizione</button>'
-  +'<button class="btn" style="flex:1;background:#0e0e11;border:2px solid #F97316;color:#F97316;margin:0;padding:16px;font-size:14px" onclick="go(\'ai\')">AI</button>'
-  +'</div>'
+  // "AI" e' sparito il 19/09/2026: quella schermata mostrava i riepiloghi del coach, che
+  // non arrivano piu' da quando il referto vive in `metrics.report` ed esce qui sotto
+  // (consigli + card). Un tasto che porta a una pagina vuota e' peggio di nessun tasto.
+  +'<button class="btn" style="width:100%;background:#0e0e11;border:2px solid #27272a;color:#fff;margin:16px 0 0;padding:16px;font-size:14px" onclick="go(\'history\')">Nutrizione</button>'
   // (rimossi 12/07 i vecchi consigli in-app Recovery + Nutrizione domani — superati dai
   //  consigli/card del report Sumi Legacy qui sotto)
   // Consigli di Sumi + "cosa dicono i dati" dalla vetrina Sumi Legacy (report ragionato nel feed)
   +((S.aiDB.metrics&&S.aiDB.metrics.report)?WKUI.consigli(S.aiDB.metrics.report):'')
   +((S.aiDB.metrics&&S.aiDB.metrics.report)?WKUI.cards(S.aiDB.metrics.report):'')
-  +'<div style="display:flex;gap:6px;margin-top:16px">'
-  +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialWorkout()">Sessione prova</button>'
-  +'<button class="btn" style="flex:1;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:0;padding:12px;font-size:12px" onclick="startTrialNutrition()">Survey prova</button>'
-  +'</div>'
-  +'<button class="btn" id="force-run-btn" style="width:100%;background:transparent;border:2px solid #F97316;color:#F97316;margin:16px 0 0;padding:14px;font-size:13px;font-weight:700" onclick="requestForceRun()">⟳ Aggiorna piano ora (chiedi al coach)</button>'
+  // 19/09/2026 — tolti "Survey prova" (la nutrizione si compila dalla lista dei 20 giorni,
+  // la prova non serve piu') e "Aggiorna piano ora" (il force-run: il coach gira ogni notte
+  // e il piano scende da solo). Il MECCANISMO del force-run resta — `requestForceRun()`
+  // scrive `aiDB.forceRun` e il poller sul Mac lo guarda — e' solo il bottone a sparire:
+  // se serve di nuovo, basta rimetterlo.
+  +'<button class="btn" style="width:100%;background:transparent;border:2px solid #27272a;color:#6b6b70;margin:16px 0 0;padding:12px;font-size:12px" onclick="startTrialWorkout()">Sessione prova</button>'
   +'<button class="btn" style="width:100%;background:transparent;border:2px solid #27272a;color:#71717a;margin:8px 0 0;padding:14px;font-size:13px;font-weight:700" onclick="forceRefresh()">↻ Aggiorna app (forza ricarica)</button>'
   +'<div style="text-align:center;font-size:9px;color:#3f3f46;margin-top:6px">build '+APP_BUILD+'</div>'
   +'</div>'
@@ -4728,6 +4734,11 @@ function rReports(){
   +'</div>':'';
  return '<div style="margin-bottom:10px">'+wCard+mCard+'</div>';
 }
+// ⚠️ SENZA PORTA D'INGRESSO dal 19/09/2026: il tasto "AI" in home e' stato tolto e nessuno
+// chiama piu' `go('ai')`. Il codice resta perche' la chat col coach c'e' ancora, viva, dentro
+// la scheda (`updateFloatAI`); qui dentro vivevano i RIEPILOGHI settimanali/mensili, che non
+// arrivano piu' da quando il referto passa da `metrics.report` ed esce in home.
+// Se un giorno tornano: la riga del tasto sta in `rHome`, sopra i consigli.
 function rAI(){
  var msgs=S.aiChat.map(function(m){
   return '<div class="chat-msg" style="background:'+(m.role==='user'?'#431407':'#27272a')+';margin-'+(m.role==='user'?'left':'right')+':40px">'+m.content.replace(/\n/g,'<br>')+'</div>';
