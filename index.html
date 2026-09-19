@@ -1222,6 +1222,28 @@ function computeProgression(session){
 // L'unico canale per escludere davvero un esercizio è `adaptation.avoidExercises`, che scrive
 // l'AI Coach quando glielo dici in chat: una decisione ragionata, non un click di passaggio.
 // `dropSkipState()` ripulisce i residui locali e, al primo sync, anche il blob su Drive.
+// ONE-SHOT 19/09/2026 — `progression.p4` portava un carico DERIVATO, mai sollevato.
+// Il 17/09 `propagaParallelo` scriveva anche nello storico (da oggi non piu', vedi la sua
+// nota): con il ripiego sulla chiave nuda, i 68kg calcolati per la variante manubri sono
+// finiti sulla progressione della panca, etichettando «68kg» le reps del 14/09 fatte a 22
+// per mano. `progression` e' DEVICE-OWNED — `mergeDown` non la fonde — quindi il blob
+// corretto sul Mac non arriva qui: la pulizia deve girare sul telefono, una volta sola.
+// Vale solo finche' la panca non viene rifatta: Simone non l'ha piu' eseguita dopo la
+// ritaratura, quindi qui non c'e' nessuna misura vera da perdere. Il marker in `_fix`
+// impedisce che una progressione legittima futura venga riabbassata.
+function fixProgressionP4(){
+ try{
+  if(!S.aiDB.progression||(S.aiDB._fix||{}).p4_20260919)return;
+  var pr=S.aiDB.progression.p4;
+  var kg=pr&&parseFloat(String(pr.band||'').replace(/kg/i,'').replace(',','.'));
+  if(pr&&kg>40){
+   pr.band='24kg';
+   pr.note=(pr.note||'')+' · band corretta il 19/09: era un carico derivato (68kg), le reps del 14/09 sono a 24 per mano';
+  }
+  S.aiDB._fix=Object.assign({},S.aiDB._fix||{},{p4_20260919:1});
+  sv('ai',S.aiDB);
+ }catch(e){console.error('fixProgressionP4:',e);}
+}
 function dropSkipState(){
  var d=false;
  ['skipped','skipLog','skippedUpdatedAt'].forEach(function(k){if(k in S.aiDB){delete S.aiDB[k];d=true;}});
@@ -1774,6 +1796,7 @@ async function loadData(){
   S.nutDraft=loadNutDraft(); // compilazione interrotta da un riavvio: la home la offre indietro
   if(typeof recoveryInit==='function')recoveryInit(); // modalità recupero: init una-tantum + auto-uscita g30
   dropSkipState(); // la lista dei banditi non esiste più: ripulisce i residui locali e, al primo sync, il blob
+ fixProgressionP4(); // una-tantum 19/09/2026 — vedi sotto
   // Migrazione: ripristina da array nutrition legacy (preferisci dati reali su skipped)
   if(S.aiDB.nutrition&&S.aiDB.nutrition.length){
    S.aiDB.nutrition.forEach(function(n){
