@@ -2920,7 +2920,10 @@ function rimandaExercise(){
  var na={};for(var k in S.wAlt){var o=+k;na[(o===slot?ultimo:(o>slot&&o<=ultimo?o-1:o))]=S.wAlt[k];}
  S.wAlt=na;
  S.wEx=ne;S.wSteps=buildSteps(ne);
- var fi=S.wSteps.findIndex(function(x){return x.type==='work'&&x.exIdx===slot&&x.setNum===1;});
+ // Il posto dove atterri e' il PRIMO lavoro da qui in poi: se al posto liberato c'e' un
+ // RIPOSO del core (`isBreak`, che non produce nessuno step di lavoro) cercare solo
+ // `exIdx===slot` non troverebbe niente e il -1 ti ributterebbe all'inizio della seduta.
+ var fi=S.wSteps.findIndex(function(x){return x.type==='work'&&x.exIdx>=slot&&x.setNum===1;});
  S.wStepIdx=Math.max(0,fi);
  S.wAltMsg=(ex.name||'Esercizio')+' spostato in fondo'+(fatte?' ('+resta+' serie che restano)':'');
  render();
