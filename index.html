@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-19b · data sui consigli di Sumi'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-20a · manubri a passo 2,5'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -1036,7 +1036,18 @@ function leggiPerVariante(mappa,e){
  var c=chiaveVar(e);
  return mappa[c.k]||(c.legacy?mappa[c.legacy]:null)||null;
 }
-var STEP_ATTREZZO={manubri:2,bilanciere:2.5,macchina:5,cavo:5,dischi:1.25};
+// `manubri` 2 -> 2,5 il 20/09/2026. Il 2 non era mai stato misurato: e' un default
+// ereditato dall'era elastici. La rastrelliera vera sta nei commenti di Simone (colonna
+// `feedback` di SERIE): dall'11/08 a oggi undici carichi riportati, NESSUNO fuori dal
+// passo 2,5 — 4 · 8 · 10 · 12,5 · 15 · 17,5 · 20 · 22,5 · 25 · 27,5 · 32,5. Mai un 12,
+// un 14, un 22. Col passo 2 il piano prescriveva manubri inesistenti e lo snap riportava
+// ogni carico vero sulla griglia sbagliata (la panca: 25 sollevati, "24kg" nel piano).
+// LIMITE DELLA PROVA, dichiarato: i riporti coprono il passo 2,5 da 10kg in su. Sotto i 10
+// la rastrelliera e' piu' fine (4 e 8 usati davvero, c52 gia' a passo 1): li' uno snap puo'
+// cadere su un manubrio che non c'e'. Si corregge in STEP_ESERCIZIO quando un commento lo
+// dimostra, non a indovinare.
+// Copia IDENTICA in workout-coach/coach_llm.py (STEP_ATTREZZO): si cambiano insieme.
+var STEP_ATTREZZO={manubri:2.5,bilanciere:2.5,macchina:5,cavo:5,dischi:1.25};
 // PASSO PER SINGOLO ESERCIZIO (19/09/2026). Vince sull'attrezzo: l'attrezzo dice come si
 // carica in generale, non cosa entra fisicamente in quel gesto. c52 Leg Raise alla Sedia
 // Romana tiene il manubrio FRA I PIEDI: +2kg (passo dei manubri) su 4kg e' un salto del 50%
@@ -1048,8 +1059,7 @@ function stepDi(id,modo){
  if(STEP_ESERCIZIO[bid]!=null)return STEP_ESERCIZIO[bid];
  // Prima il coachPlan (puo' correggere), poi il DB. Fino al 22/08/2026 leggeva SOLO il
  // coachPlan e cadeva su 2,5 (il passo del bilanciere) per tutto cio' che il coach non
- // aveva ancora toccato: un manubrio nuovo saliva di 2,5kg invece che di 2, e un cavo
- // di 2,5 invece che di 5. L'attrezzo e' un fatto dell'esercizio, e sta nella sua riga.
+ // aveva ancora toccato: un cavo saliva di 2,5kg invece che di 5. L'attrezzo e' un fatto dell'esercizio, e sta nella sua riga.
  // Dal 16/09/2026 l'attrezzo puo' essere quello della VARIANTE scelta in palestra, che non
  // e' quello del catalogo: chi conosce il modo lo passa, e allora comanda quello — un
  // esercizio fatto alla macchina sale di 5kg anche se in catalogo e' di manubri.
