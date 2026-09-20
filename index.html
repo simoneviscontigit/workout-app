@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-20a · manubri a passo 2,5'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-09-20b · s1 alla macchina'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -769,7 +769,14 @@ const PLAN=[
  // numero scritto a mano: la lunghezza e' `PLAN.length`.
  // {id:'legs', name:'LEGS', emoji:'◇',color:'#14b8a6',bg:'#042f2e',cats:{legs:4},            must:['l3','l5'],    desc:'Quadricipiti · Femorali · Glutei'},
  {id:'push2',name:'PUSH',  emoji:'↑',color:'#ef4444',bg:'#450a0a',cats:{push:3,shoulders:2},must:['p6','s1'],desc:'Petto (adduzione) · Tricipiti · Spalle'},
- {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:3,legs:1,shoulders:1},must:['r4','s4','l5'],    desc:'Dorsali · Bicipiti (hammer) · Delt. post. · Catena posteriore'},
+ // 20/09/2026 — il `must` di spalle di PULL+ era `s4`, un id che NON ESISTE PIU': il 17/09
+ // Rear Delt Fly Manubri e' uscito dal catalogo perche' era la seconda riga della stessa
+ // famiglia di `s3` (che se lo tiene come variante `manubri`). `genWorkout` cerca il `must`
+ // con un `find` e se non lo trova NON forza niente: lo slot spalle di PULL+ e' tornato a
+ // pescare a caso fra s1/s2/s3 per tre giorni, e la `desc` continuava a promettere
+ // «Delt. post.». Un `must` morto non da' errore, toglie una garanzia in silenzio.
+ // Il successore e' `s3` Face Pull ai Cavi, lo stesso muscolo con cui s4 era stato fuso.
+ {id:'pull2',name:'PULL+', emoji:'↓',color:'#8b5cf6',bg:'#2e1065',cats:{pull:3,legs:1,shoulders:1},must:['r4','s3','l5'],    desc:'Dorsali · Bicipiti (hammer) · Delt. post. · Catena posteriore'},
  {id:'full', name:'FULL',  emoji:'✦',color:'#f97316',bg:'#431407',cats:{push:1,pull:2,legs:1,shoulders:1},must:['l3'],desc:'Corpo completo · Mix intelligente'},
 ];
 
@@ -1287,6 +1294,86 @@ function fixProgressioneFossile(){
   });
   if(tocco){S.aiDB._fix=fatti;sv('ai',S.aiDB);}
  }catch(e){console.error('fixProgressioneFossile:',e);}
+}
+// ONE-SHOT 20/09/2026 — `s1` SHOULDER PRESS: tre sedute alla MACCHINA sotto la chiave dei manubri.
+// Il 03/09, il 14/09 e il 16/09 Simone ha fatto shoulder press alla macchina con 30kg totali,
+// e l'ha scritto ogni volta nel commento della seduta («Fatto su macchina con 30kg totali» ·
+// «30kg su macchina» · «Fatto 30 kg totali»). La scheda pero' era aperta sulla variante di
+// default, quindi tutte e tre sono finite sotto `s1` — la chiave dei MANUBRI — con la band
+// prescritta, 14kg per manubrio. La variante esiste in catalogo dal 16/09 (`Shoulder Press
+// alla Macchina`, 30kg): quello che mancava erano i DATI sotto `s1#macchina`.
+// Cos'e' costato: il coach ha cambiato idea quattro volte in sei giorni (14 -> 30 -> 36 -> 36
+// -> 14, il suo `log` le porta tutte) cercando di far stare 30kg di pacco pesi su una scala di
+// manubri; e il 20/09 lo snap sulla griglia 2,5 ha portato `s1` da 14 a 15, cioe' un numero
+// della rastrelliera applicato a lavoro fatto sulla macchina.
+// 🔑 Stessa famiglia di `r6#macchina` (19/09): l'attrezzo decide la CHIAVE, e i dati scritti
+// sotto la chiave vecchia non seguono da soli. Li' era una migrazione, qui uno SPLIT — `s1`
+// nudo resta legittimo (e' la variante di default, e il 22/08 e' una seduta di manubri vera).
+// DUE LATI, come per r6. Il blob lo sistema `workout-sheet/fix_s1_macchina_ONESHOT_20260920.py`
+// (coachPlan, progression, history -> e da li' il foglio e il coach). Qui si sistema il
+// telefono, e non e' ridondanza: `progression` e' DEVICE-OWNED e `history` scende per UNIONE
+// sulla data (`unionBy`), quindi la copia locale di una seduta gia' presente vince sempre —
+// il blob corretto non la raggiunge, e al primo salvataggio il telefono la riporterebbe su.
+// Cosa resta sotto `s1`: i 12,5kg riportati il 22/08 (9/9/9/9), che sono l'unica misura vera
+// mai fatta coi manubri. I 45kg in `progression` erano l'etichetta dell'era elastici (Band
+// Shoulder Press), mai piu' rinfrescata perche' s1 non ha mai chiuso il massimo.
+var S1_MIGRA={
+ marker:'s1_macchina_20260920',
+ date:['2026-09-03','2026-09-14','2026-09-16'],
+ bandVecchia:'14kg',
+ nuovo:{name:'Shoulder Press alla Macchina',band:'30kg',attrezzo:'macchina',
+        video:'gym-shoulder-press-alla-macchina.mp4'},
+ prog:{k:'s1#macchina',name:'Shoulder Press alla Macchina',date:'2026-09-16',
+       lastReps:[11,11,11,10],band:'30kg',attrezzo:'macchina',
+       note:'30kg totali alla macchina (03/09 · 14/09 · 16/09) — migrata il 20/09 dalla chiave dei manubri, dove era finita per tre sedute'},
+ resta:{k:'s1',name:'Shoulder Press Manubri',date:'2026-08-22',lastReps:[9,9,9,9],
+        band:'12.5kg',attrezzo:'manubri',
+        note:'ultima seduta VERA coi manubri: 12,5kg riportati il 22/08 (9,9,9,9). I 45kg erano l\'etichetta dell\'era elastici, i 14/15 descrivevano lavoro fatto alla macchina'},
+ progFossile:45   // sopra questo valore progression.s1.band e' ancora il fossile elastici
+};
+function migraS1AllaMacchina(){
+ try{
+  var fatti=S.aiDB._fix||{};
+  if(fatti[S1_MIGRA.marker])return;
+  var M=S1_MIGRA,tocco=0;
+  // 1) LE TRE SEDUTE. L'attrezzo con cui una seduta e' stata chiusa e' il dato che sceglie la
+  //    chiave, sia qui (computeProgression) sia dall'altro lato (il dossier del coach, che lo
+  //    legge dalla colonna `attrezzo` di SERIE — e quella colonna nasce da `exercises`).
+  (S.history||[]).forEach(function(h){
+   var d=((h&&h.date)||'').slice(0,10);
+   if(M.date.indexOf(d)<0)return;
+   // Guardia sul VALORE, non solo sul marker: una seduta gia' corretta (o diversa da quella
+   // che questa one-shot descrive) non si tocca.
+   var r=(h.reps||{}).s1;
+   if(r&&r.band===M.bandVecchia&&(!r.attrezzo||r.attrezzo==='manubri')){
+    r.name=M.nuovo.name;r.band=M.nuovo.band;r.attrezzo=M.nuovo.attrezzo;tocco++;
+   }
+   (h.exercises||[]).forEach(function(e){
+    if(!e||baseExId(e.id)!=='s1')return;
+    if(e.band===M.bandVecchia&&(!e.attrezzo||e.attrezzo==='manubri')){
+     e.name=M.nuovo.name;e.band=M.nuovo.band;e.attrezzo=M.nuovo.attrezzo;e.video=M.nuovo.video;tocco++;
+    }
+   });
+  });
+  // 2) PROGRESSION: lo split. La chiave nuova nasce col lavoro misurato alla macchina; quella
+  //    nuda torna a dire solo cio' che i manubri hanno davvero guadagnato.
+  if(!S.aiDB.progression)S.aiDB.progression={};
+  var pr=S.aiDB.progression,k;
+  if(!pr[M.prog.k]){
+   var nuova={};for(k in M.prog)if(k!=='k')nuova[k]=M.prog[k];
+   pr[M.prog.k]=nuova;tocco++;
+  }
+  var vecchia=pr[M.resta.k],kg=vecchia&&parseFloat(String(vecchia.band||'').replace(',','.'));
+  if(vecchia&&kg>=M.progFossile){
+   for(k in M.resta)if(k!=='k')vecchia[k]=M.resta[k];
+   tocco++;
+  }
+  var segno={};segno[M.marker]=1;
+  S.aiDB._fix=Object.assign({},fatti,segno);
+  if(tocco)sv('wh',S.history);
+  sv('ai',S.aiDB);
+  console.log('[s1] split alla macchina: '+tocco+' scritture');
+ }catch(e){console.error('migraS1AllaMacchina:',e);}
 }
 function dropSkipState(){
  var d=false;
@@ -1841,6 +1928,7 @@ async function loadData(){
   if(typeof recoveryInit==='function')recoveryInit(); // modalità recupero: init una-tantum + auto-uscita g30
   dropSkipState(); // la lista dei banditi non esiste più: ripulisce i residui locali e, al primo sync, il blob
  fixProgressioneFossile(); // una-tantum 19/09/2026 (p4, r6) — vedi FIX_PROGRESSION
+  migraS1AllaMacchina(); // una-tantum 20/09/2026 — s1: tre sedute alla macchina sotto la chiave dei manubri
   // Migrazione: ripristina da array nutrition legacy (preferisci dati reali su skipped)
   if(S.aiDB.nutrition&&S.aiDB.nutrition.length){
    S.aiDB.nutrition.forEach(function(n){
