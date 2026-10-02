@@ -1231,7 +1231,7 @@ function computeProgression(session){
    S.aiDB.progression[ck.k]=Object.assign({},prevProg,entry);
    // Avanzamento in parallelo: se questa variante ha cambiato carico, le altre due si
    // spostano dello stesso rapporto (vedi propagaParallelo).
-   if(entry.band&&cur&&entry.band!==cur)propagaParallelo(baseExId(id),ck.modo,bandNumOnly(cur),bandNumOnly(entry.band));
+   if(entry.band&&cur&&entry.band!==cur)propagaParallelo(baseExId(id),ck.modo,bandNumOnly(cur),bandNumOnly(entry.band),varianteDerivata(baseExId(id),ck.modo));
    // Migrazione: la voce nuda dello stesso esercizio ha appena finito di servire (l'abbiamo
    // letta come `prevProg` e riscritta sotto la chiave per variante). Lasciarla li' sarebbe
    // un secondo inventario che da domani diverge in silenzio.
@@ -2905,13 +2905,31 @@ function bandDiVariante(baseId,modo){
  if(!b){var cat=exById(baseId),v=variantiDi(cat).filter(function(x){return x.modo===modo;})[0];b=(v&&v.band)||'';}
  return bandNumOnly(b);
 }
-function propagaParallelo(baseId,modoSorgente,prima,dopo){
+// Una variante parte da un DERIVATO se il suo carico l'ha scritto una propagazione e
+// nessuno l'ha sollevato: piano con `derivatoDa`, o (senza piano) loads con `derivato`.
+// Va letto PRIMA di sovrascrivere loads, per questo i chiamanti lo calcolano loro.
+function varianteDerivata(baseId,modo){
+ var e={id:baseId,attrezzo:modo};
+ var cp=leggiPerVariante(S.aiDB.coachPlan&&S.aiDB.coachPlan.perExercise,e);
+ if(cp&&cp.band)return !!cp.derivatoDa;
+ var ld=leggiPerVariante(S.aiDB.loads,e);
+ return !!(ld&&ld.derivato);
+}
+// Banda del rapporto che un PASSO puo' avere (02/10/2026, gemella di RAPPORTO_PARALLELO in
+// coach_llm.py). Fuori c'e' una correzione — un carico sbagliato rimesso a posto — e
+// propagarla moltiplica l'errore: sei notti di altalena a 375 kg sulla panca.
+var RAPPORTO_PARALLELO=[2/3,1.5];
+function propagaParallelo(baseId,modoSorgente,prima,dopo,daDerivato){
  var fatti=[];
  try{
   if(attrezzatura()!=='palestra')return fatti;          // le varianti esistono solo in palestra
   if(!(prima>0)||!(dopo>0)||prima===dopo)return fatti;
   var cat=exById(baseId);if(!cat)return fatti;
   var r=dopo/prima;
+  if(daDerivato||r<RAPPORTO_PARALLELO[0]-1e-9||r>RAPPORTO_PARALLELO[1]+1e-9){
+   console.log('[parallelo] SALTATO '+baseId+'#'+modoSorgente+' '+prima+'->'+dopo+(daDerivato?' (partiva da un derivato)':' (rapporto x'+Math.round(r*100)/100+' fuori banda)')+': correzione, non passo');
+   return fatti;
+  }
   variantiDi(cat).forEach(function(v){
    if(!v.modo||v.modo===modoSorgente)return;
    var cur=bandDiVariante(baseId,v.modo);
@@ -2953,12 +2971,13 @@ function bumpLoad(id,dir){
  var v=Math.round((cur+dir*st)*100)/100;
  if(v<st)v=st;                                   // sotto un passo non c'e' carico: il minimo e' il passo
  var band=v+'kg';
+ var daDer=varianteDerivata(bid,ck.modo);       // prima di riscrivere loads: dopo sarebbe "manual"
  (S.wEx||[]).forEach(function(x){if(baseExId(x.id)===bid){x.band=band;x.stima=false;}});
  if(!S.aiDB.loads)S.aiDB.loads={};
  S.aiDB.loads[ck.k]={kg:String(v),name:(rif&&rif.name)||bid,attrezzo:ck.modo,date:dayKey(),updatedAt:new Date().toISOString(),manual:true};
  // Le altre famiglie si spostano dello stesso RAPPORTO, in su come in giu': una correzione
  // qui dice "questo gesto oggi vale tanto", e vale per il gesto, non per l'attrezzo.
- propagaParallelo(bid,ck.modo,cur,v);
+ propagaParallelo(bid,ck.modo,cur,v,daDer);
  sv('ai',S.aiDB);
  render();
 }
@@ -5081,9 +5100,9 @@ async function sendFloatAI(){
     // 17/09/2026: la chiave e' quella della VARIANTE che hai in mano, non l'id nudo. Prima
     // un carico detto in chat mentre eri alla macchina finiva sotto `p4`, cioe' sulla
     // chiave legacy dei manubri: il numero della macchina riscriveva quello dei manubri.
-    var ckc=chiaveVar(loadEx),prec=bandDiVariante(baseExId(loadEx.id),ckc.modo);
+    var ckc=chiaveVar(loadEx),prec=bandDiVariante(baseExId(loadEx.id),ckc.modo),daDerc=varianteDerivata(baseExId(loadEx.id),ckc.modo);
     S.aiDB.loads[ckc.k]={kg:detectedKg,name:loadEx.name,attrezzo:ckc.modo,date:dayKey(),updatedAt:new Date().toISOString()};
-    propagaParallelo(baseExId(loadEx.id),ckc.modo,prec,detectedKg);
+    propagaParallelo(baseExId(loadEx.id),ckc.modo,prec,detectedKg,daDerc);
    }
   }
   // Persist floatChat so it survives panel close/reopen
