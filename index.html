@@ -1686,6 +1686,14 @@ function genCoreCasa(){
 // lavoro dell'altro: senza carico il limite e' metabolico, e le pause corte reggono solo
 // se il distretto cambia.
 const FULLBODY_PLAN=[['push',2],['pull',2],['legs',2],['shoulders',1]];
+const FULLBODY_SPLIT={id:'fullbody',name:'FULL-BODY',emoji:'⌂',color:'#22c55e',bg:'#052e16',
+                      desc:'Corpo libero · spinta · tirata · gambe · spalle · core'};
+// La seduta che sta per partire, non il giorno dello split (03/10/2026). Il check
+// pre-workout leggeva sempre PLAN[splitIdx]: premevi FULL BODY e l'ultima schermata prima
+// del via diceva «↑ PUSH — Petto (piano + inclinato)» con il tasto «Inizia ↑», e il
+// commento sui DOMS confrontava i muscoli doloranti con quelli della seduta di palestra.
+// Il CORE CASA non passa dal check, quindi i casi sono due.
+function splitDellaSeduta(){return S.wMode==='fullbody'?FULLBODY_SPLIT:PLAN[S.splitIdx%PLAN.length];}
 function genFullBody(){
  var di=dayIdx(),gaps=[],adapt=S.aiDB.adaptation||{},avoid=adapt.avoidExercises||[];
  var perCat={},used=[];
@@ -1712,8 +1720,7 @@ function genFullBody(){
  var cc=buildCoreCircuit(di,true,gaps,{zone:[zc[di%zc.length]]});
  var cardio=buildCardio(di,avoid);
  return{
-  split:{id:'fullbody',name:'FULL-BODY',emoji:'⌂',color:'#22c55e',bg:'#052e16',
-         desc:'Corpo libero · spinta · tirata · gambe · spalle · core'},
+  split:FULLBODY_SPLIT,
   all:exercises.concat(cc.core).concat(cardio),circuit:cc.circuit,gaps:gaps,
   home:true,fullBody:true};
 }
@@ -2370,10 +2377,10 @@ function getMissingNutritionDays(){
  });
 }
 var SORE_MUSCLES=['Petto','Tricipiti','Spalle','Dorsali','Bicipiti','Quadricipiti','Glutei','Femorali','Core'];
-var SPLIT_MUSCLES={'push':['Petto','Tricipiti','Spalle'],'push2':['Petto','Tricipiti','Spalle'],'pull':['Dorsali','Bicipiti'],'pull2':['Dorsali','Bicipiti','Spalle'],'legs':['Quadricipiti','Glutei','Femorali'],'full':['Petto','Tricipiti','Dorsali','Bicipiti','Quadricipiti']};
+var SPLIT_MUSCLES={'push':['Petto','Tricipiti','Spalle'],'push2':['Petto','Tricipiti','Spalle'],'pull':['Dorsali','Bicipiti'],'pull2':['Dorsali','Bicipiti','Spalle'],'legs':['Quadricipiti','Glutei','Femorali'],'full':['Petto','Tricipiti','Dorsali','Bicipiti','Quadricipiti'],'fullbody':['Petto','Tricipiti','Spalle','Dorsali','Bicipiti','Quadricipiti','Glutei','Core']};
 function buildPreWorkoutComment(){
  var ans=S.preWQAns||{};
- var todaySplit=PLAN[S.splitIdx%PLAN.length];
+ var todaySplit=splitDellaSeduta();
  var doms=ans.domsActual||1;
  var recov=ans.recoveryFeel||2;
  var sore=ans.soreMuscles||[];
@@ -2401,7 +2408,7 @@ function rPreWorkoutCheck(){
  var lastSession=(S.history||[]).slice(-1)[0];
  var lastDate=sessionDay(lastSession&&lastSession.date)||'?';
  var lastSplit=lastSession&&lastSession.split?(lastSession.split.emoji+' '+lastSession.split.name):'?';
- var todaySplit=PLAN[S.splitIdx%PLAN.length];
+ var todaySplit=splitDellaSeduta();
  var phase=S.preWQPhase||'doms';
  var wrap='<div style="position:fixed;inset:0;background:#09090b;z-index:200;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">'
   +'<div style="width:100%;max-width:360px">'
