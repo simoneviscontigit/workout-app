@@ -332,7 +332,7 @@ const DB={
   // sedute. Il Body Saw lo riempie ed e' l'unico anti-estensione a corpo libero che NON
   // progredisce ne' a reps ne' a secondi: la leva e' quanto lontano scivoli, cioe' la leva
   // del corpo. Non ha il tetto che ha fatto fuori c25 V-sit e hs2 Shoulder Tap.
-  // Attrezzatura: un asciugamano su pavimento liscio — la stessa gia' assunta da hl5.
+  // Attrezzatura: un asciugamano su pavimento liscio (era anche quella di hl5, ritirato il 03/10).
   // Clip presa il 04/09 (fonte Rachel Gregory, "Towel Body Saw"): il crop toglie il
   // lower-third, che diceva «add weight to back to progress» — cioe' l'esatto contrario
   // della leva di questo esercizio, che e' il range. Una didascalia che contraddice la
@@ -532,16 +532,16 @@ const HOME_KEEP={}; // vuoto dal 22/08/2026: p1/p2/p3/p5/l1 NON sono piu' nel DB
 // casa, si rimette qui invece di duplicarne la riga.
 const HOME_NEW={
  push:[
-  {id:'hp1',cat:'push',name:'Push-up',
+  {id:'hp1',cat:'push',name:'Push-up',video:'casa-push-up.mp4',
    desc:'Mani sotto le spalle, corpo in linea dalla testa ai talloni. Scendi col petto a un pugno da terra, gomiti a 45° (non aperti a T), spingi su senza far cedere i fianchi. Se non chiudi le reps: sulle ginocchia, non a metà corsa.',
    muscles:'Petto, Tricipiti, Core',reps:12,repsMax:18,sets:4,restSec:75},
-  {id:'hp2',cat:'push',name:'Diamond Push-up',
+  {id:'hp2',cat:'push',name:'Diamond Push-up',video:'casa-diamond-push-up.mp4',
    desc:'Mani unite sotto lo sterno, indici e pollici a formare un rombo. Gomiti stretti che sfiorano i fianchi. È la versione tricipiti del push-up: scendi lento e non allargare le mani quando diventa duro.',
    muscles:'Tricipiti, Petto interno',reps:8,repsMax:12,sets:4,restSec:75},
-  {id:'hp3',cat:'push',name:'Decline Push-up',
+  {id:'hp3',cat:'push',name:'Decline Push-up',video:'casa-decline-push-up.mp4',
    desc:'Piedi su una sedia stabile, mani a terra a larghezza spalle. Più i piedi sono alti, più carico va sul petto alto e sulle spalle. Corpo in linea: se i fianchi si alzano stai riducendo il braccio di leva.',
    muscles:'Petto alto, Spalle ant.',reps:8,repsMax:12,sets:4,restSec:90},
-  {id:'hp4',cat:'push',name:'Push-up Negativo',
+  {id:'hp4',cat:'push',name:'Push-up Negativo',video:'casa-push-up-negativo.mp4',
    desc:'Solo la discesa, contata: 5 secondi pieni dal blocco alto fino a terra. Poi risali come vuoi (anche sulle ginocchia) e ricomincia. Il tempo sotto tensione sostituisce il carico che a casa non hai.',
    muscles:'Petto, Tricipiti',reps:6,repsMax:8,sets:3,restSec:90},
   {id:'p1',cat:'push',name:'Archer Push-up',video:'Archer push-up.mp4',
@@ -550,36 +550,26 @@ const HOME_NEW={
   {id:'p2',cat:'push',name:'Pseudo Planche Push-up',video:'Pseudo planche push-up.mp4',
    desc:'Mani rivolte verso i fianchi, braccia leggermente inclinate. Inclina il corpo avanti il più possibile prima di scendere. Testa e spalle avanzano oltre le mani.',
    muscles:'Petto basso, Spalle, Core',reps:6,repsMax:9,sets:4,restSec:90},
-  {id:'p3',cat:'push',name:'Chair Dips',video:'Dip su sedie.mp4',
+  {id:'p3',cat:'push',name:'Chair Dips',video:'casa-dip-su-sedie.mp4',
    desc:'Due sedie stabili, mani sul bordo. Scendi finché i gomiti superano le spalle. Busto leggermente inclinato avanti per coinvolgere il petto.',
    muscles:'Tricipiti, Petto basso',reps:12,repsMax:16,sets:4,restSec:90},
   // Riga trasferita in HOME_NEW.shoulders il 04/09/2026 — vedi il commento la' sotto.
  ],
  pull:[
-  {id:'hr1',cat:'pull',name:'Superman',video:'core-superman-a-terra.mp4',
-   desc:'A pancia in giù, braccia avanti. Solleva petto, braccia e gambe insieme contraendo la schiena, tieni 2s in alto e scendi lento. Non tirare il collo: guarda il pavimento.',
-   muscles:'Erettori, Dorsali bassi, Glutei',reps:12,repsMax:16,sets:3,restSec:60},
-  {id:'hr2',cat:'pull',name:'Reverse Snow Angel',
-   desc:'A pancia in giù, braccia lungo i fianchi e petto sollevato. Porta le braccia tese in alto sopra la testa sfiorando il pavimento senza toccarlo, poi torna indietro. Lento: sono le scapole a muoversi.',
-   muscles:'Deltoide post., Trapezio basso',reps:10,repsMax:14,sets:3,restSec:60},
-  {id:'hr3',cat:'pull',name:'Prone Y-T-W',
-   desc:'A pancia in giù, petto sollevato. Un ciclo = braccia a Y, poi a T, poi a W (gomiti piegati, scapole strette). Pollici in su per tutto. Una rep sono i tre passaggi.',
-   muscles:'Trapezio basso, Romboidi, Rotatori',reps:8,repsMax:12,sets:3,restSec:60},
-  {id:'hr4',cat:'pull',name:'Rematore con Asciugamano',
-   desc:'Asciugamano teso tra le mani, braccia avanti. Tira indietro col braccio che lavora mentre l\'altro RESISTE: sono i tuoi stessi dorsali a fare il carico. Gomito lungo il fianco, 3s per tirare e 3s per cedere. Alterna il lato a ogni rep.',
-   muscles:'Dorsali, Romboidi',reps:12,repsMax:16,sets:3,restSec:75},
-  {id:'hr5',cat:'pull',name:'Curl con Asciugamano',
-   desc:'Stesso principio, per i bicipiti: piede sull\'asciugamano (o mano che spinge in basso) e curl contro la resistenza. Gomito fisso al fianco, 3s su e 3s giù. Cerca il bruciore, non le reps veloci.',
-   muscles:'Bicipiti',reps:12,repsMax:16,sets:3,restSec:60},
-  {id:'hr6',cat:'pull',name:'Prone Swimmer',
-   desc:'A pancia in giù, petto sollevato. Le braccia disegnano una nuotata lenta: avanti sopra la testa, di lato, fino alla schiena bassa, e ritorno. Continuo e controllato — una rep è un giro completo.',
-   muscles:'Deltoide post., Trapezio, Erettori',reps:10,repsMax:14,sets:3,restSec:60},
-  {id:'hr7',cat:'pull',name:'Reverse Plank Hip Lift',
-   desc:'Seduto, mani dietro i fianchi con le dita verso i piedi, gambe tese. Spingi i fianchi in alto fino a mettere il corpo in linea, stringi le scapole e tieni 2s. Scendi senza appoggiarti del tutto.',
-   muscles:'Catena posteriore, Scapole',reps:10,repsMax:14,sets:3,restSec:60},
+  // 03/10/2026 — revisione delle clip di casa (pagina di revisione, scelte di Simone): la
+  // tirata a terra (hr1-hr7: Superman, Snow Angel, Y-T-W, rematore e curl con asciugamano,
+  // Swimmer, Reverse Plank) e' uscita tutta. Senza sbarra ne' elastici erano estensioni a
+  // terra e autoresistenza, cioe' il "mantenimento" che HOME_WARN_PULL gia' confessava.
+  // Al loro posto un solo esercizio con carico VERO e scalabile: lo zaino. Copre i
+  // bicipiti, che col ritiro di hr5 sarebbero rimasti senza nessun esercizio diretto.
+  // Senza clip per scelta di Simone. Lo slot tirata di FULLBODY_PLAN scende a 1.
+  {id:'hr8',cat:'pull',name:'Curl con Zaino',
+   desc:'Zaino riempito di libri o bottiglie, impugnato per gli spallacci. In piedi, gomiti fermi ai fianchi: porta lo zaino verso le spalle senza dondolare col busto, 2s su e 3s giu\'. La progressione e\' il PESO dello zaino, non le reps: quando chiudi il massimo su tutte le serie, aggiungi un libro o una bottiglia e riparti dal target basso.',
+   muscles:'Bicipiti, Avambracci',reps:10,repsMax:14,sets:3,restSec:60},
  ],
  shoulders:[
-  {id:'hs1',cat:'shoulders',name:'Wall Walk',
+  // 03/10/2026: hs3 Wall Slide e hs4 Prone Y Raise ritirati in revisione (scelta di Simone).
+  {id:'hs1',cat:'shoulders',name:'Wall Walk',video:'casa-wall-walk.mp4',
    desc:'Plank coi piedi al muro. Cammina indietro con le mani salendo coi piedi sulla parete fino a quanto reggi, poi torna giù con lo stesso controllo. Una rep = salita + discesa. Fermati prima che la schiena si inarchi.',
    muscles:'Spalle, Core',reps:4,repsMax:6,sets:3,restSec:90},
   // hs2 Plank Shoulder Tap RITIRATO il 04/09/2026 (decisione Simone, Q&A n.74: «cambia
@@ -602,39 +592,28 @@ const HOME_NEW={
   // che ora dichiara la leva di progressione: e' l'ALTEZZA del rialzo, non le reps —
   // che e' il motivo per cui questo esercizio prende il posto di hs2 invece di una sua
   // variante piu' dura. `id`, clip, storico e piano del coach restano gli stessi.
-  {id:'p5',cat:'shoulders',name:'Elevated Pike Push-up',video:'Pike push-up su rialzo.mp4',
+  {id:'p5',cat:'shoulders',name:'Elevated Pike Push-up',video:'casa-pike-push-up-rialzo.mp4',
    desc:'Piedi su sedia (o divano, se la sedia ti e\' diventata facile), corpo a V stretta, fianchi alti. Scendi con la testa verso il suolo tra le mani. Movimento verticale puro — spalle, non petto. La progressione e\' l\'ALTEZZA del rialzo, non le ripetizioni: quando chiudi il massimo su tutte le serie, alza il rialzo e riparti dal target basso.',
    muscles:'Spalle ant., Tricipiti',reps:8,repsMax:11,sets:4,restSec:90},
-  {id:'hs3',cat:'shoulders',name:'Wall Slide',
-   desc:'Schiena e braccia al muro, gomiti a 90°. Scivola con le braccia verso l\'alto senza staccare polsi e gomiti dalla parete, poi torna giù stringendo le scapole. Fa male alla mobilità, non ai muscoli: è salute della spalla.',
-   muscles:'Rotatori, Trapezio basso',reps:12,repsMax:16,sets:3,restSec:45},
-  {id:'hs4',cat:'shoulders',name:'Prone Y Raise',
-   desc:'A pancia in giù, braccia a Y sopra la testa, pollici in su. Solleva solo le braccia (petto a terra) e tieni 2s in alto. Piccolo movimento, tanto deltoide posteriore: non trasformarlo in uno slancio.',
-   muscles:'Deltoide post., Trapezio basso',reps:12,repsMax:16,sets:3,restSec:45},
  ],
  legs:[
-  {id:'hl1',cat:'legs',name:'Squat a corpo libero',
+  {id:'hl1',cat:'legs',name:'Squat a corpo libero',video:'casa-squat.mp4',
    desc:'Piedi a larghezza spalle, punte leggermente aperte. Scendi spingendo i fianchi indietro fino a cosce parallele o sotto, talloni a terra, petto alto. Risali spingendo col tallone. 2s a scendere, esplosivo a salire.',
    muscles:'Quadricipiti, Glutei',reps:15,repsMax:20,sets:4,restSec:75},
-  {id:'hl2',cat:'legs',name:'Affondi Alternati',
+  {id:'hl2',cat:'legs',name:'Affondi Alternati',video:'casa-affondi-alternati.mp4',
    desc:'Passo avanti scendendo col ginocchio posteriore a sfiorare terra, busto eretto, ginocchio anteriore sopra il piede. Spingi col tallone per tornare e alterna. Le reps sono TOTALI, non per gamba.',
    muscles:'Quadricipiti, Glutei',reps:12,repsMax:16,sets:4,restSec:75},
-  {id:'hl3',cat:'legs',name:'Bulgarian Split Squat (corpo libero)',
+  {id:'hl3',cat:'legs',name:'Bulgarian Split Squat (corpo libero)',video:'casa-bulgarian-split-squat.mp4',
    desc:'Piede posteriore su una sedia, piede avanti a un passo abbondante. Scendi dritto col ginocchio anteriore a 90°, busto eretto. Senza manubri la difficoltà la fai con la profondità e con 3s in discesa. Reps PER GAMBA.',
    muscles:'Quadricipiti, Glutei',reps:10,repsMax:14,sets:4,restSec:90},
-  {id:'hl4',cat:'legs',name:'Stacco Rumeno su una gamba',
+  {id:'hl4',cat:'legs',name:'Stacco Rumeno su una gamba',video:'casa-stacco-rumeno-una-gamba.mp4',
    desc:'In piedi su una gamba, ginocchio morbido. Spingi il fianco indietro abbassando il busto e alzando la gamba libera dietro, schiena piatta, fino a sentire tirare il femorale. Risali contraendo. Reps PER GAMBA — è anche un test di equilibrio.',
    muscles:'Femorali, Glutei, Stabilità',reps:10,repsMax:14,sets:3,restSec:75},
-  {id:'hl5',cat:'legs',name:'Leg Curl con Asciugamano',
-   desc:'Sdraiato supino, talloni su un asciugamano su pavimento liscio, fianchi sollevati. Allunga le gambe facendo scivolare i talloni in avanti e riportali indietro contraendo i femorali, senza far cadere il bacino. È l\'unico curl femorali che si fa senza attrezzi: 3s ad allungare.',
-   muscles:'Femorali',reps:8,repsMax:12,sets:3,restSec:75},
-  {id:'hl6',cat:'legs',name:'Step-up su Sedia',
-   desc:'Sali su una sedia stabile con tutto il piede, spingendo col tallone e senza darti la spinta con la gamba di sotto. Scendi lento, controllando. Reps PER GAMBA.',
-   muscles:'Quadricipiti, Glutei',reps:12,repsMax:16,sets:3,restSec:75},
+  // 03/10/2026: hl5 Leg Curl con Asciugamano e hl6 Step-up su Sedia ritirati in revisione (scelta di Simone).
   {id:'hl7',cat:'legs',name:'Squat Jump',video:'cardio-jump-squat.mp4',
    desc:'Scendi in squat ed esplodi in alto. Atterra morbido riassorbendo con ginocchia e anche, e riparti solo quando sei stabile. Chiude la seduta: è la parte veloce che a corpo libero sostituisce il carico.',
    muscles:'Quadricipiti, Glutei, Potenza',reps:12,repsMax:16,sets:3,restSec:90},
-  {id:'l1',cat:'legs',name:'Pistol Squat',video:'Pistol squat.mp4',
+  {id:'l1',cat:'legs',name:'Pistol Squat',video:'casa-pistol-squat.mp4',
    desc:'Squat su 1 gamba, altra tesa avanti. Scendi il più in basso possibile mantenendo il tallone a terra. Usa supporto leggero per il bilanciamento se serve.',
    muscles:'Quadricipiti, Glutei, Core',reps:6,repsMax:9,sets:4,restSec:120},
  ],
@@ -820,6 +799,7 @@ const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
  // (catalogo a tre famiglie). Una chiave orfana qui non fa danno, ma mente sul catalogo.
  k1:9,k2:9,k3:9,k4:9,
  c42:3,                                               // plank a leva lunga: brace forte come c1
+ // 03/10/2026: via le chiavi di hr1-hr7, hs3, hs4, hl5, hl6 insieme alle loro righe.
  // RAMO CASA (04/09/2026). Fino a oggi NESSUNA riga `h*` era elencata qui: cadevano tutte
  // sul default 1 di `recoveryAllows`, cioe' "ammesso nella fase piu' fragile del
  // post-operatorio" — Wall Walk quasi in verticale e Squat Jump compresi. E' lo stesso
@@ -830,10 +810,10 @@ const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
  // Piana Manubri sta in fase 1 e p1 Archer Push-up in fase 3: quel che si CARICA si puo'
  // scalare a piacere, il corpo libero no — pesi sempre te stesso. Quindi a casa quasi
  // niente sta in fase 1.
- hr4:1,hr5:1,hs3:1,                                   // auto-resistenza o mobilita': il carico lo decidi tu, busto eretto
- hp1:2,hr1:2,hr2:2,hr3:2,hr6:2,hs4:2,                 // spinta base o prono leggero: la testa appoggia, niente apnea
- hl1:2,hl2:2,hl3:2,hl5:2,hl6:2,                       // gambe a corpo libero, busto eretto
- hp2:3,hp3:3,hp4:3,hr7:3,hl4:3,                       // spinta dura, ponte inverso, o hinge = "chinarsi"
+ hr8:1,                                               // curl con zaino: il carico lo decidi tu, busto eretto
+ hp1:2,                                               // spinta base: niente apnea
+ hl1:2,hl2:2,hl3:2,                                   // gambe a corpo libero, busto eretto
+ hp2:3,hp3:3,hp4:3,hl4:3,                             // spinta dura o hinge = "chinarsi"
  hs1:9,hl7:9,                                         // Wall Walk va quasi in verticale, Squat Jump e' impatto: mai in recupero
  // Gli id `p*`/`l*` passati al ramo casa (p1,p2,p3,p5,l1) la loro fase ce l'hanno gia', sopra.
  // CORE (23/08/2026). Fino a oggi NESSUN c* era elencato qui: cadevano tutti sul
@@ -1685,7 +1665,8 @@ function genCoreCasa(){
 // L'ordine alterna i distretti (spinta → tirata → gambe) cosi' il recupero di uno e' il
 // lavoro dell'altro: senza carico il limite e' metabolico, e le pause corte reggono solo
 // se il distretto cambia.
-const FULLBODY_PLAN=[['push',2],['pull',2],['legs',2],['shoulders',1]];
+// 03/10/2026: tirata da 2 a 1 slot — nel ramo casa ne resta un solo esercizio (hr8).
+const FULLBODY_PLAN=[['push',2],['pull',1],['legs',2],['shoulders',1]];
 const FULLBODY_SPLIT={id:'fullbody',name:'FULL-BODY',emoji:'⌂',color:'#22c55e',bg:'#052e16',
                       desc:'Corpo libero · spinta · tirata · gambe · spalle · core'};
 // La seduta che sta per partire, non il giorno dello split (03/10/2026). Il check
@@ -1703,7 +1684,10 @@ function genFullBody(){
   perCat[cat]=[];
   if(!pool.length){gaps.push('full-body '+cat+' (pool vuoto)');return;}
   for(var n=0;n<count;n++){
-   var e=pool[((((di*3)+ci*2+n)%pool.length)+pool.length)%pool.length];
+   // 03/10/2026: il passo era `di*3`. Con 6 gambe (dopo il ritiro di hl5/hl6) 3 divide 6 e
+   // la rotazione girava su due coppie sole: hl1 e hl4 non uscivano MAI. Avanzare di `count`
+   // al giorno fa scorrere finestre contigue, che coprono il pool qualunque sia la lunghezza.
+   var e=pool[((((di*count)+ci+n)%pool.length)+pool.length)%pool.length];
    if(!e||used.indexOf(e.id)>=0){gaps.push('full-body '+cat+' slot '+(n+1)+' (pool: '+pool.length+')');continue;}
    used.push(e.id);
    perCat[cat].push(applyAdaptation(withCoachOverride(e)));
@@ -1714,7 +1698,7 @@ function genFullBody(){
   if(perCat[cat]&&perCat[cat][n2])exercises.push(perCat[cat][n2]);
  });
  (perCat.shoulders||[]).forEach(function(e){exercises.push(e);});
- // Core: UNA zona (due esercizi a corpo libero), non due. La seduta e' gia' lunga sette
+ // Core: UNA zona (due esercizi a corpo libero), non due. La seduta e' gia' lunga sei
  // esercizi, e il core qui e' il finale, non il piatto.
  var nC=DB.coreCircuits.length,zc=DB.coreCircuits[((di%nC)+nC)%nC].zone||['A'];
  var cc=buildCoreCircuit(di,true,gaps,{zone:[zc[di%zc.length]]});
