@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-09-20b · s1 alla macchina'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-10-03c · core casa completo'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -1379,7 +1379,9 @@ function buildCoreCircuit(idx,home,gaps,opts){
  gaps=gaps||[];
  var nC=DB.coreCircuits.length;
  var circuit=DB.coreCircuits[((idx%nC)+nC)%nC];
- var rot=Math.floor(idx/nC);
+ // `opts.rot` (03/10/2026): il CORE CASA passa il SUO contatore di sedute, cosi' ogni zona
+ // avanza di un esercizio a ogni seduta fatta — non a ogni giro di tre circuiti.
+ var rot=opts.rot!=null?opts.rot:Math.floor(idx/nC);
  var zone=opts.zone||circuit.zone||[];
  var picks=[];
  zone.forEach(function(z,zi){
@@ -1399,7 +1401,9 @@ function buildCoreCircuit(idx,home,gaps,opts){
   // slot avrebbe prodotto un buco dichiarato a ogni seduta. A casa il pool a corpo libero e'
   // largo — venticinque righe — e due slot li riempie sempre: dimezzare il CORE CASA, che e'
   // una seduta a se' di sei minuti, l'avrebbe svuotata.
-  var slots=home?2:1;
+  // `opts.slots` (03/10/2026): il CORE CASA prende tutte e sei le zone con UN esercizio
+  // ciascuna — sei esercizi diversi invece di due zone da due.
+  var slots=opts.slots||(home?2:1);
   for(var n=0;n<slots;n++){
    // Pool vuoto o esercizio gia' preso (di solito: recoveryAllows ha filtrato tutto) → slot
    // scoperto DICHIARATO, non riempito con un esercizio di un'altra zona. Riempirlo vorrebbe
@@ -1455,6 +1459,8 @@ function buildCoreCircuit(idx,home,gaps,opts){
  return{circuit:circuit,core:core,zone:zone};
 }
 // Finisher cardio: blocco corto in coda, ruota per giorno.
+// NESSUN CHIAMANTE dal 03/10/2026: tolto dalla palestra il 16/09 e dalla FULL-BODY il 03/10.
+// Resta col catalogo DB.cardio: se il finisher deve tornare da qualche parte, torna da qui.
 function buildCardio(idx,avoid){
  avoid=avoid||[];
  var nk=DB.cardio.length,pickK=[],cardio=[];
@@ -1594,8 +1600,8 @@ function genWorkout(splitIdx,opts){
  var cc=buildCoreCircuit(splitIdx,home,gaps),circuit=cc.circuit,core=cc.core;
  // FINISHER CARDIO TOLTO dalla seduta di palestra il 16/09/2026 (decisione Simone). Restava
  // il blocco 3x30s di salti a fine seduta: la palestra chiude col core e basta. `buildCardio`
- // NON e' morta — la usa ancora la FULL-BODY a corpo libero, dove il finisher metabolico e'
- // il senso della seduta. Se un giorno il cardio deve tornare in palestra, torna da qui.
+ // e' rimasta senza chiamanti dal 03/10/2026, quando e' uscita anche dalla FULL-BODY.
+ // Se un giorno il cardio deve tornare in palestra, torna da qui.
  return{split:split,all:exercises.concat(core),circuit:circuit,gaps:gaps,home:home};
 }
 
@@ -1604,71 +1610,52 @@ function genWorkout(splitIdx,opts){
 // dalla palestra per vivere in due sedute a sé — un CORE CASA che fai quando vuoi, e una
 // FULL-BODY a corpo libero che sostituisce la palestra quando non ci vai.
 // Nessuna delle due consuma lo split: il giorno previsto (PUSH, PULL…) SLITTA, non salta.
-// La rotazione qui non puo' dipendere da `splitIdx` proprio per questo — se lo split non
-// avanza, un core casa fatto tre giorni di fila sarebbe tre volte lo stesso. Dipende dal
-// GIORNO: cambia da solo, anche se non ti alleni.
-function dayIdx(d){
- d=d||new Date();
- return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000);
+// ROTAZIONI PROPRIE (03/10/2026, Simone: «entrambi seguono il proprio avanzamento non
+// incrociato con palestra»). Fino a oggi i due rami giravano sul GIORNO del calendario, e il
+// CORE CASA si accorciava a una zona sola se quel giorno eri gia' stato in palestra. Ora
+// ciascuno ha il suo contatore: il numero di sedute DI QUEL RAMO gia' nello storico. Avanza
+// solo quando lo fai — non col calendario, non con la palestra. Letto dallo storico e non
+// da un campo a parte: lo storico si fonde gia' fra telefono e Drive, un contatore nuovo
+// andrebbe sincronizzato e timbrato come splitIdx.
+function tipoSeduta(h){
+ if(h.tipo)return h.tipo;               // scritto da finishWorkout dal 03/10/2026
+ if(h.home&&h.extra)return 'corecasa';  // prima del 03/10 il CORE CASA era `extra`
+ if(h.home&&h.slitta)return 'fullbody';
+ return h.home?'casa':'gym';
 }
-function sessioniOggi(){
- var t=new Date().toDateString();
- return (S.history||[]).filter(function(h){try{return new Date(h.date).toDateString()===t;}catch(e){return false;}});
+function contaSedute(tipo){
+ return (S.history||[]).filter(function(h){return tipoSeduta(h)===tipo;}).length;
 }
-// Zone del core gia' morse oggi, lette dalle sedute di oggi: non da un flag che qualcuno
-// deve ricordarsi di scrivere, ma dagli esercizi che ci sono davvero dentro.
-function coreZoneOggi(){
- var out=[];
- sessioniOggi().forEach(function(h){
-  (h.exercises||[]).forEach(function(e){
-   var base=exById((e.id||'').replace(/-L[12]$/,''));
-   var z=(base&&base.zona)||e.zona;
-   if(z&&out.indexOf(z)<0)out.push(z);
-  });
- });
- return out;
-}
-// CORE CASA — il livello NON lo scegli tu: lo deduce l'app da quello che sa gia'.
-// (1) Ti sei gia' allenato oggi → una zona sola, e quella che il core di oggi NON ha
-//     morso: due volte lo stesso distretto nella stessa giornata non e' piu' volume, e'
-//     recupero mangiato. (2) Modalita' recupero attiva → un giro invece di due, e
-//     `recoveryAllows` filtra gia' il pool. (3) Altrimenti pieno: due zone, quattro
-//     esercizi, due giri.
+// CORE CASA — allenamento completo di addominali (03/10/2026, Simone: «non 2 esercizi»).
+// Prima: due zone del giorno, e una sola se ti eri gia' allenato. Ora sempre tutte e SEI
+// le zone, un esercizio a corpo libero per zona, alternando i piani (flessione → anti-
+// estensione → rotazione → flessione dal basso → laterale → estensione) cosi' una zona
+// recupera mentre lavora la successiva. La palestra non entra piu' nel calcolo.
+// Modalita' recupero: un giro invece di due, e `recoveryAllows` filtra gia' il pool.
+const CORE_CASA_ZONE=['A','B','D','C','E','F'];
 function genCoreCasa(){
- var gaps=[],di=dayIdx(),nC=DB.coreCircuits.length;
- var circuit=DB.coreCircuits[((di%nC)+nC)%nC];
- var fatte=coreZoneOggi(),rec=!!recoveryPhase(),allenato=sessioniOggi().length>0;
- var zone=(circuit.zone||[]).slice(),motivo='Giro pieno: due zone, quattro esercizi.';
- if(allenato){
-  var libere=zone.filter(function(z){return fatte.indexOf(z)<0;});
-  if(!libere.length)libere=Object.keys(CORE_ZONE).filter(function(z){return fatte.indexOf(z)<0;});
-  if(libere.length){
-   zone=[libere[0]];
-   motivo='Ti sei gia\' allenato oggi: una zona sola ('+CORE_ZONE[zone[0]]+'), quella che il core di oggi non ha morso.';
-  }else{
-   zone=[zone[0]];
-   motivo='Oggi il core le ha morse tutte: giro corto di ripasso.';
-  }
- }
- if(rec)motivo+=' Modalita\' recupero: un giro invece di due.';
- var giri=(allenato||rec)?1:CORE_SETS_TEMPO;
- var cc=buildCoreCircuit(di,true,gaps,{zone:zone,giri:giri});
+ var gaps=[],n=contaSedute('corecasa'),rec=!!recoveryPhase();
+ var giri=rec?1:CORE_SETS_TEMPO;
+ var cc=buildCoreCircuit(n,true,gaps,{zone:CORE_CASA_ZONE,slots:1,rot:n,giri:giri});
+ var motivo='Seduta n.'+(n+1)+' · sei zone, un esercizio per zona'+(rec?' · modalita\' recupero: un giro invece di due':'');
  return{
   split:{id:'corecasa',name:'CORE CASA',emoji:'◆',color:'#22d3ee',bg:'#083344',
-         desc:zone.map(function(z){return CORE_ZONE[z];}).join(' · ')},
+         desc:'Addominali completi · tutte le zone'},
   all:cc.core,circuit:cc.circuit,gaps:gaps,home:true,coreOnly:true,livello:motivo};
 }
 // FULL-BODY a corpo libero — fissa, indipendente dallo split (scelta di Simone
 // dell'11/09/2026: prima il tasto A CASA rifaceva lo split del giorno, e un PULL a casa
 // senza sbarra ne' elastici era mantenimento travestito da seduta). Qui ogni seduta tocca
-// tutto: spinta, tirata, gambe, spalle, core, finisher.
+// spinta, tirata, gambe, spalle.
+// 03/10/2026: via il core e il finisher cardio in coda (scelta di Simone). Gli addominali
+// vivono nel CORE CASA, che e' diventato una seduta completa a se'.
 // L'ordine alterna i distretti (spinta → tirata → gambe) cosi' il recupero di uno e' il
 // lavoro dell'altro: senza carico il limite e' metabolico, e le pause corte reggono solo
 // se il distretto cambia.
 // 03/10/2026: tirata da 2 a 1 slot — nel ramo casa ne resta un solo esercizio (hr8).
 const FULLBODY_PLAN=[['push',2],['pull',1],['legs',2],['shoulders',1]];
 const FULLBODY_SPLIT={id:'fullbody',name:'FULL-BODY',emoji:'⌂',color:'#22c55e',bg:'#052e16',
-                      desc:'Corpo libero · spinta · tirata · gambe · spalle · core'};
+                      desc:'Corpo libero · spinta · tirata · gambe · spalle'};
 // La seduta che sta per partire, non il giorno dello split (03/10/2026). Il check
 // pre-workout leggeva sempre PLAN[splitIdx]: premevi FULL BODY e l'ultima schermata prima
 // del via diceva «↑ PUSH — Petto (piano + inclinato)» con il tasto «Inizia ↑», e il
@@ -1676,7 +1663,8 @@ const FULLBODY_SPLIT={id:'fullbody',name:'FULL-BODY',emoji:'⌂',color:'#22c55e'
 // Il CORE CASA non passa dal check, quindi i casi sono due.
 function splitDellaSeduta(){return S.wMode==='fullbody'?FULLBODY_SPLIT:PLAN[S.splitIdx%PLAN.length];}
 function genFullBody(){
- var di=dayIdx(),gaps=[],adapt=S.aiDB.adaptation||{},avoid=adapt.avoidExercises||[];
+ // `di` = sedute FULL-BODY gia' fatte (03/10/2026), non il giorno: vedi tipoSeduta.
+ var di=contaSedute('fullbody'),gaps=[],adapt=S.aiDB.adaptation||{},avoid=adapt.avoidExercises||[];
  var perCat={},used=[];
  FULLBODY_PLAN.forEach(function(entry,ci){
   var cat=entry[0],count=entry[1];
@@ -1686,7 +1674,7 @@ function genFullBody(){
   for(var n=0;n<count;n++){
    // 03/10/2026: il passo era `di*3`. Con 6 gambe (dopo il ritiro di hl5/hl6) 3 divide 6 e
    // la rotazione girava su due coppie sole: hl1 e hl4 non uscivano MAI. Avanzare di `count`
-   // al giorno fa scorrere finestre contigue, che coprono il pool qualunque sia la lunghezza.
+   // a seduta fa scorrere finestre contigue, che coprono il pool qualunque sia la lunghezza.
    var e=pool[((((di*count)+ci+n)%pool.length)+pool.length)%pool.length];
    if(!e||used.indexOf(e.id)>=0){gaps.push('full-body '+cat+' slot '+(n+1)+' (pool: '+pool.length+')');continue;}
    used.push(e.id);
@@ -1698,14 +1686,9 @@ function genFullBody(){
   if(perCat[cat]&&perCat[cat][n2])exercises.push(perCat[cat][n2]);
  });
  (perCat.shoulders||[]).forEach(function(e){exercises.push(e);});
- // Core: UNA zona (due esercizi a corpo libero), non due. La seduta e' gia' lunga sei
- // esercizi, e il core qui e' il finale, non il piatto.
- var nC=DB.coreCircuits.length,zc=DB.coreCircuits[((di%nC)+nC)%nC].zone||['A'];
- var cc=buildCoreCircuit(di,true,gaps,{zone:[zc[di%zc.length]]});
- var cardio=buildCardio(di,avoid);
  return{
   split:FULLBODY_SPLIT,
-  all:exercises.concat(cc.core).concat(cardio),circuit:cc.circuit,gaps:gaps,
+  all:exercises,circuit:null,gaps:gaps,
   home:true,fullBody:true};
 }
 function buildSteps(all){
@@ -2273,7 +2256,7 @@ function rHome(){
   // `align-items:stretch` tiene la stessa altezza anche se uno dei due va a due righe.
   +'<div style="display:flex;gap:8px;align-items:stretch;margin-top:10px">'
   +'<button class="btn" style="flex:1;background:transparent;color:#F97316;border:2px solid #F97316;margin:0;padding:14px 8px;font-size:14px;font-weight:700;letter-spacing:1px;line-height:1.25" onclick="startWorkout(\'fullbody\')">FULL BODY<br><span style="font-weight:400;letter-spacing:0;font-size:12px;color:#a1a1aa">corpo libero</span></button>'
-  +'<button class="btn" style="flex:1;background:transparent;color:#F97316;border:2px solid #F97316;margin:0;padding:14px 8px;font-size:14px;font-weight:700;letter-spacing:1px;line-height:1.25" onclick="startWorkout(\'corecasa\')">HOME CORE<br><span style="font-weight:400;letter-spacing:0;font-size:12px;color:#a1a1aa">il giro di oggi</span></button>'
+  +'<button class="btn" style="flex:1;background:transparent;color:#F97316;border:2px solid #F97316;margin:0;padding:14px 8px;font-size:14px;font-weight:700;letter-spacing:1px;line-height:1.25" onclick="startWorkout(\'corecasa\')">HOME CORE<br><span style="font-weight:400;letter-spacing:0;font-size:12px;color:#a1a1aa">addominali completi</span></button>'
   +'</div>'
   +'<div style="display:flex;border:2px solid #27272a;margin-top:16px">'
   +'<div style="flex:1;padding:16px;border-right:2px solid #27272a"><div class="font-display" style="font-size:42px;font-weight:700;line-height:1">'+S.history.length+'</div><div class="lbl" style="font-size:10px;color:#a1a1aa">Sessioni</div></div>'
@@ -2361,7 +2344,7 @@ function getMissingNutritionDays(){
  });
 }
 var SORE_MUSCLES=['Petto','Tricipiti','Spalle','Dorsali','Bicipiti','Quadricipiti','Glutei','Femorali','Core'];
-var SPLIT_MUSCLES={'push':['Petto','Tricipiti','Spalle'],'push2':['Petto','Tricipiti','Spalle'],'pull':['Dorsali','Bicipiti'],'pull2':['Dorsali','Bicipiti','Spalle'],'legs':['Quadricipiti','Glutei','Femorali'],'full':['Petto','Tricipiti','Dorsali','Bicipiti','Quadricipiti'],'fullbody':['Petto','Tricipiti','Spalle','Dorsali','Bicipiti','Quadricipiti','Glutei','Core']};
+var SPLIT_MUSCLES={'push':['Petto','Tricipiti','Spalle'],'push2':['Petto','Tricipiti','Spalle'],'pull':['Dorsali','Bicipiti'],'pull2':['Dorsali','Bicipiti','Spalle'],'legs':['Quadricipiti','Glutei','Femorali'],'full':['Petto','Tricipiti','Dorsali','Bicipiti','Quadricipiti'],'fullbody':['Petto','Tricipiti','Spalle','Dorsali','Bicipiti','Quadricipiti','Glutei']};
 function buildPreWorkoutComment(){
  var ans=S.preWQAns||{};
  var todaySplit=splitDellaSeduta();
@@ -2483,8 +2466,8 @@ function launchWorkout(){
 // progressione (che a corpo libero sale di reps, non di kg) e il coach la legge come le altre.
 // `mode` (11/09/2026): 'gym' (default), 'fullbody', 'corecasa'. `true` vale 'fullbody' per
 // i vecchi punti di chiamata. Il CORE CASA salta check pre-workout, promemoria nutrizione e
-// post-quiz: e' un giro di sei minuti che puoi fare due volte al giorno, e tre schermate di
-// domande intorno a sei minuti di plank sono il modo migliore per non farlo piu'.
+// post-quiz: e' una seduta di soli addominali da fare quando vuoi, e tre schermate di
+// domande intorno a una seduta di plank sono il modo migliore per non farla piu'.
 function startWorkout(mode){
  if(mode===true)mode='fullbody';
  S.wMode=mode||'gym';
@@ -3200,13 +3183,17 @@ function finishWorkout(){
  var dur=Math.round((Date.now()-S.wStartTime)/60000)||1;
  S.pending={split:S.wSplit,exercises:S.wEx,sets:S.wSets,duration:dur,reps:S.wReps||{}};
  if(S.homeMode)S.pending.home=true; // marca la seduta come fatta a casa: spiega al coach perché non ci sono kg
+ // `tipo` (03/10/2026): quale ramo e' stato. Ne vive la rotazione propria di FULL-BODY e
+ // CORE CASA (vedi tipoSeduta), e il coach li distingue dalla palestra.
+ S.pending.tipo=S.wMode||'gym';
  // FULL-BODY: conta come seduta e alimenta la progressione, ma NON consuma lo split — il
  // giorno previsto slitta a domani invece di saltare (decisione di Simone, 11/09/2026).
  if(S.wMode==='fullbody')S.pending.slitta=true;
- // CORE CASA: `extra` — non consuma lo split, non entra in progressione (non c'e' un kg da
- // muovere) e il coach la salta, com'e' giusto: e' lavoro in piu', non la seduta del giorno.
- // Niente post-quiz: si chiude qui.
- if(S.wMode==='corecasa'){S.pending.extra=true;S.qAns={};finishSession();return;}
+ // CORE CASA: dal 03/10/2026 NON piu' `extra` ma `slitta`, come la FULL-BODY. Prima il coach
+ // la saltava e i secondi del core a corpo libero non progredivano mai; ora e' una seduta
+ // completa con la SUA progressione (gli esercizi c* a corpo libero escono solo qui), e non
+ // consuma lo split. Niente post-quiz: si chiude qui.
+ if(S.wMode==='corecasa'){S.pending.slitta=true;S.qAns={};finishSession();return;}
  S.qStep=0;S.qAns={};go('post_quiz');
 }
 
