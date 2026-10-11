@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-10-06a · fai dopo non torna in palestra'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-10-11a · pistol assistito e affondi con zaino'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -597,12 +597,16 @@ const HOME_NEW={
    muscles:'Spalle ant., Tricipiti',reps:8,repsMax:11,sets:4,restSec:90},
  ],
  legs:[
-  {id:'hl1',cat:'legs',name:'Squat a corpo libero',video:'casa-squat.mp4',
-   desc:'Piedi a larghezza spalle, punte leggermente aperte. Scendi spingendo i fianchi indietro fino a cosce parallele o sotto, talloni a terra, petto alto. Risali spingendo col tallone. 2s a scendere, esplosivo a salire.',
-   muscles:'Quadricipiti, Glutei',reps:15,repsMax:20,sets:4,restSec:75},
-  {id:'hl2',cat:'legs',name:'Affondi Alternati',video:'casa-affondi-alternati.mp4',
-   desc:'Passo avanti scendendo col ginocchio posteriore a sfiorare terra, busto eretto, ginocchio anteriore sopra il piede. Spingi col tallone per tornare e alterna. Le reps sono TOTALI, non per gamba.',
-   muscles:'Quadricipiti, Glutei',reps:12,repsMax:16,sets:4,restSec:75},
+  // 11/10/2026: hl1 Squat a corpo libero e hl2 Affondi Alternati ritirati (scelta di Simone, Q&A
+  // n.15). hl1 era al tetto 25 (24/24/24/24 il 09/10), hl2 ci stava arrivando (18-20): oltre il
+  // tetto si cambia esercizio, non numero. Id NUOVI apposta: lo storico di hl1/hl2 resta loro e
+  // il coach non legge le prime reps del pistol come un crollo dello squat.
+  {id:'hl8',cat:'legs',name:'Pistol Squat Assistito',video:'casa-pistol-squat-assistito.mp4',
+   desc:'Squat su una gamba tenendoti con una mano allo stipite della porta, altra gamba tesa avanti. Scendi lento (3s) fin dove tieni il tallone a terra e risali spingendo con la gamba, non tirando col braccio: la mano corregge l\'equilibrio, non solleva. La progressione e\' meno aiuto dalla mano, poi il Pistol Squat libero (l1). Reps PER GAMBA.',
+   muscles:'Quadricipiti, Glutei, Core',reps:6,repsMax:10,sets:4,restSec:90},
+  {id:'hl9',cat:'legs',name:'Affondi con Zaino',video:'casa-affondi-alternati.mp4',
+   desc:'Zaino carico in spalla, spallacci stretti. Passo avanti scendendo col ginocchio posteriore a sfiorare terra, busto eretto, ginocchio anteriore sopra il piede; spingi col tallone per tornare e alterna. La progressione e\' il PESO dello zaino, non le reps: quando chiudi il massimo su tutte le serie, aggiungi un libro o una bottiglia e riparti dal target basso. Le reps sono TOTALI, non per gamba.',
+   muscles:'Quadricipiti, Glutei',reps:10,repsMax:14,sets:4,restSec:75},
   {id:'hl3',cat:'legs',name:'Bulgarian Split Squat (corpo libero)',video:'casa-bulgarian-split-squat.mp4',
    desc:'Piede posteriore su una sedia, piede avanti a un passo abbondante. Scendi dritto col ginocchio anteriore a 90°, busto eretto. Senza manubri la difficoltà la fai con la profondità e con 3s in discesa. Reps PER GAMBA.',
    muscles:'Quadricipiti, Glutei',reps:10,repsMax:14,sets:4,restSec:90},
@@ -812,7 +816,8 @@ const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
  // niente sta in fase 1.
  hr8:1,                                               // curl con zaino: il carico lo decidi tu, busto eretto
  hp1:2,                                               // spinta base: niente apnea
- hl1:2,hl2:2,hl3:2,                                   // gambe a corpo libero, busto eretto
+ hl3:2,hl9:2,                                         // gambe a busto eretto (hl9: il carico lo decidi tu)
+ hl8:3,                                               // pistol assistito: una gamba sola, come l1
  hp2:3,hp3:3,hp4:3,hl4:3,                             // spinta dura o hinge = "chinarsi"
  hs1:9,hl7:9,                                         // Wall Walk va quasi in verticale, Squat Jump e' impatto: mai in recupero
  // Gli id `p*`/`l*` passati al ramo casa (p1,p2,p3,p5,l1) la loro fase ce l'hanno gia', sopra.
