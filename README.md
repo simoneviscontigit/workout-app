@@ -10,7 +10,17 @@ Webapp personale di allenamento (corpo libero + elastici). Single-file `index.ht
 ## Sicurezza
 La API key Anthropic NON va mai nel codice: si inserisce dalle impostazioni (⚙️ Profilo) e vive in `localStorage` (`anthropicKey`).
 
+Dal 22/10/2026 anche il **token di scrittura dello store** vive solo in `localStorage`
+(`workoutStoreToken`, si incolla a mano una volta da ⚙️ Profilo › STORE). Questo repo è pubblico:
+nessun token, nessun URL con segreto, nessun identificativo di store ci entra.
+
 ## Deploy
 Hosting statico su **GitHub Pages** (`simoneviscontigit.github.io/workout-app/`), servito dal branch `main` (deploy = `git push origin main`, autenticato via PAT classic repo-scope nel Keychain macOS). Stesso URL = `localStorage` del telefono preservato.
 
-Deploy alternativo/ridondante su Vercel (`workout-app-eight-iota.vercel.app`, progetto CLI-linked `.vercel/`) — non primario, il telefono carica Pages. Il vecchio Netlify (`workout-standalone-app.netlify.app`) è **dismesso** (404).
+Il deploy Vercel **non è più alternativo**: dal 22/10/2026 serve l'**API dello store**
+(`workout-app-eight-iota.vercel.app/api/sync` e `/api/state`, progetto CLI-linked `.vercel/`),
+cioè il canale con cui l'app consegna i dati. Due pubblicatori sullo stesso repo, con confini
+espliciti: Pages serve la **root** (l'app), Vercel serve **solo `api/`** — è il `.vercelignore`
+a tenerlo confinato. Toccarlo rimetterebbe in piedi una seconda copia dell'app su un'altra
+origine, cioè un secondo `localStorage` vivo. Il vecchio Netlify
+(`workout-standalone-app.netlify.app`) è **dismesso** (404).
