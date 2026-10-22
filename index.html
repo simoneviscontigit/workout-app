@@ -2012,7 +2012,15 @@ const DRIVE_URL='https://script.google.com/macros/s/AKfycbxtbx4x2KZZxgCvzOtibFtF
 // ma si LEGGE solo dallo store.
 const STORE_URL='https://workout-app-eight-iota.vercel.app';
 // Il token di scrittura NON sta nel repo (che e' pubblico): lo si incolla una volta nel profilo.
-function getStoreToken(){try{return localStorage.getItem('workoutStoreToken')||'';}catch(e){return '';}}
+// ⚠️ Si toglie OGNI spazio, non solo quelli ai bordi, e si fa in LETTURA. Un token di 43
+// caratteri si copia a occhio da una schermata che lo mostra in blocchi da 4, e gli spazi ci
+// restano dentro: il server risponde 401 e dal telefono sembra «la chiave e' sbagliata» quando
+// invece e' giusta e sporca. Ripulire in lettura (e non solo quando si salva) aggiusta anche un
+// valore gia' finito in localStorage, senza doverlo re-incollare.
+function getStoreToken(){try{return (localStorage.getItem('workoutStoreToken')||'').replace(/\s+/g,'');}catch(e){return '';}}
+// Per far vedere a occhio SE il token e' quello giusto senza mostrarlo: quanti caratteri, e i
+// primi e ultimi quattro. 43 e `MF18…eY9o` si riconoscono; 47 dice subito «ci sono gli spazi».
+function impronteToken(){var t=getStoreToken();if(!t)return '';return t.length+' caratteri · '+t.slice(0,4)+'…'+t.slice(-4);}
 
 // FNV-1a 32 bit. Serve identico in due linguaggi (qui e in travaso_storico.py/`fnv1a`): la
 // chiave di una voce di chat deve venire uguale da entrambi i lati, altrimenti nascono due
@@ -2222,7 +2230,11 @@ async function syncDelta(){
    S.syncError='';try{localStorage.setItem('syncOk',new Date().toISOString());}catch(e){}
   }
  }catch(e){
-  S.syncError='Ultimo salvataggio non confermato sullo store ('+((e&&e.message)||'rete')+'). Riapri l\'app quando hai linea.';
+  var _m=(e&&e.message)||'rete';
+  // Un 401 non e' un problema di rete e non si risolve riaprendo l'app: e' il token. Dirlo.
+  S.syncError=/401/.test(_m)
+   ? 'Lo store non accetta il token di questo telefono (401). Profilo > STORE: ricontrollalo — adesso il riquadro mostra quanti caratteri ha, devono essere 43 e nessuno spazio.'
+   : 'Ultimo salvataggio non confermato sullo store ('+_m+'). Riapri l\'app quando hai linea.';
  }
  S.syncBusy=false;
  if(S.view==='home')render();
@@ -3820,8 +3832,8 @@ function rProfile(){
   +'<div class="lbl" style="color:'+(getStoreToken()?'#22c55e':'#ef4444')+';margin-bottom:8px">STORE · TOKEN DI SCRITTURA'+(getStoreToken()?'':' — MANCA')+'</div>'
   +'<input type="password" id="store-token-input" placeholder="token dello store..." value="'+(localStorage.getItem('workoutStoreToken')||'')+'"'
   +' style="width:100%;box-sizing:border-box;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:13px;padding:10px;outline:none;font-family:monospace">'
-  +'<button class="btn" style="background:#14532d;margin-top:8px" onclick="(function(){var k=document.getElementById(\'store-token-input\').value.trim();if(k){localStorage.setItem(\'workoutStoreToken\',k);syncToDrive();alert(\'Token salvato su questo telefono. Sincronizzo.\');}else{localStorage.removeItem(\'workoutStoreToken\');alert(\'Token rimosso: da adesso i dati restano solo qui.\');}render();})()">Salva token store</button>'
-  +'<div style="font-size:11px;color:#52525b;margin-top:6px">Sta solo su questo dispositivo. Il repo dell\'app e\' pubblico: qui non ci arriva mai.</div>'
+  +'<button class="btn" style="background:#14532d;margin-top:8px" onclick="(function(){var k=document.getElementById(\'store-token-input\').value.replace(/\\s+/g,\'\');if(k){localStorage.setItem(\'workoutStoreToken\',k);syncToDrive();alert(\'Token salvato su questo telefono. Sincronizzo.\');}else{localStorage.removeItem(\'workoutStoreToken\');alert(\'Token rimosso: da adesso i dati restano solo qui.\');}render();})()">Salva token store</button>'
+  +'<div style="font-size:11px;color:#52525b;margin-top:6px">'+(getStoreToken()?'Salvato: '+impronteToken()+'. Devono essere 43 caratteri.<br>':'')+'Sta solo su questo dispositivo. Il repo dell\'app e\' pubblico: qui non ci arriva mai.</div>'
   +'</div>'
   +'<button id="restore-btn" class="btn" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;margin-top:8px" onclick="restoreFromDrive()">Ripristina dallo store</button>'
   +'</div>';
