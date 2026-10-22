@@ -2021,6 +2021,40 @@ function getStoreToken(){try{return (localStorage.getItem('workoutStoreToken')||
 // Per far vedere a occhio SE il token e' quello giusto senza mostrarlo: quanti caratteri, e i
 // primi e ultimi quattro. 43 e `MF18…eY9o` si riconoscono; 47 dice subito «ci sono gli spazi».
 function impronteToken(){var t=getStoreToken();if(!t)return '';return t.length+' caratteri · '+t.slice(0,4)+'…'+t.slice(-4);}
+// Il token si salvava con un `localStorage.setItem` NUDO dentro l'onclick del bottone. Su questo
+// telefono e' il guasto del 18/09/2026 che ritorna: col tetto di localStorage pieno `setItem`
+// SOLLEVA, l'alert di conferma non viene mai eseguito e non resta niente salvato — da fuori
+// sembra che il bottone non faccia nulla. Stessa rete di sicurezza di sv(): si butta la zavorra
+// e si ritenta, e se non si riesce lo si DICE, invece di tacere.
+function liberaSpazioOra(){
+ var buttata=dropRestoreBackup();
+ alert(buttata?'Zavorra buttata: riprova a salvare il token.':'Niente zavorra da buttare: lo spazio non si libera da qui.');
+}
+function salvaStoreToken(){
+ var el=document.getElementById('store-token-input');
+ var k=(el&&el.value||'').replace(/\s+/g,'');
+ if(!k){
+  try{localStorage.removeItem('workoutStoreToken');}catch(e){}
+  alert('Token rimosso: da adesso i dati restano solo qui.');render();return;
+ }
+ var ok=false,err='';
+ try{localStorage.setItem('workoutStoreToken',k);ok=true;}
+ catch(e){
+  err=(e&&e.name)||'errore';
+  // Seconda occasione dopo aver liberato spazio: un annullamento scaduto non vale un token.
+  if(freeSpace()){try{localStorage.setItem('workoutStoreToken',k);ok=true;err='';}catch(e2){err=(e2&&e2.name)||'errore';}}
+ }
+ if(!ok){
+  alert('Token NON salvato su questo telefono ('+err+').\n\nLo spazio e\' pieno: vai in Profilo e usa «Libera spazio», poi riprova. Finche\' non si salva, i dati restano solo qui.');
+  render();return;
+ }
+ // Si rilegge da dove lo leggera' l'app, non si crede alla variabile in mano.
+ var ri=getStoreToken();
+ if(ri!==k){alert('Token salvato ma rileggendolo risulta diverso ('+ri.length+' caratteri invece di '+k.length+'). Non lo uso.');render();return;}
+ alert('Token salvato: '+impronteToken()+'.\nSincronizzo.');
+ syncToDrive();
+ render();
+}
 
 // FNV-1a 32 bit. Serve identico in due linguaggi (qui e in travaso_storico.py/`fnv1a`): la
 // chiave di una voce di chat deve venire uguale da entrambi i lati, altrimenti nascono due
@@ -3832,8 +3866,9 @@ function rProfile(){
   +'<div class="lbl" style="color:'+(getStoreToken()?'#22c55e':'#ef4444')+';margin-bottom:8px">STORE · TOKEN DI SCRITTURA'+(getStoreToken()?'':' — MANCA')+'</div>'
   +'<input type="password" id="store-token-input" placeholder="token dello store..." value="'+(localStorage.getItem('workoutStoreToken')||'')+'"'
   +' style="width:100%;box-sizing:border-box;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:13px;padding:10px;outline:none;font-family:monospace">'
-  +'<button class="btn" style="background:#14532d;margin-top:8px" onclick="(function(){var k=document.getElementById(\'store-token-input\').value.replace(/\\s+/g,\'\');if(k){localStorage.setItem(\'workoutStoreToken\',k);syncToDrive();alert(\'Token salvato su questo telefono. Sincronizzo.\');}else{localStorage.removeItem(\'workoutStoreToken\');alert(\'Token rimosso: da adesso i dati restano solo qui.\');}render();})()">Salva token store</button>'
-  +'<div style="font-size:11px;color:#52525b;margin-top:6px">'+(getStoreToken()?'Salvato: '+impronteToken()+'. Devono essere 43 caratteri.<br>':'')+'Sta solo su questo dispositivo. Il repo dell\'app e\' pubblico: qui non ci arriva mai.</div>'
+  +'<button class="btn" style="background:#14532d;margin-top:8px" onclick="salvaStoreToken()">Salva token store</button>'
+  +'<button class="btn" style="background:#1f2937;margin-top:6px;font-size:12px;padding:8px" onclick="liberaSpazioOra()">Libera spazio</button>'
+  +'<div style="font-size:11px;color:#52525b;margin-top:6px">'+(getStoreToken()?'Salvato: '+impronteToken()+'. Devono essere 43 caratteri.<br>':'<b style="color:#ef4444">Niente salvato su questo telefono.</b><br>')+'Sta solo su questo dispositivo. Il repo dell\'app e\' pubblico: qui non ci arriva mai.</div>'
   +'</div>'
   +'<button id="restore-btn" class="btn" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;margin-top:8px" onclick="restoreFromDrive()">Ripristina dallo store</button>'
   +'</div>';
