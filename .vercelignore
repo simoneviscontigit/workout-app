@@ -1,0 +1,7 @@
+# Il deploy Vercel di questo repo e' SOLO l'API (api/). L'app resta su GitHub Pages:
+# una seconda copia su un'altra origine avrebbe un localStorage proprio = un secondo stato vivo.
+*
+!api
+!api/**
+!package.json
+!vercel.json

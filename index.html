@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-10-11a · pistol assistito e affondi con zaino'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-10-22a · store unico: scritture a delta, merge sul server'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -916,7 +916,7 @@ const S={
  wSplit:null,wEx:[],wSteps:[],wStepIdx:0,wTimer:0,wElapsed:0,wSets:0,wStartTime:0,wPaused:false,
  wAlt:{},wSkipAsk:null,wGaps:[],homeMode:false,wMode:'gym',wLivello:'', // wAlt: rotazione alternative per slot (vedi skipExercise) · wGaps: slot che il pool non ha riempito · homeMode: seduta senza palestra · wMode: 'gym' | 'fullbody' | 'corecasa' · wLivello: perche' il CORE CASA e' di quella misura
  qStep:0,qAns:{},pending:null,
- aiDB:{sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},mealTombstones:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},
+ aiDB:{nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},mealTombstones:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},
  aiChat:[],aiLoading:false,aiErr:'',exFbAnswers:{},
  aiOpen:false,floatChat:[],floatLoading:false,
  trialMode:false,trialNutMode:false,wConfirmClose:false,
@@ -1748,8 +1748,12 @@ function buildSteps(all){
  });
  return s;
 }
+// PATTERN sullo STORICO VERO (22/10/2026). Leggeva `aiDB.sessions`, che dal 02/08/2026 nessuno
+// piu' appende: diceva al coach «18 sessioni» mentre `history` ne aveva 65. Un numero sbagliato
+// dato in pasto a un LLM non e' peso morto innocuo, e' una bugia che ragiona. Ora legge
+// `S.history`, che e' la sola fonte viva — e `aiDB.sessions` smette di esistere.
 function calcPatterns(){
- var sess=S.aiDB.sessions;
+ var sess=S.history||[];
  if(!sess.length)return{};
  var wq=sess.filter(function(s){return s.quiz;});
  function avg(arr,k){return arr.length?Math.round(arr.reduce(function(s,h){return s+(h.quiz[k]||0);},0)/arr.length*10)/10:0;}
@@ -1897,11 +1901,16 @@ async function loadData(){
   v=localStorage.getItem('wh');if(v)S.history=JSON.parse(v);
   v=localStorage.getItem('si');if(v)S.splitIdx=parseInt(v)||0;
   v=localStorage.getItem('nd');if(v)S.nutrition=JSON.parse(v);
-  v=localStorage.getItem('ai');if(v){var _ai=JSON.parse(v);S.aiDB=Object.assign({sessions:[],nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},mealTombstones:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},_ai);if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};if(!S.aiDB.nutritionAdvice)S.aiDB.nutritionAdvice='';if(!S.aiDB.mealLog)S.aiDB.mealLog={};if(!S.aiDB.mealTombstones)S.aiDB.mealTombstones={};
+  v=localStorage.getItem('ai');if(v){var _ai=JSON.parse(v);S.aiDB=Object.assign({nutrition:[],nutritionLog:{},nutritionAdvice:'',mealLog:{},mealTombstones:{},chatLog:[],loads:{},patterns:{},adaptation:{intensity:'mantieni',nextFocus:'',avoidExercises:[],suggestExercises:[],reasoning:'',shortRec:'',recoveryFlag:false,recoveryAction:''},weeklyReports:[],monthlyReports:[]},_ai);if(!S.aiDB.nutritionLog)S.aiDB.nutritionLog={};if(!S.aiDB.nutritionAdvice)S.aiDB.nutritionAdvice='';if(!S.aiDB.mealLog)S.aiDB.mealLog={};if(!S.aiDB.mealTombstones)S.aiDB.mealTombstones={};
   // Le lapidi si applicano gia' qui, non solo nel mergeDown: `loadData` gira prima che
   // l'utente possa syncare, e un telefono che parte con il pasto soppresso ancora in
   // localStorage lo ri-pusherebbe al primo salvataggio, prima di aver mai fuso col server.
-  S.aiDB.mealLog=purgeTombstoned(S.aiDB.mealLog,S.aiDB.mealTombstones);}
+  S.aiDB.mealLog=purgeTombstoned(S.aiDB.mealLog,S.aiDB.mealTombstones);
+  // `aiDB.sessions` e' peso morto dal 02/08/2026: duplicava `history` e nessuno lo appendeva
+  // piu'. Si toglie una volta sola, cosi' smette di occupare il tetto di localStorage.
+  if(S.aiDB.sessions)delete S.aiDB.sessions;
+  if(S.aiDB.nutritionAdvice)delete S.aiDB.nutritionAdvice;}
+  _loadSH();
   if(!S.aiDB.profile)S.aiDB.profile={peso:74,altezza:182,eta:30,obiettivo:'massa'};
   S.nutDraft=loadNutDraft(); // compilazione interrotta da un riavvio: la home la offre indietro
   if(typeof recoveryInit==='function')recoveryInit(); // modalità recupero: init una-tantum + auto-uscita g30
@@ -1953,22 +1962,34 @@ async function loadData(){
 // Estratta da loadData il 19/09/2026 perche' i chiamanti sono DUE: l'avvio e, da oggi,
 // ogni push (vedi syncToDrive). Ritorna una Promise<bool>: `true` = il server e' stato letto.
 function pullDown(){
+ // Dal 22/10/2026 si legge dallo STORE, non piu' dal blob Drive. Il nome resta perche' i
+ // chiamanti sono due (l'avvio e ogni push) e il contratto verso di loro non cambia:
+ // Promise<bool>, `true` = il server e' stato letto.
+ // Finche' il token dello store non e' su questo telefono, si LEGGE ancora da Drive col vecchio
+ // `mergeDown`: altrimenti fra il deploy e il momento in cui il token viene incollato il piano
+ // del coach non arriverebbe piu'. ⛔️ Questo ramo si cancella con la gamba legacy, a fine
+ // doppia scrittura.
+ if(!getStoreToken()){S.storeNoToken=true;return pullDriveLegacy();}
+ return pullStore().then(function(ok){
+  return ok;
+ }).catch(function(e){
+  S.storeError=(e&&e.message)||'rete';
+  return false;
+ });
+}
+function pullDriveLegacy(){
  return fetch(DRIVE_URL+'?t='+Date.now(),{cache:'no-store',redirect:'follow'})
  .then(function(r){return r.json();}).then(function(dd){
-  if(dd&&dd.ok&&dd.proxyToken&&!getApiKey()){localStorage.setItem('workoutProxyToken',dd.proxyToken);} // ripristina proxy-token perso da wipe localStorage / reinstall
   var r=dd&&dd.ok&&dd.aiDB;
   if(!r)return false;
   if(r.serverUpdatedAt&&newer(r.serverUpdatedAt,S.aiDB._lastServerSync)){
-   // Il server ha scritto dopo l'ultimo sync locale → merge completo (tabella maestra del contratto).
    mergeDown(dd);
    sv('ai',S.aiDB);
    if(S.history&&S.history.length)sv('wh',S.history);
    if(typeof S.splitIdx==='number')sv('si',String(S.splitIdx));
   }else{
-   // Fallback backward-safe: blob pre-contratto (senza serverUpdatedAt) → vecchio comportamento
-   // (blind coachPlan/metrics + profilo last-wins). Nessun merge se non c'e' il marker server.
-   if(r.coachPlan){S.aiDB.coachPlan=r.coachPlan;}
-   if(r.metrics){S.aiDB.metrics=r.metrics;} // SOLA LETTURA: l'app le mostra, non le calcola
+   if(r.coachPlan)S.aiDB.coachPlan=r.coachPlan;
+   if(r.metrics)S.aiDB.metrics=r.metrics;
    if(r.profile&&r.profile.profileUpdatedAt&&newer(r.profile.profileUpdatedAt,S.aiDB.profile&&S.aiDB.profile.profileUpdatedAt))S.aiDB.profile=r.profile;
    sv('ai',S.aiDB);
   }
@@ -1976,6 +1997,237 @@ function pullDown(){
  }).catch(function(){return false;});
 }
 const DRIVE_URL='https://script.google.com/macros/s/AKfycbxtbx4x2KZZxgCvzOtibFtFTI8h0Bxg1-xalRboisHzyP_w8QD14Hb2-ZiAgTTDNQPP/exec';
+
+// ─── STORE UNICO (Fase 1, 22/10/2026) ───────────────────────────────────────
+// Il trasporto non e' piu' il blob intero su Drive: e' un DELTA di record verso un'API su Vercel
+// davanti a Upstash Redis. Cambia la famiglia di guasti alla radice, non per attenzione:
+//  - il salvataggio non spedisce piu' ~1 MB ma i soli record toccati (3-10 KB);
+//  - il merge lo fa il SERVER su cio' che riceve, quindi un record che il telefono non ha
+//    nominato non e' in gioco: omettere una chiave non la cancella piu' (R166 chiusa);
+//  - la risposta dice lo stato RECORD PER RECORD, quindi «l'ho compilato» e «e' arrivato»
+//    smettono di essere la stessa cosa anche quando ne passa solo una parte.
+// Il contratto di merge NON cambia (wiki/Personale/allenamento/sync-contract.md): timbro per
+// record, last-wins per istante, unione sui log, lapidi. Cambia chi lo applica e quando.
+// Per due settimane si scrive ANCHE sul vecchio canale Drive (rete di riserva in sola lettura),
+// ma si LEGGE solo dallo store.
+const STORE_URL='https://workout-app-eight-iota.vercel.app';
+// Il token di scrittura NON sta nel repo (che e' pubblico): lo si incolla una volta nel profilo.
+function getStoreToken(){try{return localStorage.getItem('workoutStoreToken')||'';}catch(e){return '';}}
+
+// FNV-1a 32 bit. Serve identico in due linguaggi (qui e in travaso_storico.py/`fnv1a`): la
+// chiave di una voce di chat deve venire uguale da entrambi i lati, altrimenti nascono due
+// record per la stessa voce. Non serve resistenza crittografica — serve determinismo, e
+// `crypto.subtle` e' asincrona, quindi non entra nel percorso sincrono che costruisce il delta.
+function _fnv1a(str){
+ var h=0x811c9dc5,b=unescape(encodeURIComponent(String(str==null?'':str)));
+ // Math.imul, NON `h*0x01000193`: il prodotto di due interi a 32 bit arriva a ~2^56 e un
+ // Number lo arrotonda. Con la moltiplicazione normale le chiavi uscivano diverse da quelle
+ // calcolate in Python (che fa aritmetica esatta + mask) — tutte e 109 le voci di chat. Un
+ // record parallelo per ognuna, cioe' lo stesso dato in due posti.
+ for(var i=0;i<b.length;i++){h=Math.imul(h^b.charCodeAt(i),0x01000193)>>>0;}
+ return ('0000000'+h.toString(16)).slice(-8);
+}
+// JSON con le chiavi ORDINATE. Il confronto «questo record e' cambiato?» non deve dipendere
+// dall'ordine in cui le chiavi sono finite nell'oggetto: lo stesso record arrivato dallo store
+// e quello costruito in locale hanno lo stesso contenuto e ordini diversi.
+function _stabile(v){
+ if(v===null||typeof v!=='object')return JSON.stringify(v===undefined?null:v);
+ if(Array.isArray(v))return '['+v.map(_stabile).join(',')+']';
+ return '{'+Object.keys(v).sort().map(function(k){return JSON.stringify(k)+':'+_stabile(v[k]);}).join(',')+'}';
+}
+function _impronta(dati){return _fnv1a(_stabile(dati));}
+// Stesso alfabeto di `_slug` in travaso_storico.py: cio' che non ci sta diventa '-'.
+function _slugK(x,n){return String(x==null?'':x).replace(/[^A-Za-z0-9_.:@#+-]/g,'-').slice(0,n||60);}
+function chiaveChat(c){return _slugK(c&&c.date||'senza-data',40)+'.'+_fnv1a(c&&c.userMsg||'');}
+function chiaveSess(h){return _slugK(h&&h.date,40);}
+
+// Lo stato locale, scomposto nei record dello store. Specchio dichiarato di `scomponi()` in
+// travaso_storico.py: se qui si aggiunge un tipo, va aggiunto anche lì e in TIPI di api/_store.js.
+// `plan` e `metrics` NON ci sono di proposito: sono BLIND-DOWN, li scrive solo il Mac — e con il
+// token dell'app l'API li rifiuta, che e' il modo in cui la regola diventa un confine.
+function recordLocali(){
+ var A=S.aiDB||{},out=[];
+ function agg(t,k,d){if(d!==undefined&&d!==null)out.push({tipo:t,chiave:k,dati:d});}
+ function mappa(t,o,slug){Object.keys(o||{}).forEach(function(k){agg(t,slug?_slugK(k):k,o[k]);});}
+ mappa('nut',A.nutritionLog);
+ mappa('weight',A.weightLog);
+ mappa('meal',A.mealLog);
+ (S.history||[]).forEach(function(h){if(h&&h.date)agg('sess',chiaveSess(h),h);});
+ (A.chatLog||[]).forEach(function(c){if(c)agg('chat',chiaveChat(c),c);});
+ mappa('load',A.loads,true);
+ mappa('prog',A.progression,true);
+ mappa('varlast',A.varLast,true);
+ (A.weeklyReports||[]).forEach(function(w){if(w)agg('weekly',_slugK(String(w.weekStart)+'_'+String(w.weekEnd),40),w);});
+ (A.monthlyReports||[]).forEach(function(m){if(m)agg('monthly',_pad4(m.year)+'-'+_pad2(m.month),m);});
+ if(A.profile)agg('profilo',null,A.profile);
+ if(typeof A.splitIdx==='number'||typeof S.splitIdx==='number')
+  agg('splitidx',null,{splitIdx:(typeof A.splitIdx==='number'?A.splitIdx:S.splitIdx),splitIdxUpdatedAt:A.splitIdxUpdatedAt||null});
+ if(A.recoveryMode)agg('recovery',null,A.recoveryMode);
+ if(A.adaptation)agg('adaptation',null,A.adaptation);
+ if(A.forceRun)agg('forcerun',null,A.forceRun);
+ var fl=Object.assign({},A._fix||{});if(A._nutRecovered)fl._nutRecovered=true;
+ if(Object.keys(fl).length)agg('flags',null,fl);
+ return out;
+}
+function _pad2(n){return ('0'+(parseInt(n,10)||0)).slice(-2);}
+function _pad4(n){return ('000'+(parseInt(n,10)||0)).slice(-4);}
+const FISSI={profilo:1,splitidx:1,recovery:1,adaptation:1,forcerun:1,flags:1,plan:1,metrics:1};
+function nomeRec(r){return FISSI[r.tipo]?r.tipo:r.tipo+':'+r.chiave;}
+
+// Le impronte dei record che lo store ha gia' (chiave 'sh', fuori da 'ai'). Stanno in una chiave
+// a parte perche' 'ai' e' quella che il 18/09/2026 ha sbattuto sul tetto di localStorage: farla
+// crescere ancora sarebbe comprare un trasporto leggero pagandolo in spazio sul telefono.
+// Se 'sh' non si scrive, il peggio che capita e' ri-mandare record che il server ignorera':
+// degradato, non rotto.
+var SH={};
+function _loadSH(){try{var v=localStorage.getItem('sh');SH=v?JSON.parse(v):{};}catch(e){SH={};}}
+function _saveSH(){try{localStorage.setItem('sh',JSON.stringify(SH));}catch(e){}}
+
+// Applica allo stato locale i record arrivati dallo store, con le regole della tabella maestra.
+// Stesse regole di `mergeDown`, su record singoli invece che sul blob.
+function applicaRecord(records){
+ var A=S.aiDB,tocca=false,tombNuove={};
+ (records||[]).forEach(function(r){
+  var d=r.dati,k=r.chiave;
+  switch(r.tipo){
+   // BLIND-DOWN: il server vince sempre, l'app non li calcola
+   case 'plan': A.coachPlan=d; break;
+   case 'metrics': A.metrics=d; break;
+   // LAST-WINS
+   case 'profilo': if(newer(d&&d.profileUpdatedAt,A.profile&&A.profile.profileUpdatedAt))A.profile=d; break;
+   case 'nut': A.nutritionLog=A.nutritionLog||{};
+    if(!A.nutritionLog[k]||newer(d&&d.savedAt,A.nutritionLog[k].savedAt))A.nutritionLog[k]=d; break;
+   case 'weight': A.weightLog=A.weightLog||{};
+    if(!A.weightLog[k]||newer(d&&d.loggedAt,A.weightLog[k].loggedAt))A.weightLog[k]=d; break;
+   case 'load': A.loads=A.loads||{};
+    if(!A.loads[k]||newer(_tsRec(d),_tsRec(A.loads[k])))A.loads[k]=d; break;
+   case 'prog': A.progression=A.progression||{};
+    if(!A.progression[k]||newer(_tsRec(d),_tsRec(A.progression[k])))A.progression[k]=d; break;
+   case 'varlast': A.varLast=A.varLast||{};
+    if(!A.varLast[k]||newer(_tsRec(d),_tsRec(A.varLast[k])))A.varLast[k]=d; break;
+   case 'splitidx': if(d&&typeof d.splitIdx==='number'&&newer(d.splitIdxUpdatedAt,A.splitIdxUpdatedAt)){
+     S.splitIdx=d.splitIdx;A.splitIdx=d.splitIdx;A.splitIdxUpdatedAt=d.splitIdxUpdatedAt;} break;
+   case 'recovery': if(newer(d&&d.updatedAt,A.recoveryMode&&A.recoveryMode.updatedAt))A.recoveryMode=d; break;
+   case 'adaptation': if(newer(d&&d.lastUpdated,A.adaptation&&A.adaptation.lastUpdated))A.adaptation=d; break;
+   case 'forcerun': if(newer(d&&d.ts,A.forceRun&&A.forceRun.ts))A.forceRun=d; break;
+   // UNIONE per voce (pasti): il record dello store e' GIA' la verita' fusa e potata, ma in
+   // locale si unisce comunque — un pasto appena inserito e non ancora spedito non va perso.
+   case 'meal': A.mealLog=A.mealLog||{};
+    A.mealLog=mergeArrayMap(A.mealLog,_unGiorno(k,d),mealKey); break;
+   // Le lapidi si raccolgono e si applicano DOPO, mai dentro il giro: nello stesso lotto puo'
+   // arrivare prima il pasto e poi la sua lapide.
+   case 'tomb': tombNuove[k]=d; break;
+   // UNIONE append-only
+   case 'sess': if(!(S.history||[]).some(function(h){return chiaveSess(h)===k;})){S.history=(S.history||[]).concat([d]);} break;
+   case 'chat': if(!(A.chatLog||[]).some(function(c){return chiaveChat(c)===k;})){A.chatLog=(A.chatLog||[]).concat([d]);} break;
+   case 'weekly': if(!(A.weeklyReports||[]).some(function(w){return _slugK(String(w.weekStart)+'_'+String(w.weekEnd),40)===k;})){A.weeklyReports=(A.weeklyReports||[]).concat([d]);} break;
+   case 'monthly': if(!(A.monthlyReports||[]).some(function(m){return _pad4(m.year)+'-'+_pad2(m.month)===k;})){A.monthlyReports=(A.monthlyReports||[]).concat([d]);} break;
+   // Guardie delle migrazioni una-tantum: si accendono e non si spengono.
+   case 'flags': {
+    // `_nutRecovered` viaggia DENTRO flags ma in locale e' un campo a se': se finisse anche in
+    // `_fix` la forma divergerebbe da quella di blob_shim.py, e il record risulterebbe «sporco»
+    // a ogni sync senza che nulla sia cambiato.
+    var fx={};Object.keys(d||{}).forEach(function(k){if(k!=='_nutRecovered')fx[k]=d[k];});
+    A._fix=Object.assign(fx,A._fix||{});
+    if(d&&d._nutRecovered)A._nutRecovered=true;
+    break;}
+   default: return; // un tipo che questa versione dell'app non conosce si ignora, non si perde
+  }
+  tocca=true;
+  SH[nomeRec(r)]=_impronta(d);
+ });
+ if(Object.keys(tombNuove).length){
+  A.mealTombstones=mergeTombstones(A.mealTombstones,tombNuove);
+  A.mealLog=purgeTombstoned(A.mealLog,A.mealTombstones);
+ }
+ return tocca;
+}
+function _tsRec(d){return d&&(d.updatedAt||d.date)||null;}
+function _unGiorno(k,arr){var o={};o[k]=arr||[];return o;}
+
+// PULL — scarica dallo store solo cio' che e' cambiato dopo il cursore locale. Il cursore e' una
+// sequenza del server: non dipende dall'orologio di nessuno e non salta i record scritti nello
+// stesso millisecondo. Senza cursore (telefono nuovo, localStorage azzerato) scarica tutto.
+async function pullStore(){
+ var tk=getStoreToken();
+ if(!tk){S.storeNoToken=true;return false;}
+ S.storeNoToken=false;
+ var cur=S.aiDB&&S.aiDB._storeCursore;
+ var q=(typeof cur==='number'&&cur>0)?('?since='+cur):'';
+ var r=await fetch(STORE_URL+'/api/state'+q,{cache:'no-store',headers:{Authorization:'Bearer '+tk}});
+ if(!r.ok)throw new Error('store HTTP '+r.status);
+ var d=await r.json();
+ var cambiato=applicaRecord(d.records);
+ S.aiDB._storeCursore=d.cursore;
+ if(d.serverUpdatedAt){S.aiDB.serverUpdatedAt=d.serverUpdatedAt;S.aiDB._lastServerSync=d.serverUpdatedAt;}
+ _saveSH();
+ sv('ai',S.aiDB);
+ if(cambiato){
+  if(S.history&&S.history.length)sv('wh',S.history);
+  if(typeof S.splitIdx==='number')sv('si',String(S.splitIdx));
+ }
+ return cambiato;
+}
+
+// PUSH — manda i soli record la cui impronta non combacia con quella che lo store ha confermato.
+// A lotti, perche' l'API ne accetta 400 per volta e perche' un lotto piccolo arriva anche con la
+// linea che balla in palestra.
+const LOTTO_DELTA=100;
+async function syncDelta(){
+ var tk=getStoreToken();
+ if(!tk){S.storeNoToken=true;S.syncError='Manca il token dello store su questo telefono: Profilo > STORE. Finche\' manca, i dati restano solo qui.';return false;}
+ // ANTI-WIPE: non si parla con lo store partendo da uno storico vuoto (telefono appena
+ // reinstallato o azzerato). Con i delta non si cancellerebbe niente, ma un telefono vuoto non
+ // ha nulla da dire: prima legge.
+ if(!(S.history&&S.history.length)){console.warn('delta saltato: storico locale vuoto');return false;}
+ // PULL PRIMA DEL PUSH. Non serve piu' a salvare il lavoro del server (il merge e' suo), ma
+ // serve a non far partire un push che il server ignorera' e a mostrare subito cio' che c'e'.
+ try{await pullStore();}catch(e){}
+ var locali=recordLocali(),sporchi=[];
+ locali.forEach(function(r){
+  var n=nomeRec(r),imp=_impronta(r.dati);
+  if(SH[n]!==imp)sporchi.push({r:r,n:n,imp:imp});
+ });
+ var tomb=Object.keys((S.aiDB.mealTombstones||{})).filter(function(d){
+  var l=S.aiDB.mealTombstones[d]||[];
+  return l.length && SH['tomb:'+d]!==_impronta(l);
+ }).map(function(d){return {data:d,chiavi:S.aiDB.mealTombstones[d]};});
+ if(!sporchi.length&&!tomb.length){S.syncError='';return true;}
+ var rifiutati=[];
+ try{
+  S.syncBusy=true;if(S.view==='home')render();
+  for(var i=0;i<Math.max(1,Math.ceil(sporchi.length/LOTTO_DELTA));i++){
+   var pezzo=sporchi.slice(i*LOTTO_DELTA,(i+1)*LOTTO_DELTA);
+   var corpo={records:pezzo.map(function(x){return x.r;})};
+   if(i===Math.max(0,Math.ceil(sporchi.length/LOTTO_DELTA)-1)&&tomb.length)corpo.tombstones=tomb;
+   var rr=await fetch(STORE_URL+'/api/sync',{method:'POST',headers:{Authorization:'Bearer '+tk,'Content-Type':'application/json'},body:JSON.stringify(corpo)});
+   if(!rr.ok)throw new Error('store HTTP '+rr.status);
+   var out=await rr.json();
+   var cattivi={};(out.rifiutati||[]).forEach(function(x){cattivi[x.chiave]=x.perche;rifiutati.push(x);});
+   // `ok` e `ignorati` sono entrambi «lo store e' allineato su questo record»: un LAST-WINS
+   // perso non e' un guasto, e' il merge che ha dato ragione all'altro lato. Si segna
+   // l'impronta solo di quelli, mai di un rifiutato — quello va ritentato.
+   pezzo.forEach(function(x){if(!cattivi[x.n])SH[x.n]=x.imp;});
+   if(corpo.tombstones)tomb.forEach(function(t){if(!cattivi['tomb:'+t.data])SH['tomb:'+t.data]=_impronta(t.chiavi);});
+   if(typeof out.cursore==='number'&&out.cursore>(S.aiDB._storeCursore||0))S.aiDB._storeCursore=out.cursore;
+  }
+  _saveSH();sv('ai',S.aiDB);
+  if(rifiutati.length){
+   // Il banner dice QUALE record non e' passato. E' il punto cieco del 21/10: prima il
+   // salvataggio taceva in due modi diversi e sembravano lo stesso.
+   S.syncError='Lo store ha rifiutato '+rifiutati.length+' record: '
+    +rifiutati.slice(0,3).map(function(x){return x.chiave+' ('+x.perche+')';}).join(' · ')
+    +(rifiutati.length>3?' e altri '+(rifiutati.length-3):'')+'.';
+  }else{
+   S.syncError='';try{localStorage.setItem('syncOk',new Date().toISOString());}catch(e){}
+  }
+ }catch(e){
+  S.syncError='Ultimo salvataggio non confermato sullo store ('+((e&&e.message)||'rete')+'). Riapri l\'app quando hai linea.';
+ }
+ S.syncBusy=false;
+ if(S.view==='home')render();
+ return !rifiutati.length&&!S.syncError;
+}
 // Sandbox: sui domini di test (Vercel) NON scriviamo mai su Drive (solo lettura per caricare i dati veri).
 const TEST_MODE=(typeof location!=='undefined'&&/vercel\.app$/i.test(location.hostname));
 // SALVATAGGIO RUMOROSO (19/08/2026). Prima era `try{...}catch(e){}`: se localStorage
@@ -2064,56 +2316,73 @@ function _vuoto(v){
  return v==='';
 }
 async function restoreFromDrive(){
+ // RIPRISTINO = MERGE, MAI SOSTITUZIONE (03/09/2026). Un ripristino puo' AGGIUNGERE, mai
+ // togliere: sovrascrivere ucciderebbe cio' che il backup non ha. Dal 22/10/2026 la fonte e' lo
+ // store, non il blob: si scarica TUTTO (nessun cursore) e si fonde col contratto.
  var btn=document.getElementById('restore-btn');
  if(btn){btn.textContent='Scaricando...';btn.disabled=true;}
+ function basta(msg){alert(msg);if(btn){btn.textContent='Ripristina dallo store';btn.disabled=false;}}
  try{
-  var resp=await fetch(DRIVE_URL+'?t='+Date.now(),{redirect:'follow',cache:'no-store'});
+  var tk=getStoreToken();
+  if(!tk)return basta('Manca il token dello store: Profilo > STORE.');
+  var resp=await fetch(STORE_URL+'/api/state',{cache:'no-store',headers:{Authorization:'Bearer '+tk}});
+  if(!resp.ok)return basta('Errore: store HTTP '+resp.status);
   var data=await resp.json();
-  if(!data.ok){alert('Errore: '+(data.error||'risposta non valida'));if(btn){btn.textContent='Ripristina da Drive';btn.disabled=false;}return;}
+  if(!data||!Array.isArray(data.records))return basta('Errore: risposta non valida');
   // Rete di sicurezza: lo stato locale com'era un istante fa, recuperabile a mano.
   try{localStorage.setItem('bkp-pre-restore',JSON.stringify({at:new Date().toISOString(),wh:localStorage.getItem('wh'),ai:localStorage.getItem('ai'),nd:localStorage.getItem('nd'),si:localStorage.getItem('si')}));}catch(e){}
-  var r=data.aiDB||{};
-  Object.keys(r).forEach(function(k){if(_vuoto(S.aiDB[k])&&!_vuoto(r[k]))S.aiDB[k]=r[k];});
-  mergeDown(data); // union/last-wins del contratto, `history` compresa
+  applicaRecord(data.records);
+  S.aiDB._storeCursore=data.cursore;
+  if(data.serverUpdatedAt){S.aiDB.serverUpdatedAt=data.serverUpdatedAt;S.aiDB._lastServerSync=data.serverUpdatedAt;}
   if(typeof S.splitIdx!=='number')S.splitIdx=0;
+  _saveSH();
   var okH=await sv('wh',S.history);
   var okA=await sv('ai',S.aiDB);
   await sv('si',String(S.splitIdx));
-  if(data.splits)await sv('splits',data.splits);
-  if(data.proxyToken)localStorage.setItem('workoutProxyToken',data.proxyToken);
-  if(!okH||!okA){alert('Ripristino NON scritto su questo telefono: '+(S.ioError||'errore di scrittura')+'\nNessun dato perso, riprova.');if(btn){btn.textContent='Ripristina da Drive';btn.disabled=false;}return;}
-  alert('Ripristinato da Drive e FUSO con quello che c\'era (niente cancellato).\n'
+  if(!okH||!okA)return basta('Ripristino NON scritto su questo telefono: '+(S.ioError||'errore di scrittura')+'\nNessun dato perso, riprova.');
+  alert('Ripristinato dallo store e FUSO con quello che c\'era (niente cancellato).\n'
    +(S.history||[]).length+' sessioni · '+Object.keys(S.aiDB.nutritionLog||{}).length+' giorni di nutrizione.\nRicarico...');
   location.reload();
  }catch(e){
-  alert('Errore connessione: '+e.message);
-  if(btn){btn.textContent='Ripristina da Drive';btn.disabled=false;}
+  basta('Errore connessione: '+e.message);
  }
 }
-async function syncToDrive(){ // NB: da qui in poi e' await-abile — chiamarla senza await resta legittimo (fire-and-forget con badge)
+// NUOVO PUNTO DI INGRESSO (22/10/2026). Il nome resta `syncToDrive` perche' lo chiamano quindici
+// punti dell'app e rinominarli tutti sarebbe rischio senza guadagno. Cio' che cambia e' cosa fa:
+//  1. manda il DELTA allo store (e' questa la consegna che conta, ed e' questa che risponde
+//     record per record);
+//  2. poi, per due settimane, riscrive anche il blob su Drive — rete di riserva in SOLA LETTURA.
+// La gamba legacy non puo' mai accendere il banner: se fallisce, il dato e' comunque nello store,
+// e un allarme per un canale che stiamo staccando e' rumore che insegna a ignorare gli allarmi.
+// Alla fine della doppia scrittura si cancella `syncDriveLegacy` e la sua chiamata qui sotto.
+async function syncToDrive(){
+ var ok=await syncDelta();
+ syncDriveLegacy().catch(function(){});
+ return ok;
+}
+async function syncDriveLegacy(){
  if(TEST_MODE)return; // sandbox: niente scrittura su Drive
  // ANTI-WIPE: non sincronizzare mai uno storico vuoto sopra i dati su Drive
  // (evita che un telefono appena reinstallato/azzerato cancelli il backup).
  if(!(S.history&&S.history.length)){console.warn('sync saltato: storico locale vuoto');return;}
- // PULL PRIMA DEL PUSH, DAVVERO (19/09/2026). Il POST fa `setContent`: sostituisce il blob
- // INTERO, quindi tutto cio' che il Mac ha scritto e che questo telefono non ha ancora letto
- // viene cancellato. Fino a oggi l'unico pull stava in `loadData`, cioe' all'avvio — e il
- // commento la chiamava "invariante" pur non essendolo: se all'avvio la rete manca, il fetch
- // cade nel catch vuoto e il push di fine seduta riporta su lo stato di ieri.
- // 🔑 Successo il 19/09/2026: app aperta senza linea in palestra, POST riuscito a fine seduta,
- // e i 6 cambi al piano scritti dal coach quella notte spariti dal blob — insieme al
- // `serverUpdatedAt`, tornato indietro di due giorni. Nessun errore, da nessuna parte.
- // Un GET fallito NON blocca il push: la seduta appena fatta vale piu' del rischio, ed e' il
- // caso in cui anche il POST fallirebbe. Ma quando la rete c'e' al momento del salvataggio —
- // che e' esattamente lo scenario del 19/09 — il piano del coach sopravvive.
- await pullDown();
+ // Il pull non sta piu' qui: lo fa `syncDelta`, che gira prima (vedi `syncToDrive`). Resta vero
+ // il motivo per cui serviva — questo POST fa `setContent`, cioe' sostituisce il blob INTERO, e
+ // il 19/09/2026 ha cancellato i sei cambi al piano scritti dal coach quella notte. E' esattamente
+ // il guasto che lo store chiude: la' si manda un delta e il merge e' del server. Qui no, quindi
+ // questa gamba vive solo due settimane come rete di riserva in SOLA LETTURA.
  try{
   // Round-trip: splitIdx vive anche in aiDB (solo aiDB sopravvive al POST del telefono, che
   // sovrascrive tutto il blob). Il timbro *UpdatedAt lo mette chi edita (finishSession).
   dropSkipState(); // il payload non deve riportare su Drive lo stato skip appena rimosso
   if(typeof S.splitIdx==='number')S.aiDB.splitIdx=S.splitIdx;
   var payload={history:S.history,nutrition:S.nutrition,aiDB:S.aiDB,savedAt:new Date().toISOString()};
-  var _k=getApiKey();if(_k)payload.proxyToken=_k; // backup proxy-token: sopravvive a wipe localStorage / reinstall PWA
+  // ⛔️ `proxyToken` NON va piu' nel payload (22/10/2026). Era un backup comodo — sopravviveva a un
+  // wipe di localStorage — ma il blob su Drive si scarica da chiunque senza credenziali (l'URL
+  // `/exec` sta in questo file, e il repo e' PUBBLICO): era una chiave viva dentro un file
+  // pubblico. Il registro degli accessi diceva gia' «se trapela si ruota questo», e la condizione
+  // era soddisfatta dal giorno in cui l'URL e' finito nel repo. Se il telefono perde
+  // localStorage, il token si re-incolla a mano dal vault (`Personale/chiavi/anthropic-workout.env`);
+  // con la Fase 2 il proxy sparisce del tutto.
   // 19/08/2026 — era fire-and-forget dentro un catch vuoto: una POST persa non lasciava
   // traccia. Ora si aspetta la risposta dell'Apps Script (`{ok:true}`) e un push non
   // confermato accende il badge in home, cosi' "l'ho compilato" e "e' arrivato" smettono
@@ -2125,16 +2394,15 @@ async function syncToDrive(){ // NB: da qui in poi e' await-abile — chiamarla 
   // indistinguibile da un tasto morto -> "riprova ora non fa nulla". Il POST dura decine di
   // secondi (l'Apps Script rigenera 5 tab del Foglio prima di rispondere), quindi il silenzio
   // non e' un istante: e' tutta l'attesa.
-  S.syncBusy=true;if(S.view==='home')render();
   var _r=await fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload),redirect:'follow'});
   var _d=await _r.json();
   if(!_d||!_d.ok)throw new Error((_d&&_d.error)||'risposta non valida');
-  S.syncError='';localStorage.setItem('syncOk',new Date().toISOString());
+  localStorage.setItem('driveOk',new Date().toISOString());
  }catch(e){
-  S.syncError='Ultimo salvataggio non confermato su Drive ('+((e&&e.message)||'rete')+'). Riapri l\'app quando hai linea.';
+  // Silenzioso DI PROPOSITO: la consegna che conta e' quella allo store, e questo canale sta
+  // per essere staccato. L'ultima riuscita resta leggibile in localStorage['driveOk'].
+  console.warn('doppia scrittura Drive non confermata:',(e&&e.message)||e);
  }
- S.syncBusy=false;
- if(S.view==='home')render();
 }
 // Force-run (Fase 3): scrive un flag aiDB.forceRun={ts} e sincronizza. Il Mac (poller
 // launchd ogni ~10 min) lo vede e lancia il coach subito, senza aspettare la notte.
@@ -3546,7 +3814,16 @@ function rProfile(){
   +'<button class="btn" style="background:#78350f;margin-top:8px" onclick="(function(){var k=document.getElementById(\'api-key-input\').value.trim();if(k){localStorage.setItem(\'workoutProxyToken\',k);if(typeof syncToDrive===\'function\')syncToDrive();alert(\'Token salvato e messo al sicuro su Drive!\');}else{localStorage.removeItem(\'workoutProxyToken\');alert(\'Token rimosso.\');}})()">Salva proxy-token</button>'
   +'<div style="font-size:11px;color:#52525b;margin-top:6px">Token del proxy (non la sk-ant), su questo dispositivo + backup su Drive.</div>'
   +'</div>'
-  +'<button id="restore-btn" class="btn" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;margin-top:8px" onclick="restoreFromDrive()">Ripristina da Drive</button>'
+  // Il token dello store NON e' nel repo (pubblico): vive solo qui, in localStorage, incollato
+  // a mano una volta. Senza di lui l'app funziona ma resta muta: scrive in locale e non consegna.
+  +'<div class="card" style="margin-top:12px;background:#0f0f0f;border-color:'+(getStoreToken()?'#27272a':'#ef4444')+'">'
+  +'<div class="lbl" style="color:'+(getStoreToken()?'#22c55e':'#ef4444')+';margin-bottom:8px">STORE · TOKEN DI SCRITTURA'+(getStoreToken()?'':' — MANCA')+'</div>'
+  +'<input type="password" id="store-token-input" placeholder="token dello store..." value="'+(localStorage.getItem('workoutStoreToken')||'')+'"'
+  +' style="width:100%;box-sizing:border-box;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:13px;padding:10px;outline:none;font-family:monospace">'
+  +'<button class="btn" style="background:#14532d;margin-top:8px" onclick="(function(){var k=document.getElementById(\'store-token-input\').value.trim();if(k){localStorage.setItem(\'workoutStoreToken\',k);syncToDrive();alert(\'Token salvato su questo telefono. Sincronizzo.\');}else{localStorage.removeItem(\'workoutStoreToken\');alert(\'Token rimosso: da adesso i dati restano solo qui.\');}render();})()">Salva token store</button>'
+  +'<div style="font-size:11px;color:#52525b;margin-top:6px">Sta solo su questo dispositivo. Il repo dell\'app e\' pubblico: qui non ci arriva mai.</div>'
+  +'</div>'
+  +'<button id="restore-btn" class="btn" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;margin-top:8px" onclick="restoreFromDrive()">Ripristina dallo store</button>'
   +'</div>';
 }
 function saveProfile(){

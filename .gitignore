@@ -8,6 +8,7 @@ bkp/
 # Vecchie versioni con API key in chiaro / snapshot di rollback
 LIVE_*.html
 index_backup_*.html
+index.html.bkp-*
 workout_standalone.html
 .vercel
 
@@ -15,3 +16,7 @@ workout_standalone.html
 # Casa: ~/Documents/Claude/Projects/Personal/processi/workout-appscript/ (R30)
 appscript_backup.gs
 *.gs
+
+# Env scaricate da Vercel: mai nel repo PUBBLICO
+.env
+.env.*
