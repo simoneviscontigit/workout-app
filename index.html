@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-10-22a · store unico: scritture a delta, merge sul server'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-10-25a · casa: via Wall Walk, entrano le Alzate con Zaino'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -569,9 +569,18 @@ const HOME_NEW={
  ],
  shoulders:[
   // 03/10/2026: hs3 Wall Slide e hs4 Prone Y Raise ritirati in revisione (scelta di Simone).
-  {id:'hs1',cat:'shoulders',name:'Wall Walk',video:'casa-wall-walk.mp4',
-   desc:'Plank coi piedi al muro. Cammina indietro con le mani salendo coi piedi sulla parete fino a quanto reggi, poi torna giù con lo stesso controllo. Una rep = salita + discesa. Fermati prima che la schiena si inarchi.',
-   muscles:'Spalle, Core',reps:4,repsMax:6,sets:3,restSec:90},
+  // hs1 Wall Walk RITIRATO il 25/10/2026 (decisione Simone, Q&A n.39: «togliamolo, non c'e'
+  // quasi mai un muro disponibile»). Saltato tre volte di fila (06/10, 12/10, 22/10): era
+  // l'ultimo della seduta e una volta mancava proprio il muro libero. L'11/10 (Q&A n.15/n.28)
+  // era stato lasciato in fondo per riprovarci; non ha retto. Si ritira, non si cancella:
+  // storico e piano del coach restano all'id `hs1`, la clip resta nel repo.
+  // Al suo posto hs6 Alzate con Zaino, stessa logica di hr8: niente muro, il carico e' il
+  // PESO dello zaino. Copre il deltoide medio, che p5 (spalla anteriore) non tocca, e tiene
+  // l'alternanza nello slot spalle di FULLBODY_PLAN invece di dare p5 a ogni seduta.
+  // Clip: quella delle alzate coi manubri della palestra, il gesto e' lo stesso.
+  {id:'hs6',cat:'shoulders',name:'Alzate con Zaino',video:'gym-alzate-laterali-manubri.mp4',
+   desc:'Zaino riempito di libri o bottiglie, impugnato per lo spallaccio con una mano, braccio lungo il fianco e gomito appena piegato. Alza di lato fino all\'altezza della spalla, ferma 1 secondo, scendi in 3 secondi. Busto fermo: se devi dare uno slancio, lo zaino e\' troppo pesante. Reps per lato. La progressione e\' il PESO dello zaino: quando chiudi il massimo su tutte le serie, aggiungi un libro o una bottiglia e riparti dal target basso.',
+   muscles:'Deltoide medio',reps:10,repsMax:14,sets:3,restSec:60},
   // hs2 Plank Shoulder Tap RITIRATO il 04/09/2026 (decisione Simone, Q&A n.74: «cambia
   // totalmente»). Il 17/08 chiuso 25/25/25 a difficolta' 1: l'esercizio piu' facile del
   // dossier E gia' al tetto delle 25 reps, cioe' zero margine da qualunque lato lo
@@ -819,7 +828,8 @@ const RECOVERY_MIN={p1:3,p2:3,p3:2,p4:1,p5:3,p6:1,p7:2,p10:2,p11:1,
  hl3:2,hl9:2,                                         // gambe a busto eretto (hl9: il carico lo decidi tu)
  hl8:3,                                               // pistol assistito: una gamba sola, come l1
  hp2:3,hp3:3,hp4:3,hl4:3,                             // spinta dura o hinge = "chinarsi"
- hs1:9,hl7:9,                                         // Wall Walk va quasi in verticale, Squat Jump e' impatto: mai in recupero
+ hs6:1,                                               // alzate con zaino: il carico lo decidi tu, busto eretto (come s2)
+ hl7:9,                                               // Squat Jump e' impatto: mai in recupero (hs1 Wall Walk era qui, ritirato il 25/10)
  // Gli id `p*`/`l*` passati al ramo casa (p1,p2,p3,p5,l1) la loro fase ce l'hanno gia', sopra.
  // CORE (23/08/2026). Fino a oggi NESSUN c* era elencato qui: cadevano tutti sul
  // default 1, cioe' "ammesso nella fase piu' fragile del post-operatorio". Era latente
