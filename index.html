@@ -165,7 +165,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-10-25a · casa: via Wall Walk, entrano le Alzate con Zaino'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-10-28a · acqua dalla borraccia, via dalla survey'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -2887,7 +2887,7 @@ async function confirmNutPhotos(){
  var levels=macrosToScoreLevel(tot);
  S.qAns=Object.assign(S.qAns||{},{protein:levels.protein,carbs:levels.carbs,fats:levels.fats,calories:levels.calories});
  S.nutPhotoUploads=[];
- // Salta le domande macro (0-3) e vai a water (4)
+ // Salta le domande macro (0-3) e vai alla nota (4) — l'acqua non e' piu' in survey
  S.qStep=4;
  render();
 }
@@ -3647,8 +3647,10 @@ var NQ=[
   opts:[{l:'Pochissimo (<30g)',e:'',v:1},{l:'Poco (30-50g)',e:'',v:2},{l:'Equilibrato (50-80g)',e:'',v:3},{l:'Tanto (80-110g)',e:'',v:4},{l:'Tantissimo (>110g)',e:'',v:5}]},
  {key:'calories',q:'Calorie totali stimate?',sub:'Per massa: circa 2700-2900 kcal (mantenimento ~2500)',
   opts:[{l:'Deficit (<2400kcal)',e:'',v:1},{l:'Mantenimento (~2500)',e:'',v:2},{l:'Surplus lieve (2700-2900)',e:'',v:3},{l:'Surplus alto (>3000)',e:'',v:4}]},
- {key:'water',q:'Idratazione?',sub:'Almeno 2.5L per metabolismo e recupero muscolare',
-  opts:[{l:'Scarsa (<1.5L)',e:'',v:1},{l:'Insufficiente (1.5-2L)',e:'',v:2},{l:'Buona (2-2.5L)',e:'',v:3},{l:'Ottima (>2.5L)',e:'',v:4}]},
+ // acqua rimossa dalla survey 2026-10-28: la misura la borraccia HidrateSpark -> Apple Health ->
+ // Comando Rapido -> /api/acqua (serve.py) -> colonna `acqua_bottiglia_l` del foglio.
+ // workout_metrics.apply_acqua_override scrive water/water_l (borraccia, o 1,8 L se manca) e
+ // ricalcola lo score, dal 27/10/2026 in poi. Lo storico con `water` compilato resta valido.
  // sonno e stress rimossi dalla survey 2026-08-02 (pipeline Sumi-centrica). NON hanno lo
  // stesso stato — verificato 03/08/2026, la riga precedente li dava entrambi coperti:
  //  - SONNO: coperto davvero. workout_metrics.apply_oura_sleep_override riscrive il rating
@@ -3978,7 +3980,7 @@ function rNutSummary(){
   // cosi' saveNutrition non le scrive e la colonna del foglio resta vuota invece che a zero.
   ['protein_g','carbs_g','fats_g','calories_kcal'].forEach(function(k){delete S.nutQty[k];});
  }
- if(!S.nutQty.water_l)S.nutQty.water_l=scoreToQty('water_l',a.water)||0;
+ if(a.water&&!S.nutQty.water_l)S.nutQty.water_l=scoreToQty('water_l',a.water)||0; // solo storico: l'acqua la misura la borraccia
  if(a.sleep&&!S.nutQty.sleep_h)S.nutQty.sleep_h=scoreToQty('sleep_h',a.sleep)||0; // solo storico: la domanda sonno non esiste piu'
  // RIMOSSO 06/08/2026 — qui c'era un `+400 kcal se giorno allenato` sull'INGERITO. Sommava il
  // CONSUMO dell'allenamento al cibo: lato sbagliato, e per giunta doppio, perche' il workout sta
@@ -4026,7 +4028,7 @@ function rNutSummary(){
   +mbar('Carboidrati',a.carbs||0,5,'#f59e0b',L5,'carbs_g','g')
   +mbar('Grassi',a.fats||0,5,'#22c55e',L5,'fats_g','g')
   +mbar('Calorie',a.calories||0,4,'#ef4444',L4c,'calories_kcal','kcal')
-  +mbar('Idratazione',a.water||0,4,'#f97316',L4,'water_l','L')
+  +(a.water?mbar('Idratazione',a.water,4,'#f97316',L4,'water_l','L'):'')
   +(a.sleep?mbar('Sonno',a.sleep,4,'#8b5cf6',L4,'sleep_h','h'):'')
   +(a.stress?mbar('Stress/Recovery',a.stress,4,'#22c55e',L4s):'')
   +'</div>'
@@ -4114,7 +4116,7 @@ function getNutAdvice(a){
  } else if(a.calories===4&&!workout){
   tips.push('Surplus alto in un giorno di riposo — parte delle calorie extra potrebbe andare in grasso. Riserva i pasti abbondanti ai giorni di allenamento.');
  }
- if(!a.water||a.water<=2)tips.push('Idratazione scarsa: inizia domani con 500ml appena sveglio. Obiettivo 3L totali.');
+ if(a.water&&a.water<=2)tips.push('Idratazione scarsa: inizia domani con 500ml appena sveglio. Obiettivo 3L totali.');
  // sonno/stress: solo se il valore c'e' (storico) — assente = domanda rimossa, non "scarso"
  if(a.sleep&&a.sleep<=2)tips.push('Riposo insufficiente: GH peak nelle prime 2h di sonno. Prova a dormire 30min prima stasera.');
  if(a.stress&&a.stress<=2)tips.push('Stress alto: 10 min di respirazione o camminata abbassano cortisolo e migliorano il recupero.');
