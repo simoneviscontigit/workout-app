@@ -162,7 +162,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-10-28b · icone, header pulito, corpo libero fra gli attrezzi'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-10-28c · lat machine: tornano corda e trazioni'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -234,7 +234,15 @@ const DB={
    // chiave nuda `r6` = 100kg del vecchio piano: i 50 esistevano ma non li leggeva nessuno.
    // 🔑 Cambiare l'`attrezzo` di un esercizio gia' vissuto ne SPOSTA la chiave, e i dati
    // scritti sotto la chiave vecchia non seguono: e' una migrazione, non un'etichetta.
-   muscles:'Dorsali, Bicipiti',primary:'dorsali',attrezzo:'macchina',reps:8,repsMax:10,sets:4,band:'45kg',restSec:100},
+   // 28/10/2026 — varianti RIMESSE (Simone: «non e' strano che la lat machine non abbia
+   // alternative?»). Erano sparite per sbaglio il 17/09: la riclassificazione sulle tre
+   // famiglie l'aveva spostata fra i cavi e le aveva tolto la variante `cavo`, il 19/09
+   // l'attrezzo e' tornato `macchina` ma la variante non l'ha rimessa nessuno. Da allora
+   // era l'UNICO esercizio di palestra senza una sola alternativa — con la colonna
+   // occupata non restava niente da premere.
+   muscles:'Dorsali, Bicipiti',primary:'dorsali',attrezzo:'macchina',reps:8,repsMax:10,sets:4,band:'45kg',restSec:100,
+   varianti:[{modo:'cavo',name:'Lat Machine alla Corda, presa stretta',band:'35kg',video:'gym-lat-machine-alla-corda-presa-stretta.mp4',desc:'Corda alla puleggia alta, presa neutra alle due estremita\', ginocchia bloccate come alla lat. Tira portando i gomiti giu\' e indietro e ALLARGA la corda in fondo, 1 secondo di contrazione, risali in 3 secondi. La presa stretta e neutra pesca piu\' in basso sul dorsale e perdona la spalla quando la presa larga da\' fastidio. Carico piu\' basso della lat: e\' una puleggia, non un pacco pesi dedicato.'},
+             {modo:'corpo libero',name:'Trazioni alla Sbarra',video:'gym-trazioni-sbarra.mp4',reps:5,repsMax:8,muscles:'Dorsali, Bicipiti, Core',desc:'Presa prona poco piu\' larga delle spalle, parti a braccia tese e sali portando il petto verso la sbarra, gomiti giu\' e indietro - lo stesso gesto della lat, ma a muoversi sei tu. Niente slancio di gambe: se non chiudi le reps usa l\'elastico o la macchina assistita, non accorciare la salita. E\' la lat machine senza la lat machine: quando la colonna e\' occupata la sbarra e\' sempre libera.'}]},
   {id:'r8',cat:'pull',name:'Rematore Manubrio Singolo',video:'gym-rematore-manubrio-singolo.mp4',
    desc:'Un ginocchio e una mano sulla panca, schiena parallela al suolo e neutra. Tira il manubrio verso l\'ANCA, non verso la spalla, portando il gomito oltre la linea della schiena. Non ruotare il busto per guadagnare centimetri. Carico per braccio.',
    muscles:'Dorsali, Romboidi',primary:'dorsali',attrezzo:'manubri',reps:8,repsMax:10,sets:4,band:'20kg',perSide:true,stima:true,restSec:90,
