@@ -162,7 +162,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-10-28c · lat machine: tornano corda e trazioni'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-10-28d · lat machine + nota di Sumi sotto la descrizione'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -3100,12 +3100,16 @@ function rWorkout(){
      +'</div>'
     :'<div style="border:2px solid '+ac+';color:'+ac+';padding:9px 12px;margin-bottom:8px;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase">'+(ex.attrezzo||(attrezzatura()==='palestra'?'Carico':'Elastico'))+' · '+ex.band+(ex.stima?' · da tarare':'')+'</div>')
    :'')
-  +(ex.coachNote?'<div style="border:2px solid #1e3a5f;background:#0a1420;padding:7px 11px;margin-bottom:8px;color:#7dd3fc;font-size:11px;line-height:1.4;letter-spacing:.5px"><b>'+(ex.coachSrc==='sumi'?'SUMI':'COACH')+'</b> · '+ex.coachNote+'</div>':'')
   +mediaHtml(ex)
   +'<div class="card" style="margin-top:10px">'
   +'<p style="color:#d4d4d8;font-size:14px;line-height:1.6;margin:0">'+ex.desc+'</p>'
   +'<p style="color:#52525b;font-size:12px;margin-top:8px;margin-bottom:0">'+ex.muscles+'</p>'
   +'</div>'
+  // La nota di Sumi sta SOTTO la descrizione (28/10/2026, Simone). Prima stava fra il carico
+  // e il video, cioe' in mezzo alla fila di cose che guardi prima di partire. Ma non e'
+  // un'istruzione di esecuzione: e' un commento su cosa e' successo l'altra volta e su che
+  // carico ti aspetta. Si legge DOPO aver capito il gesto, non al posto di capirlo.
+  +(ex.coachNote?'<div style="border:2px solid #1e3a5f;background:#0a1420;padding:8px 11px;margin-top:8px;color:#7dd3fc;font-size:12px;line-height:1.45;letter-spacing:.3px"><b>'+(ex.coachSrc==='sumi'?'SUMI':'COACH')+'</b> · '+ex.coachNote+'</div>':'')
   +'</div>'
   +'<div style="background:#09090b;border-top:1px solid #27272a;padding:18px 16px 24px;flex-shrink:0">'
   +'<div class="g3" style="margin-bottom:14px;gap:8px">'
