@@ -2027,11 +2027,8 @@ function pullDown(){
  // Dal 22/10/2026 si legge dallo STORE, non piu' dal blob Drive. Il nome resta perche' i
  // chiamanti sono due (l'avvio e ogni push) e il contratto verso di loro non cambia:
  // Promise<bool>, `true` = il server e' stato letto.
- // Finche' il token dello store non e' su questo telefono, si LEGGE ancora da Drive col vecchio
- // `mergeDown`: altrimenti fra il deploy e il momento in cui il token viene incollato il piano
- // del coach non arriverebbe piu'. ⛔️ Questo ramo si cancella con la gamba legacy, a fine
- // doppia scrittura.
- if(!getStoreToken()){S.storeNoToken=true;return pullDriveLegacy();}
+ // Senza token `pullStore` ritorna false e accende `S.storeNoToken`: il ramo di ripiego che
+ // leggeva il blob su Drive e' stato tolto il 29/10/2026, con la fine della doppia scrittura.
  return pullStore().then(function(ok){
   return ok;
  }).catch(function(e){
@@ -2039,26 +2036,6 @@ function pullDown(){
   return false;
  });
 }
-function pullDriveLegacy(){
- return fetch(DRIVE_URL+'?t='+Date.now(),{cache:'no-store',redirect:'follow'})
- .then(function(r){return r.json();}).then(function(dd){
-  var r=dd&&dd.ok&&dd.aiDB;
-  if(!r)return false;
-  if(r.serverUpdatedAt&&newer(r.serverUpdatedAt,S.aiDB._lastServerSync)){
-   mergeDown(dd);
-   sv('ai',S.aiDB);
-   if(S.history&&S.history.length)sv('wh',S.history);
-   if(typeof S.splitIdx==='number')sv('si',String(S.splitIdx));
-  }else{
-   if(r.coachPlan)S.aiDB.coachPlan=r.coachPlan;
-   if(r.metrics)S.aiDB.metrics=r.metrics;
-   if(r.profile&&r.profile.profileUpdatedAt&&newer(r.profile.profileUpdatedAt,S.aiDB.profile&&S.aiDB.profile.profileUpdatedAt))S.aiDB.profile=r.profile;
-   sv('ai',S.aiDB);
-  }
-  return true;
- }).catch(function(){return false;});
-}
-const DRIVE_URL='https://script.google.com/macros/s/AKfycbxtbx4x2KZZxgCvzOtibFtFTI8h0Bxg1-xalRboisHzyP_w8QD14Hb2-ZiAgTTDNQPP/exec';
 
 // ─── STORE UNICO (Fase 1, 22/10/2026) ───────────────────────────────────────
 // Il trasporto non e' piu' il blob intero su Drive: e' un DELTA di record verso un'API su Vercel
@@ -2456,61 +2433,12 @@ async function restoreFromDrive(){
  }
 }
 // NUOVO PUNTO DI INGRESSO (22/10/2026). Il nome resta `syncToDrive` perche' lo chiamano quindici
-// punti dell'app e rinominarli tutti sarebbe rischio senza guadagno. Cio' che cambia e' cosa fa:
-//  1. manda il DELTA allo store (e' questa la consegna che conta, ed e' questa che risponde
-//     record per record);
-//  2. poi, per due settimane, riscrive anche il blob su Drive — rete di riserva in SOLA LETTURA.
-// La gamba legacy non puo' mai accendere il banner: se fallisce, il dato e' comunque nello store,
-// e un allarme per un canale che stiamo staccando e' rumore che insegna a ignorare gli allarmi.
-// Alla fine della doppia scrittura si cancella `syncDriveLegacy` e la sua chiamata qui sotto.
+// punti dell'app e rinominarli tutti sarebbe rischio senza guadagno. Cio' che fa: manda il DELTA
+// allo store, che risponde record per record. La doppia scrittura sul blob Drive
+// (`syncDriveLegacy`) e' finita il 29/10/2026: lo store e' l'unico canale.
 async function syncToDrive(){
  var ok=await syncDelta();
- syncDriveLegacy().catch(function(){});
  return ok;
-}
-async function syncDriveLegacy(){
- if(TEST_MODE)return; // sandbox: niente scrittura su Drive
- // ANTI-WIPE: non sincronizzare mai uno storico vuoto sopra i dati su Drive
- // (evita che un telefono appena reinstallato/azzerato cancelli il backup).
- if(!(S.history&&S.history.length)){console.warn('sync saltato: storico locale vuoto');return;}
- // Il pull non sta piu' qui: lo fa `syncDelta`, che gira prima (vedi `syncToDrive`). Resta vero
- // il motivo per cui serviva — questo POST fa `setContent`, cioe' sostituisce il blob INTERO, e
- // il 19/09/2026 ha cancellato i sei cambi al piano scritti dal coach quella notte. E' esattamente
- // il guasto che lo store chiude: la' si manda un delta e il merge e' del server. Qui no, quindi
- // questa gamba vive solo due settimane come rete di riserva in SOLA LETTURA.
- try{
-  // Round-trip: splitIdx vive anche in aiDB (solo aiDB sopravvive al POST del telefono, che
-  // sovrascrive tutto il blob). Il timbro *UpdatedAt lo mette chi edita (finishSession).
-  dropSkipState(); // il payload non deve riportare su Drive lo stato skip appena rimosso
-  if(typeof S.splitIdx==='number')S.aiDB.splitIdx=S.splitIdx;
-  var payload={history:S.history,nutrition:S.nutrition,aiDB:S.aiDB,savedAt:new Date().toISOString()};
-  // ⛔️ `proxyToken` NON va piu' nel payload (22/10/2026). Era un backup comodo — sopravviveva a un
-  // wipe di localStorage — ma il blob su Drive si scarica da chiunque senza credenziali (l'URL
-  // `/exec` sta in questo file, e il repo e' PUBBLICO): era una chiave viva dentro un file
-  // pubblico. Il registro degli accessi diceva gia' «se trapela si ruota questo», e la condizione
-  // era soddisfatta dal giorno in cui l'URL e' finito nel repo. Se il telefono perde
-  // localStorage, il token si re-incolla a mano dal vault (`Personale/chiavi/anthropic-workout.env`);
-  // con la Fase 2 il proxy sparisce del tutto.
-  // 19/08/2026 — era fire-and-forget dentro un catch vuoto: una POST persa non lasciava
-  // traccia. Ora si aspetta la risposta dell'Apps Script (`{ok:true}`) e un push non
-  // confermato accende il badge in home, cosi' "l'ho compilato" e "e' arrivato" smettono
-  // di essere la stessa cosa. Il badge dice NON CONFERMATO, non "fallito": la risposta puo'
-  // perdersi anche a scrittura avvenuta, e gridare al errore sbagliato si impara a ignorarlo.
-  // Il render qui e' load-bearing (30/08/2026). Prima `syncBusy` veniva alzato ma non lo leggeva
-  // nessuno: per tutta la durata del POST la schermata restava identica, e al termine di un
-  // tentativo fallito veniva ridipinto lo STESSO banner con lo stesso testo. Da fuori era
-  // indistinguibile da un tasto morto -> "riprova ora non fa nulla". Il POST dura decine di
-  // secondi (l'Apps Script rigenera 5 tab del Foglio prima di rispondere), quindi il silenzio
-  // non e' un istante: e' tutta l'attesa.
-  var _r=await fetch(DRIVE_URL,{method:'POST',body:JSON.stringify(payload),redirect:'follow'});
-  var _d=await _r.json();
-  if(!_d||!_d.ok)throw new Error((_d&&_d.error)||'risposta non valida');
-  localStorage.setItem('driveOk',new Date().toISOString());
- }catch(e){
-  // Silenzioso DI PROPOSITO: la consegna che conta e' quella allo store, e questo canale sta
-  // per essere staccato. L'ultima riuscita resta leggibile in localStorage['driveOk'].
-  console.warn('doppia scrittura Drive non confermata:',(e&&e.message)||e);
- }
 }
 // Force-run (Fase 3): scrive un flag aiDB.forceRun={ts} e sincronizza. Il Mac (poller
 // launchd ogni ~10 min) lo vede e lancia il coach subito, senza aspettare la notte.
