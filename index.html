@@ -2047,8 +2047,7 @@ function pullDown(){
 //    smettono di essere la stessa cosa anche quando ne passa solo una parte.
 // Il contratto di merge NON cambia (wiki/Personale/allenamento/sync-contract.md): timbro per
 // record, last-wins per istante, unione sui log, lapidi. Cambia chi lo applica e quando.
-// Per due settimane si scrive ANCHE sul vecchio canale Drive (rete di riserva in sola lettura),
-// ma si LEGGE solo dallo store.
+// Dal 29/10/2026 lo store e' l'unico canale: la doppia scrittura su Drive e' finita.
 const STORE_URL='https://workout-app-eight-iota.vercel.app';
 // Il token di scrittura NON sta nel repo (che e' pubblico): lo si incolla una volta nel profilo.
 // ⚠️ Si toglie OGNI spazio, non solo quelli ai bordi, e si fa in LETTURA. Un token di 43
@@ -2501,13 +2500,13 @@ function rAlerts(){
    +'<div class="lbl" style="color:#ef4444;font-size:11px;margin-bottom:4px">SALVATAGGIO FALLITO</div>'
    +'<div style="color:#fca5a5;font-size:12px;line-height:1.5">'+S.ioError+'</div></div>';
  // Tre stati distinti, non due: IN CORSO (sto lavorando), NON CONFERMATO (ho finito male),
- // niente (tutto a posto). Il salvataggio su Drive non e' istantaneo — l'Apps Script rigenera
- // 5 tab del Foglio prima di rispondere — quindi "sto lavorando" e' uno stato che va MOSTRATO,
- // altrimenti l'attesa e' indistinguibile da un tasto che non ha fatto nulla.
+ // niente (tutto a posto). Il salvataggio non e' istantaneo su una rete lenta, quindi "sto
+ // lavorando" e' uno stato che va MOSTRATO, altrimenti l'attesa e' indistinguibile da un tasto
+ // che non ha fatto nulla.
  if(S.syncBusy)
   out+='<div style="border:2px solid #52525b;background:#111114;padding:12px 14px;margin-bottom:14px">'
    +'<div class="lbl" style="color:#a1a1aa;font-size:11px;margin-bottom:4px">SALVATAGGIO IN CORSO</div>'
-   +'<div style="color:#d4d4d8;font-size:12px;line-height:1.5">Sto scrivendo su Drive. Puo\' metterci qualche decina di secondi: tieni l\'app aperta.</div></div>';
+   +'<div style="color:#d4d4d8;font-size:12px;line-height:1.5">Sto salvando i dati. Tieni l\'app aperta finche\' non finisce.</div></div>';
  else if(S.syncError)
   out+='<div style="border:2px solid #f59e0b;background:#1a1200;padding:12px 14px;margin-bottom:14px">'
    +'<div class="lbl" style="color:#f59e0b;font-size:11px;margin-bottom:4px">NON CONFERMATO SU DRIVE</div>'
@@ -3863,8 +3862,8 @@ function rProfile(){
   +'<div class="lbl" style="color:#f59e0b;margin-bottom:8px">WORKOUT AI · PROXY TOKEN</div>'
   +'<input type="password" id="api-key-input" placeholder="proxy-token..." value="'+(localStorage.getItem('workoutProxyToken')||'')+'"'
   +' style="width:100%;box-sizing:border-box;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fafafa;font-size:13px;padding:10px;outline:none;font-family:monospace">'
-  +'<button class="btn" style="background:#78350f;margin-top:8px" onclick="(function(){var k=document.getElementById(\'api-key-input\').value.trim();if(k){localStorage.setItem(\'workoutProxyToken\',k);if(typeof syncToDrive===\'function\')syncToDrive();alert(\'Token salvato e messo al sicuro su Drive!\');}else{localStorage.removeItem(\'workoutProxyToken\');alert(\'Token rimosso.\');}})()">Salva proxy-token</button>'
-  +'<div style="font-size:11px;color:#52525b;margin-top:6px">Token del proxy (non la sk-ant), su questo dispositivo + backup su Drive.</div>'
+  +'<button class="btn" style="background:#78350f;margin-top:8px" onclick="(function(){var k=document.getElementById(\'api-key-input\').value.trim();if(k){localStorage.setItem(\'workoutProxyToken\',k);if(typeof syncToDrive===\'function\')syncToDrive();alert(\'Token salvato su questo telefono.\');}else{localStorage.removeItem(\'workoutProxyToken\');alert(\'Token rimosso.\');}})()">Salva proxy-token</button>'
+  +'<div style="font-size:11px;color:#52525b;margin-top:6px">Token del proxy (non la sk-ant), solo su questo dispositivo: se lo perdi, lo reincolli dal vault.</div>'
   +'</div>'
   // Il token dello store NON e' nel repo (pubblico): vive solo qui, in localStorage, incollato
   // a mano una volta. Senza di lui l'app funziona ma resta muta: scrive in locale e non consegna.
