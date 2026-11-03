@@ -48,6 +48,11 @@ textarea,input[type=text]{background:#18181b;border:1px solid #27272a;border-rad
 .ai-fab:active{transform:scale(.92)}
 .ai-slide{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(102%);width:100%;max-width:440px;background:#18181b;border-top:1px solid #f9731640;border-radius:20px 20px 0 0;z-index:999;transition:transform .28s cubic-bezier(.32,1,.45,1);display:flex;flex-direction:column;max-height:72vh}
 .ai-slide.open{transform:translateX(-50%) translateY(0)}
+/* Pannello CHIUSO = non toccabile (03/11/2026). Su iOS, con il viewport visivo ristretto (504 su 812),
+   il pannello chiuso restava sopra il fondo dello schermo e si mangiava i tocchi: «Salva e termina»
+   non rispondeva e la seduta restava solo in memoria. Il ritardo su visibility lascia finire l'animazione. */
+.ai-slide{visibility:hidden;pointer-events:none;transition:transform .28s cubic-bezier(.32,1,.45,1),visibility 0s linear .28s}
+.ai-slide.open{visibility:visible;pointer-events:auto;transition:transform .28s cubic-bezier(.32,1,.45,1),visibility 0s}
 .ai-slide-head{padding:14px 16px 10px;border-bottom:1px solid #27272a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .ai-ctx-pill{background:#27272a;border-radius:20px;padding:5px 12px;font-size:11px;color:#a1a1aa;font-weight:600;max-width:220px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .ai-slide-msgs{flex:1;overflow-y:auto;padding:12px 14px;-webkit-overflow-scrolling:touch}
@@ -162,7 +167,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-11-03a · palestra gym80: codici macchina, leg curl e leg extension'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-11-03b · fix: pannello AI chiuso copriva «Salva e termina»; Indietro non duplica le serie'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -3408,7 +3413,14 @@ function wBack(){
  clearInterval(TI);
  var prev=S.wStepIdx-1;
  while(prev>0&&S.wSteps[prev].type!=='work')prev--;
- if(prev>=0&&S.wSteps[prev].type==='work'){S.wStepIdx=prev;S.wSets=Math.max(0,S.wSets-1);render();}
+ if(prev>=0&&S.wSteps[prev].type==='work'){
+  // La serie a cui torni si RIFA': quella gia' scritta va tolta, sennò logReps la aggiunge di nuovo
+  // (03/11/2026: Dip con 7 serie su 3, tornando indietro per correggere il carico).
+  var ps=S.wSteps[prev],pe=ps.ex,rr=pe&&S.wReps[pe.id];
+  // pop dell'ultima, non taglio su setNum: una copia spostata da «Cambia ordine» riparte da serie 1
+  // ma si porta dietro le reps gia' fatte, e un taglio le cancellerebbe.
+  if(rr&&rr.reps&&rr.reps.length)rr.reps.pop();
+  S.wStepIdx=prev;S.wSets=Math.max(0,S.wSets-1);render();}
  else go('home');
 }
 // "Cambia" = ROTAZIONE nello stesso slot, NON un ban (12/08/2026).
