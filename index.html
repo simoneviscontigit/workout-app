@@ -167,7 +167,7 @@ function sessionDay(iso){
 // (h*, push-up, squat a corpo libero): li' il carico non si regola, la
 // progressione a reps e' l'unica che c'e' e il tetto resta 25.
 // Dettaglio: wiki Personale/allenamento/core-progressione-zone e app-briefing.
-const APP_BUILD='2026-11-03b · fix: pannello AI chiuso copriva «Salva e termina»; Indietro non duplica le serie'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
+const APP_BUILD='2026-11-05a · core palestra: routine fissa F24 + F23 + obliqui alla macchina'; // bump a ogni deploy → visibile in home per confermare l'aggiornamento
 const AI_PROXY_URL='https://workout.simonevisconti.it/api/ai-chat'; // FASE 4: proxy serve.py via Cloudflare Tunnel (sk-ant server-side, guardrail x-proxy-token)
 const DB={
  push:[
@@ -395,7 +395,7 @@ const DB={
    desc:'Panca inclinata in negativo (piedi in alto, se non c\'e\' un fermapiedi bastano le ginocchia piegate sotto il cuscino). Disco stretto al petto con le due mani. Sali arrotolando la colonna una vertebra alla volta — non a corpo rigido, non a strappo — fino a superare i 45°, poi scendi in 3 secondi senza appoggiare le spalle. Il disco resta al petto: se lo allontani per aiutarti col peso davanti, stai togliendo carico. L\'ultima rep pulita e\' quella dove la salita non parte dal collo.',
    muscles:'Retto addominale',primary:'retto alto',attrezzo:'dischi',reps:8,repsMax:10,sets:3,band:'10kg',restSec:45,stima:true,
    varianti:[{modo:'cavo',name:'Crunch al Cavo in ginocchio',band:'45kg',video:'core-crunch-al-cavo-in-ginocchio.mp4',desc:'In ginocchio davanti al cavo alto, corda dietro la nuca. Arrotola la colonna portando i gomiti verso le cosce: e\' il retto che chiude, non le anche che si piegano. Bacino FERMO. E\' la flessione con il carico piu\' alto disponibile, ed e\' il motivo per cui resta fra le tre.'},
-             {modo:'macchina',name:'Crunch alla Macchina',codice:'F24',band:'35kg',video:'core-crunch-alla-macchina.mp4',desc:'Seduto, cuscinetto sul petto o maniglie sopra le spalle, bacino fermo sul sedile. Chiudi il busto verso il bacino arrotolando le vertebre, 1 secondo in contrazione, torna in 3 secondi. Il sedile tiene fermo tutto il resto: nessun modo di aiutarsi con le anche.'}]},
+             {modo:'macchina',name:'Crunch alla Macchina',codice:'F24',band:'35kg',stima:true,video:'core-crunch-alla-macchina.mp4',desc:'Seduto, cuscinetto sul petto o maniglie sopra le spalle, bacino fermo sul sedile. Chiudi il busto verso il bacino arrotolando le vertebre, 1 secondo in contrazione, torna in 3 secondi. Il sedile tiene fermo tutto il resto: nessun modo di aiutarsi con le anche.'}]},
   // c31 Ab Rollout con Bilanciere RITIRATO il 16/09/2026 (decisione Simone: via tutta la
   // zona B a carico). Al suo posto c47 Dead Bug al Cavo, che e' lo stesso anti-estensione
   // senza lo stress lombare del rollout e con il carico scelto al pacco pesi invece che dal
@@ -420,7 +420,7 @@ const DB={
    desc:'Cavo alto, impugnatura presa con due mani, piedi larghi quanto le spalle e di lato alla macchina. Tira in diagonale dall\'alto verso l\'anca opposta ruotando il BUSTO: le braccia restano quasi tese e non fanno il lavoro, il bacino resta fermo e i piedi non si staccano. Torna su lento resistendo alla trazione, senza farti riaprire di scatto. Reps PER LATO — fai tutte quelle di un lato, poi cambia.',
    muscles:'Obliqui, Core anti-rotazione',primary:'obliqui',attrezzo:'cavo',reps:8,repsMax:10,sets:3,band:'15kg',perSide:true,restSec:45,stima:true,
    varianti:[{modo:'manubri',name:'Russian Twist con Manubrio',band:'12kg',video:'core-russian-twist-con-manubrio.mp4',desc:'Seduto, busto a 45 gradi indietro, piedi sollevati se tieni. Manubrio a due mani portato di fianco a un\'anca e poi all\'altra ruotando le SPALLE, non solo le braccia. Lombare mai a curva. Una rep = un lato. Qui il limite arriva spesso dalla presa prima che dall\'obliquo.'},
-             {modo:'macchina',name:'Rotary Torso alla Macchina',codice:'F23',band:'30kg',video:'core-rotary-torso-alla-macchina.mp4',desc:'Seduto, bacino bloccato dai cuscinetti, busto contro il supporto. Ruota il tronco fino a fine corsa controllando, 1 secondo, torna lento senza farti riportare di scatto. Il bacino bloccato e\' il punto: la rotazione la fa solo la colonna toracica. Reps per lato.'}]},
+             {modo:'macchina',name:'Rotary Torso alla Macchina',codice:'F23',band:'30kg',stima:true,video:'core-rotary-torso-alla-macchina.mp4',desc:'Seduto, bacino bloccato dai cuscinetti, busto contro il supporto. Ruota il tronco fino a fine corsa controllando, 1 secondo, torna lento senza farti riportare di scatto. Il bacino bloccato e\' il punto: la rotazione la fa solo la colonna toracica. Reps per lato.'}]},
   // c35 Suitcase Carry RITIRATO il 30/08/2026 (decisione Simone). Il suo commento del
   // 29/08: "preferisco tenere il peso lungo il fianco e inclinare il corpo verso il lato
   // opposto; 30 passi con 27,5kg mi stancano prima la mano che il fianco". Cioe': faceva
@@ -431,7 +431,8 @@ const DB={
   {id:'c41',cat:'core',zona:'E',name:'Side Bend con Manubrio',video:'core-side-bend-manubrio.mp4',
    desc:'In piedi, un manubrio pesante in UNA mano lungo il fianco, l\'altra mano dietro la nuca. Inclina il busto verso il lato OPPOSTO al peso, poi risali fino a superare la verticale contraendo il fianco scarico. Il bacino resta fermo e il busto sul piano frontale: se ruoti o ti pieghi in avanti stai facendo un altro esercizio. Reps indicate PER LATO — fai tutte quelle di un lato e poi cambia.',
    muscles:'Obliqui, Quadrato dei lombi',primary:'core laterale',attrezzo:'manubri',reps:8,repsMax:10,sets:3,band:'30kg',perSide:true,restSec:45,stima:true,
-   varianti:[{modo:'cavo',name:'Side Bend al Cavo basso',band:'25kg',video:'core-side-bend-al-cavo-basso.mp4',desc:'In piedi di fianco al cavo basso, impugnatura nella mano vicina, l\'altra dietro la nuca. Inclina il busto verso il lato OPPOSTO al cavo e risali superando la verticale. Rispetto al manubrio la tensione c\'e\' anche in cima, dove il peso appeso al braccio non tira piu\'. Reps per lato.'}]},
+   varianti:[{modo:'macchina',name:'Flessione Laterale alla Macchina',band:'25kg',stima:true,desc:'Seduto o in piedi nella macchina degli obliqui, bacino bloccato. Inclina il busto di lato contro il cuscinetto fino a fine corsa, 1 secondo, torna lento oltre la verticale senza farti riportare. Il busto resta sul piano frontale: niente rotazione, niente piegarsi in avanti. Reps PER LATO.'},
+             {modo:'cavo',name:'Side Bend al Cavo basso',band:'25kg',video:'core-side-bend-al-cavo-basso.mp4',desc:'In piedi di fianco al cavo basso, impugnatura nella mano vicina, l\'altra dietro la nuca. Inclina il busto verso il lato OPPOSTO al cavo e risali superando la verticale. Rispetto al manubrio la tensione c\'e\' anche in cima, dove il peso appeso al braccio non tira piu\'. Reps per lato.'}]},
   // c36 Side Plank con disco RITIRATO il 16/09/2026 (decisione Simone). La zona E la tiene
   // c41 Side Bend con Manubrio, che carica molto di piu' e non chiede di tenere fermo un
   // disco in equilibrio su un fianco. Storico intatto nel foglio.
@@ -711,6 +712,8 @@ const CORE_ZONE={
 // aggancio: un esercizio che progredisce davvero ma non ha un `band` da scrivere va elencato
 // qui, altrimenti `corePool` lo tratta come corpo libero e non esce mai in palestra.
 const CORE_CARICO_SENZA_BAND=[];
+// Routine fissa del core di palestra (05/11/2026), nell'ordine in cui si fa. Vedi buildCoreCircuit.
+const CORE_PALESTRA_FISSO=['c51','c33','c41'];
 function coreCaricabile(e){return !!e.band||CORE_CARICO_SENZA_BAND.indexOf(e.id)>=0;}
 // Pool di una zona, separato nei due lati. Ordinato per id = ordine stabile e ripetibile:
 // la rotazione deve dipendere dal giorno, non dall'ordine in cui il DB e' scritto.
@@ -1488,6 +1491,28 @@ function migraLegCurl(){
   console.log('[legcurl] l5#macchina -> l11: '+tocco+' scritture');
  }catch(e){console.error('migraLegCurl:',e);}
 }
+// Core gym80 (05/11/2026): F24 Abdominal Press e F23 Twister erano varianti di c51/c33 ma
+// non uscivano mai, perche' conVariante propone la riga base finche' varLast non dice
+// altrimenti, e migraLegCurl aveva impostato la macchina solo su l3/p11/s2. Qui la macchina
+// diventa la scelta fissa, sovrascrivendo anche le scelte della vecchia palestra (decisione
+// Simone). Resta solo una scelta fatta dal 24/10 in poi, cioe' gia' nella palestra nuova.
+function migraMacchineCore(){
+ try{
+  var fatti=S.aiDB._fix||{},MK='core_macchine_gym80_20261105';
+  if(fatti[MK])return;
+  if(!S.aiDB.varLast)S.aiDB.varLast={};
+  var tocco=0;
+  ['c51','c33','c41'].forEach(function(id){
+   var v=S.aiDB.varLast[id];
+   if(v&&v.date&&v.date>='2026-10-24')return;
+   S.aiDB.varLast[id]={modo:'macchina',date:dayKey(),updatedAt:new Date().toISOString()};tocco++;
+  });
+  var segno={};segno[MK]=1;
+  S.aiDB._fix=Object.assign({},fatti,segno);
+  sv('ai',S.aiDB);
+  console.log('[core-gym80] c51/c33/c41 -> macchina: '+tocco+' scritture');
+ }catch(e){console.error('migraMacchineCore:',e);}
+}
 function dropSkipState(){
  var d=false;
  ['skipped','skipLog','skippedUpdatedAt'].forEach(function(k){if(k in S.aiDB){delete S.aiDB[k];d=true;}});
@@ -1516,8 +1541,22 @@ function buildCoreCircuit(idx,home,gaps,opts){
  // avanza di un esercizio a ogni seduta fatta — non a ogni giro di tre circuiti.
  var rot=opts.rot!=null?opts.rot:Math.floor(idx/nC);
  var zone=opts.zone||circuit.zone||[];
+ // DAL 05/11/2026 il core di PALESTRA e' una routine fissa di tre macchine gym80, sempre le
+ // stesse e sempre in quest'ordine (decisione Simone): F24 Abdominal Press (A), F23 Twister
+ // (D), macchina degli obliqui (E). Le zone B, C, F in palestra non escono piu': il resto del
+ // DB.core resta per il CORE CASA e la FULL BODY. La variante macchina la mette varLast
+ // (migraMacchineCore). `opts.zone` (una zona sola) segue ancora la strada vecchia.
+ if(!home&&!opts.zone){
+  zone=CORE_PALESTRA_FISSO.map(function(id){var e=exById(id);return e?e.zona:'?';});
+ }
  var picks=[];
- zone.forEach(function(z,zi){
+ if(!home&&!opts.zone)CORE_PALESTRA_FISSO.forEach(function(id,i){
+  var e=exById(id);
+  if(!e||!recoveryAllows(e)){gaps.push('core palestra '+id+(recoveryPhase()?' (recupero)':''));return;}
+  if(picks.length)picks.push('B');
+  picks.push(e);
+ });
+ else zone.forEach(function(z,zi){
   if(zi)picks.push('B');                        // pausa 30s fra le due zone
   // DAL 11/09/2026 i due slot della zona vengono dallo STESSO lato: a casa i due a corpo
   // libero (non c'e' niente da caricare), in palestra i due CARICABILI. Il corpo libero e'
@@ -2046,6 +2085,7 @@ async function loadData(){
  fixProgressioneFossile(); // una-tantum 19/09/2026 (p4, r6) — vedi FIX_PROGRESSION
   migraS1AllaMacchina(); // una-tantum 20/09/2026 — s1: tre sedute alla macchina sotto la chiave dei manubri
   migraLegCurl(); // una-tantum 03/11/2026 — leg curl da l5#macchina a l11 + varianti di partenza gym80
+  migraMacchineCore(); // una-tantum 05/11/2026 — F24/F23/obliqui come scelta fissa su c51/c33/c41
   // Migrazione: ripristina da array nutrition legacy (preferisci dati reali su skipped)
   if(S.aiDB.nutrition&&S.aiDB.nutrition.length){
    S.aiDB.nutrition.forEach(function(n){
